@@ -27,7 +27,12 @@ def sha256_hex(normalized: str) -> str:
 
 
 def _hash_gram(gram: str) -> int:
-    return int.from_bytes(hashlib.blake2b(gram.encode("utf-8"), digest_size=8).digest(), "big")
+    # 32-bit (not 64-bit) is a deliberate size/collision tradeoff: this isn't a
+    # security context, and at ~1-2k hashes per file the birthday collision
+    # probability is well under 0.1% — a stray collision would only nudge a
+    # similarity score by a fraction of a percent, never flip a verdict. Halving the
+    # hash width roughly halves the reference DB's on-disk size.
+    return int.from_bytes(hashlib.blake2b(gram.encode("utf-8"), digest_size=4).digest(), "big")
 
 
 def winnow(normalized: str, gram_size: int = GRAM_SIZE, window_size: int = WINDOW_SIZE) -> set:

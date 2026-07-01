@@ -59,21 +59,38 @@ def main() -> None:
     tags = list_tags()
     print(f"Found {len(tags)} tags on {REPO}", file=sys.stderr)
 
-    db = {"repo": REPO, "files": FILES, "tags": {}}
+    # content[filename][sha256] = {"winnow": [...], "tags": [...]} — deduplicated:
+    # many patch/rc releases leave a given file byte-identical to a prior release, so
+    # storing fingerprints once per unique content (not once per tag) cuts storage
+    # roughly in half for a project like FreeRTOS-Kernel. tag_index maps each tag back
+    # to which content hash it had, per file.
+    content: dict = {f: {} for f in FILES}
+    tag_index: dict = {}
+
     for i, tag in enumerate(tags, 1):
         entry = {}
         for filename in FILES:
-            content = fetch_file(tag, filename)
-            if content is None:
+            text = fetch_file(tag, filename)
+            if text is None:
                 continue
-            entry[filename] = fingerprint_source(content)
+            fp = fingerprint_source(text)
+            sha = fp["sha256"]
+            bucket = content[filename]
+            if sha in bucket:
+                bucket[sha]["tags"].append(tag)
+            else:
+                bucket[sha] = {"winnow": fp["winnow"], "tags": [tag]}
+            entry[filename] = sha
         if entry:
-            db["tags"][tag] = entry
+            tag_index[tag] = entry
         print(f"[{i}/{len(tags)}] {tag}: {sorted(entry.keys())}", file=sys.stderr)
 
+    db = {"repo": REPO, "files": FILES, "content": content, "tags": tag_index}
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(db, indent=1), encoding="utf-8")
-    print(f"Wrote {OUT_PATH} ({len(db['tags'])} tags with data)", file=sys.stderr)
+    OUT_PATH.write_text(json.dumps(db, separators=(",", ":")), encoding="utf-8")
+    unique_count = sum(len(bucket) for bucket in content.values())
+    print(f"Wrote {OUT_PATH} ({len(tag_index)} tags, {unique_count} unique file-contents)",
+          file=sys.stderr)
 
 
 if __name__ == "__main__":

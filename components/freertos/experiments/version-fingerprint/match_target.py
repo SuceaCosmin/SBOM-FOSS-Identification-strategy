@@ -48,22 +48,23 @@ def evaluate_file(path: Path, db: dict) -> dict:
     filename = path.name
     fp = fingerprint_source(path.read_text(encoding="utf-8", errors="replace"))
     target_winnow = set(fp["winnow"])
+    bucket = db["content"].get(filename, {})
 
-    exact_matches = sorted(
-        tag for tag, files in db["tags"].items()
-        if filename in files and files[filename]["sha256"] == fp["sha256"]
-    )
+    exact_entry = bucket.get(fp["sha256"])
+    exact_matches = sorted(exact_entry["tags"]) if exact_entry else []
 
     scored = []
-    for tag, files in db["tags"].items():
-        if filename not in files:
-            continue
-        ref_winnow = set(files[filename]["winnow"])
+    for entry in bucket.values():
+        ref_winnow = set(entry["winnow"])
         if not target_winnow and not ref_winnow:
             continue
         intersection = len(target_winnow & ref_winnow)
         union = len(target_winnow | ref_winnow) or 1
-        scored.append((intersection / union, tag))
+        score = intersection / union
+        # one content hash can correspond to several tags (patch releases that left
+        # this file untouched) — surface each as its own scored row.
+        for tag in entry["tags"]:
+            scored.append((score, tag))
     scored.sort(reverse=True)
 
     return {"path": path, "filename": filename, "exact_matches": exact_matches,

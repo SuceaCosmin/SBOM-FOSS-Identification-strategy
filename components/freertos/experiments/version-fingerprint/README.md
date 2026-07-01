@@ -20,10 +20,11 @@ only content-level analysis, per the pipeline sketched in
 2. `freertos_fingerprint.py` — for each file: strip comments and collapse whitespace
    (`normalize`), then compute both a SHA-256 of the normalized content (exact-match
    fast path) and a **winnowing fingerprint** (Schleimer/Wilkerson/Aiken): hash every
-   30-character gram of the normalized text, then keep only the minimum hash in each
-   sliding window of 50 grams (rightmost on ties). The surviving hash set is the
-   fingerprint — small, and provably still shares at least one hash with any other file
-   containing a common substring of ~79+ normalized characters.
+   30-character gram of the normalized text (32-bit blake2b — see "Reference DB size"
+   below for why 32-bit), then keep only the minimum hash in each sliding window of 50
+   grams (rightmost on ties). The surviving hash set is the fingerprint — small, and
+   provably still shares at least one hash with any other file containing a common
+   substring of ~79+ normalized characters.
 3. `match_target.py` — for each candidate file: check for an exact SHA-256 match against
    every known tag first; if none, fall back to Jaccard similarity between winnowing
    fingerprints and report the closest tags. Candidate files are **grouped by the
@@ -41,8 +42,35 @@ only content-level analysis, per the pipeline sketched in
    - If none exact-match, compares each file's closest fuzzy-match release for
      agreement (**LIKELY CONSISTENT** vs. **INCONSISTENT**).
 
-Reference DB: `reference/kernel_fingerprints.json` (~4.7 MB, committed — 58 tags,
-V8.0.0 through V11.3.0 plus a handful of older ones, three files each).
+Reference DB: `reference/kernel_fingerprints.json` (~1.2 MB, committed — 58 tags,
+V8.0.0 through V11.3.0 plus a handful of older ones, three files each, 89 unique
+file-contents).
+
+## Reference DB size
+
+An initial version of this DB was 4.7 MB — a real concern once you're bundling one of
+these per supported component for offline use. Two changes, applied together, cut it to
+1.2 MB (−75%) with **no change in match results** (re-verified against all four corpus
+scenarios below):
+
+1. **Deduplicate by content, not by tag.** 49% of (tag, file) entries turned out to be
+   byte-identical to another tag's version of that file (patch/rc releases that didn't
+   touch that particular file) — see `nxp-mcux-vendored`'s `list.c` below, which ties
+   across three releases. The DB now stores one fingerprint per unique
+   `(filename, sha256)`, plus a small tag → content-hash index, instead of one full
+   fingerprint per tag.
+2. **32-bit hashes instead of 64-bit.** `_hash_gram` truncates blake2b to 4 bytes. At
+   ~1-2k hashes per file this is nowhere near collision-risk territory (well under 0.1%
+   birthday-collision probability), and this isn't a security context — a stray
+   collision would nudge a similarity score by a fraction of a percent, never flip a
+   verdict.
+
+A further ~90% total reduction (to ~470 KB) is possible by switching from JSON decimal
+integers to packed binary — not done here, to keep the reference DB plain-JSON and
+inspectable for a research prototype, but worth doing if this format is ever adapted for
+an actual bundled tool. See
+[general/README.md — reference DB scalability](../../../../general/README.md#reference-db-size-scales-with-component-shape-not-a-fixed-constant)
+for how this generalizes (or doesn't) beyond FreeRTOS-Kernel.
 
 ## Result
 
@@ -51,7 +79,7 @@ Tested against the full three-file sets in [../../corpus/](../../corpus/):
 | Target | Result |
 |---|---|
 | `nxp-mcux-vendored/` (NXP's `FreeRTOS-Kernel` mirror, `release/26.03.00` branch) | All three files exact-match → **CONFIRMED, V11.2.0.** (`list.c` alone ties across V11.1.0–V11.3.0 since it's unchanged over that range; intersecting with `tasks.c`/`queue.c` narrows it to the true version.) Confirms NXP vendors the kernel byte-for-byte (modulo comments/whitespace) unmodified. |
-| `esp-idf-fork/` (Espressif's SMP fork, `master` branch) | **PARTIALLY MODIFIED.** `list.c` exact-matches (untouched — ties across V10.5.0–V10.6.2); `tasks.c` and `queue.c` have no exact match. Closest fuzzy matches: `tasks.c` → V10.5.1 (0.556), `queue.c` → V10.6.0 (0.763). Both fall inside `list.c`'s exact-match range, so the tool reports a consistent plausible base of **{V10.5.1, V10.6.0}** — independently confirming what [components/freertos/README.md §3](../../README.md#3-what-layers-typically-stack-on-top-of-the-kernel) already noted from Espressif's own docs (forked from v10.5.1), while also surfacing the real detail that `list.c` wasn't modified at all. |
+| `esp-idf-fork/` (Espressif's SMP fork, `master` branch) | **PARTIALLY MODIFIED.** `list.c` exact-matches (untouched — ties across V10.5.0–V10.6.2); `tasks.c` and `queue.c` have no exact match. Closest fuzzy matches: `tasks.c` → V10.5.1 (0.565), `queue.c` → V10.6.0 (0.762). Both fall inside `list.c`'s exact-match range, so the tool reports a consistent plausible base of **{V10.5.1, V10.6.0}** — independently confirming what [components/freertos/README.md §3](../../README.md#3-what-layers-typically-stack-on-top-of-the-kernel) already noted from Espressif's own docs (forked from v10.5.1), while also surfacing the real detail that `list.c` wasn't modified at all. |
 | `mixed-version-synthetic/` (synthetic: `tasks.c`+`list.c` from V10.4.3, `queue.c` from V11.0.0) | All three files exact-match, but to **disjoint** release sets → **MIXED VERSION WARNING**, correctly identifying the deliberately-mismatched files without a common tag. |
 | Unrelated file (`cJSON.c`, saved as `tasks.c`, no matching `queue.c`/`list.c`) | Reported **INCOMPLETE** (correctly refuses to confirm kernel presence from one file) and, even so, scores **0.000 similarity** against every known tag — clean negative control. |
 
