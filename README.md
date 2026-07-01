@@ -8,7 +8,10 @@ See [CLAUDE.md](CLAUDE.md) for the full scope, priorities, and working conventio
 
 ## Layout
 
-- [docs/](docs/) — findings, tool surveys, technique comparisons, design notes.
-- [experiments/](experiments/) — small prototype scripts testing detection ideas.
-- [corpus/](corpus/) — example embedded source trees/snippets with known ground truth,
-  used to validate detection techniques.
+- [general/](general/) — cross-cutting principles that apply across components (SBOM
+  identifier strategy, detection technique patterns, attribution rules), extracted from
+  component research rather than tied to any single one.
+- [components/](components/) — one folder per researched component (e.g.
+  `components/freertos/`), each with a `README.md` of findings and, once there's
+  content, `experiments/` (prototype scripts) and `corpus/` (ground-truth examples)
+  subfolders.

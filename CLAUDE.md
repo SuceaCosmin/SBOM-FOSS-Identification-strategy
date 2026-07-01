@@ -53,16 +53,29 @@ Both **CycloneDX** and **SPDX** are eventual targets, but format design is out o
 for this repo — the generator (and its format handling) lives elsewhere. Don't spend
 research effort on output serialization here.
 
-## Expected deliverables in this repo
+## Repository layout
 
-- `docs/` — written findings: technique comparisons, tool surveys, tradeoff analysis,
-  design notes to hand off to the future SBOM generator project.
-- `experiments/` — small prototype scripts (Python or C) testing detection ideas, e.g.
-  running fuzzy hashing against a modified vendored copy of a known library. These are
-  throwaway/exploratory, not production code — keep them simple and don't over-engineer.
-- `corpus/` — curated real-world (or realistic) example embedded source trees or
-  snippets with **known ground truth** of what OSS component was vendored in, used to
-  validate detection techniques against.
+The repo is organized **component-first**, not by artifact type:
+
+- `general/README.md` — cross-cutting principles that apply across components (SBOM
+  identifier/naming strategy, detection technique patterns, multi-component attribution
+  rules). When a finding while researching one component turns out to be generally
+  applicable, extract it here and have the component doc link back to it instead of
+  restating it.
+- `components/<name>/` — one folder per researched component (e.g.
+  `components/freertos/`). Each contains:
+  - `README.md` — the findings doc for that component. Keep it as a single doc per
+    component rather than splitting into many small files.
+  - `experiments/` — small prototype scripts (Python or C) testing a detection idea
+    against that component specifically, e.g. running fuzzy hashing against a modified
+    vendored copy. Throwaway/exploratory, not production code. Only create this
+    subfolder once there's an actual experiment to put in it.
+  - `corpus/` — curated real-world (or realistic) example source with **known ground
+    truth** of what was vendored in, used to validate detection techniques against that
+    component. Only create this subfolder once there's an actual example to put in it.
+
+Don't create empty `experiments/`/`corpus/` subfolders as scaffolding — add them when
+there's real content.
 
 ## Working conventions
 

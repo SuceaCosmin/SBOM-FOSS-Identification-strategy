@@ -1,9 +1,14 @@
-# FreeRTOS distribution landscape
+# FreeRTOS
 
 First research pass: understanding how many distinct "FreeRTOS" things exist in the
 wild and who distributes them, before attempting to detect vendored copies. Triggered
 by a real observation in a project containing both Amazon/AWS FreeRTOS references and
 an NXP layer around it, plus a separate NXP-promoted RTOS.
+
+General principles extracted from this research (component granularity, PURL/CPE
+identifier strategy, detection technique patterns, multi-component attribution) live in
+[general/README.md](../../general/README.md) rather than being restated here — this doc
+covers what's specific to FreeRTOS itself.
 
 ## 1. Governance and licensing history
 
@@ -21,13 +26,15 @@ an NXP layer around it, plus a separate NXP-promoted RTOS.
 - Copyright header pattern shifted with governance: pre-2017 headers reference
   WHIS/Real Time Engineers Ltd wording; post-2017 headers read
   `Copyright (C) <year> Amazon.com, Inc. or its affiliates.` under MIT. This shift is
-  itself a usable era/version heuristic.
+  itself a usable era/version heuristic (see general notes on copyright-header-era
+  detection).
 
 ## 2. Kernel vs. libraries vs. umbrella repo — component granularity
 
 "FreeRTOS" is not one versioned thing — it's a brand covering several independently
 versioned repos. This directly determines how many SBOM components a single vendored
-"FreeRTOS" integration should actually produce.
+"FreeRTOS" integration should actually produce (see general notes on component
+granularity).
 
 - **[FreeRTOS/FreeRTOS-Kernel](https://github.com/FreeRTOS/FreeRTOS-Kernel)** — the real
   scheduler (`tasks.c`, `queue.c`, `list.c`, `croutine.c`, `portable/`, `include/`). Own
@@ -55,11 +62,12 @@ versioned repos. This directly determines how many SBOM components a single vend
 component per independently-versioned upstream repo, not one merged "FreeRTOS" blob and
 not one entry per vendor-SDK-layer (that's the separate axis covered in section 3).
 
-## 3. What "layers" typically stack on top of the kernel
+## 3. What layers typically stack on top of the kernel
 
 The kernel itself (`tasks.c`, `queue.c`, `list.c`, `timers.c`, `event_groups.c`,
 `stream_buffer.c`, `croutine.c`, `portable/<compiler>/<arch>/...`) is usually vendored
-close to verbatim by downstream distributors. What varies is what gets bolted around it:
+close to verbatim by downstream distributors. What varies is what gets bolted around it
+(see general notes on multi-component attribution):
 
 - **Silicon-vendor SDK integration layer** — vendor doesn't fork the scheduler; they
   vendor upstream FreeRTOS-Kernel largely unmodified and add their own adaptation code:
@@ -107,9 +115,9 @@ FreeRTOS variant.
 
 ## 5. Naming a detected FreeRTOS component in an SBOM
 
-There isn't a single canonical identifier for "FreeRTOS" — two real-world vulnerability
-databases disagree on granularity, which affects what name/identifier a detector should
-emit for matching to actually work downstream:
+There isn't a single canonical identifier for "FreeRTOS" — the two real-world
+vulnerability databases disagree on granularity (see general notes on PURL/CPE
+disagreement). For FreeRTOS specifically:
 
 - **Legacy NVD/CPE dictionary** is not one identifier — querying it directly
   (`services.nvd.nist.gov/rest/json/cpes/2.0?keywordSearch=freertos`) shows **three
@@ -146,9 +154,7 @@ under "FreeRTOS", and a kernel-only CVE won't either.
 - **version**: the component's own release tag (e.g. `V11.1.0`), not an LTS bundle date.
   If the code was pulled from an LTS bundle, record that bundle version as an extra
   property/note, not as the component's primary version.
-- **identifiers**: attach *both* forms where available, since different downstream
-  scanners query different databases — CycloneDX and SPDX both support carrying `purl`
-  and `cpe` on the same component:
+- **identifiers**: attach *both* forms where available:
   - PURL: `pkg:github/freertos/freertos-kernel@V11.1.0` (matches OSV/GHSA tooling,
     always derivable from the upstream repo)
   - CPE: `cpe:2.3:o:amazon:freertos:11.1.0:*:*:*:*:*:*:*` (matches legacy NVD tooling;
