@@ -90,3 +90,7 @@ for `git ls-remote` only).
 - GRAM_SIZE/WINDOW_SIZE (30/50) were chosen from general winnowing literature
   conventions, not tuned specifically for C source or for this file set — worth
   revisiting if false-positive/negative rates show up in a larger test set.
+- **Open task**: run the matcher against the actual real-world project where a mixed-
+  version FreeRTOS integration was originally observed (the synthetic corpus entry
+  above reproduces the pattern but isn't the real data). Deferred until those files are
+  available to test against directly.
