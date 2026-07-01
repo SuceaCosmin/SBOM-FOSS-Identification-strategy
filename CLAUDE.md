@@ -12,6 +12,16 @@ When you (Claude) start a session in this repo, treat the scope below as settled
 established with the user (Cosmin) — don't re-ask these questions, but do flag if new
 findings suggest revisiting a decision.
 
+## Current status
+
+- **Researched**: [FreeRTOS](components/freertos/README.md) — distribution landscape,
+  SBOM naming/identifier strategy, and a working version-fingerprinting experiment
+  (exact-hash + winnowing similarity, with cross-file consistency checking to catch
+  mixed-version integrations).
+- **Next up**: **mbedTLS** — not started yet. Begin the same way FreeRTOS did: distro
+  landscape research first (who forks/vendors it, e.g. any silicon-vendor integration
+  layers), before jumping to a detection experiment.
+
 ## Problem scope
 
 - **Target language: C only.** C++ is explicitly out of scope.
