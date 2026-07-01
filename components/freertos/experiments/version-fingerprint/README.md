@@ -24,31 +24,47 @@ only content-level analysis, per the pipeline sketched in
    sliding window of 50 grams (rightmost on ties). The surviving hash set is the
    fingerprint — small, and provably still shares at least one hash with any other file
    containing a common substring of ~79+ normalized characters.
-3. `match_target.py` — for a candidate file: check for an exact SHA-256 match against
+3. `match_target.py` — for each candidate file: check for an exact SHA-256 match against
    every known tag first; if none, fall back to Jaccard similarity between winnowing
-   fingerprints and report the closest tags.
+   fingerprints and report the closest tags. Candidate files are **grouped by the
+   directory they were found in**, since presence of the kernel can't be confirmed from
+   a single file alone — a real vendored copy keeps `tasks.c`/`queue.c`/`list.c`
+   together. Per group:
+   - If not all three are present, the group is reported **INCOMPLETE** — an
+     unconfirmed signal, not a positive detection.
+   - If all three exact-match releases that share a common tag → **CONFIRMED**.
+   - If all three exact-match releases but don't share a common tag → **MIXED VERSION
+     WARNING** (e.g. a partial upgrade that replaced only some kernel files).
+   - If some files exact-match and others don't → **PARTIALLY MODIFIED**, and it checks
+     whether the modified files' closest fuzzy-match release overlaps with the
+     unmodified files' exact-match release(s), to report a plausible common base.
+   - If none exact-match, compares each file's closest fuzzy-match release for
+     agreement (**LIKELY CONSISTENT** vs. **INCONSISTENT**).
 
 Reference DB: `reference/kernel_fingerprints.json` (~4.7 MB, committed — 58 tags,
 V8.0.0 through V11.3.0 plus a handful of older ones, three files each).
 
 ## Result
 
-Tested against three real-world files (saved as ground truth in
-[../../corpus/](../../corpus/)):
+Tested against the full three-file sets in [../../corpus/](../../corpus/):
 
 | Target | Result |
 |---|---|
-| `corpus/nxp-mcux-vendored/tasks.c` (NXP's `FreeRTOS-Kernel` mirror, `release/26.03.00` branch) | **Exact match → V11.2.0.** Confirms NXP vendors the kernel byte-for-byte (modulo comments/whitespace) unmodified. |
-| `corpus/esp-idf-fork/tasks.c` (Espressif's SMP fork, `master` branch) | No exact match (expected — it's a real fork). Closest by fingerprint similarity: **V10.5.1 (0.556)**, then V10.5.0 (0.553), V10.6.x (~0.539). This **independently confirms** what [components/freertos/README.md §3](../../README.md#3-what-layers-typically-stack-on-top-of-the-kernel) already noted from Espressif's own docs: the fork is based on v10.5.1. |
-| Unrelated file (`cJSON.c`, saved as `tasks.c` to pass the filename filter) | **0.000 similarity** against every known tag — clean negative control, no false positive. |
+| `nxp-mcux-vendored/` (NXP's `FreeRTOS-Kernel` mirror, `release/26.03.00` branch) | All three files exact-match → **CONFIRMED, V11.2.0.** (`list.c` alone ties across V11.1.0–V11.3.0 since it's unchanged over that range; intersecting with `tasks.c`/`queue.c` narrows it to the true version.) Confirms NXP vendors the kernel byte-for-byte (modulo comments/whitespace) unmodified. |
+| `esp-idf-fork/` (Espressif's SMP fork, `master` branch) | **PARTIALLY MODIFIED.** `list.c` exact-matches (untouched — ties across V10.5.0–V10.6.2); `tasks.c` and `queue.c` have no exact match. Closest fuzzy matches: `tasks.c` → V10.5.1 (0.556), `queue.c` → V10.6.0 (0.763). Both fall inside `list.c`'s exact-match range, so the tool reports a consistent plausible base of **{V10.5.1, V10.6.0}** — independently confirming what [components/freertos/README.md §3](../../README.md#3-what-layers-typically-stack-on-top-of-the-kernel) already noted from Espressif's own docs (forked from v10.5.1), while also surfacing the real detail that `list.c` wasn't modified at all. |
+| `mixed-version-synthetic/` (synthetic: `tasks.c`+`list.c` from V10.4.3, `queue.c` from V11.0.0) | All three files exact-match, but to **disjoint** release sets → **MIXED VERSION WARNING**, correctly identifying the deliberately-mismatched files without a common tag. |
+| Unrelated file (`cJSON.c`, saved as `tasks.c`, no matching `queue.c`/`list.c`) | Reported **INCOMPLETE** (correctly refuses to confirm kernel presence from one file) and, even so, scores **0.000 similarity** against every known tag — clean negative control. |
 
-**Conclusion**: the pipeline works as designed on real data. Exact hashing correctly
-identifies untouched vendored copies and their precise version; winnowing similarity
-correctly recovers the base version of a genuinely modified fork, with a wide margin
-over unrelated code (0.556 vs. 0.000). This validates fingerprint/similarity matching
+**Conclusion**: the pipeline works as designed on real data, including a real case of
+partial modification (ESP-IDF leaving `list.c` untouched) and a case matching a pattern
+observed directly in a real project — a FreeRTOS-Kernel integration mixing files from
+different releases, which now gets flagged explicitly rather than silently reported as
+three unrelated single-file matches. This validates fingerprint/similarity matching
 (general notes: [detection technique patterns](../../../../general/README.md#detection-technique-patterns))
 as a viable approach for the "locally modified vendored copy" case, which is the
-highest-priority integration pattern per [CLAUDE.md](../../../../CLAUDE.md).
+highest-priority integration pattern per [CLAUDE.md](../../../../CLAUDE.md), and confirms
+that single-file matching alone is insufficient — component presence and version
+identity both require cross-checking all of a component's core files together.
 
 ## How to reproduce
 
