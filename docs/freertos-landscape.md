@@ -23,7 +23,39 @@ an NXP layer around it, plus a separate NXP-promoted RTOS.
   `Copyright (C) <year> Amazon.com, Inc. or its affiliates.` under MIT. This shift is
   itself a usable era/version heuristic.
 
-## 2. What "layers" typically stack on top of the kernel
+## 2. Kernel vs. libraries vs. umbrella repo — component granularity
+
+"FreeRTOS" is not one versioned thing — it's a brand covering several independently
+versioned repos. This directly determines how many SBOM components a single vendored
+"FreeRTOS" integration should actually produce.
+
+- **[FreeRTOS/FreeRTOS-Kernel](https://github.com/FreeRTOS/FreeRTOS-Kernel)** — the real
+  scheduler (`tasks.c`, `queue.c`, `list.c`, `croutine.c`, `portable/`, `include/`). Own
+  repo, own release versioning (`Vx.y.z`), own `LICENSE.md`. **This is one component.**
+- **[FreeRTOS/FreeRTOS](https://github.com/FreeRTOS/FreeRTOS)** — the "classic"
+  distribution repo. This is **not a separate piece of software**: it git-submodules the
+  Kernel repo and bundles a set of independently-versioned libraries under
+  `FreeRTOS-Plus/Source/` plus demo projects. Treat it as a packaging/reference repo, not
+  a component.
+- **FreeRTOS-Plus / "core" libraries** — `FreeRTOS+TCP`, `FreeRTOS+FAT`, `coreMQTT`,
+  `coreHTTP`, `corePKCS11`, `coreJSON`, etc. Each has its **own repo** under the
+  `FreeRTOS` GitHub org with its **own semver**, independent of the kernel's version.
+  **Each is its own component.**
+- **AWS IoT-specific libraries** — Device Shadow, Jobs, OTA, Device Defender — live in a
+  *separate* `aws` GitHub org, also independently versioned. Also their own components.
+- **FreeRTOS LTS** — a curated, date-versioned bundle (`YYYYMM.patch`, e.g.
+  `202604.01`) pinning a specific kernel version + specific library versions together for
+  long-term security-patch support. It's a **release manifest**, not a codebase — useful
+  as provenance metadata (which exact versions were pinned together) but not itself an
+  SBOM component.
+
+**Implication**: if a project vendors kernel files *and* `FreeRTOS+TCP` *and*
+`coreMQTT`, collapsing all of it into one `"FreeRTOS"` SBOM entry loses real information
+— each has a different version and independent CVE exposure. Correct granularity is one
+component per independently-versioned upstream repo, not one merged "FreeRTOS" blob and
+not one entry per vendor-SDK-layer (that's the separate axis covered in section 3).
+
+## 3. What "layers" typically stack on top of the kernel
 
 The kernel itself (`tasks.c`, `queue.c`, `list.c`, `timers.c`, `event_groups.c`,
 `stream_buffer.c`, `croutine.c`, `portable/<compiler>/<arch>/...`) is usually vendored
@@ -57,7 +89,7 @@ close to verbatim by downstream distributors. What varies is what gets bolted ar
   - **SafeRTOS** (WHIS) — pre-certified rewrite for IEC 61508 / EN 62304 / FDA 510(k).
   - **OpenRTOS** (WHIS) — commercially licensed, unmodified-kernel + paid support/porting.
 
-## 3. NXP's *other* RTOS is unrelated to FreeRTOS
+## 4. NXP's *other* RTOS is unrelated to FreeRTOS
 
 The "NXP is also promoting some form of RTOS" observation is very likely a *different*
 component sharing no code lineage with FreeRTOS:
@@ -73,7 +105,44 @@ If a project shows both FreeRTOS and NXP RTOS references, the likely explanation
 mixed-RTOS project (e.g. FreeRTOS on one core/subsystem, MQX or Zephyr elsewhere), not a
 FreeRTOS variant.
 
-## 4. Detection implications
+## 5. Naming a detected FreeRTOS component in an SBOM
+
+There isn't a single canonical identifier for "FreeRTOS" — two real-world vulnerability
+databases disagree on granularity, which affects what name/identifier a detector should
+emit for matching to actually work downstream:
+
+- **Legacy NVD/CPE dictionary** collapses everything into one coarse identifier:
+  `cpe:2.3:o:amazon:freertos:<version>:*:*:*:*:*:*:*` — vendor `amazon`, product
+  `freertos`. Note the CPE **type is `o` ("operating system"), not `a` ("application")**
+  — an easy mismatch if detection logic assumes library-type CPEs. This single CPE does
+  not distinguish kernel from FreeRTOS+TCP from coreMQTT.
+- **GitHub Security Advisories / OSV**, where current CVEs actually get published (e.g.
+  [CVE-2024-28115](https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r)),
+  are keyed to the **specific repo** — `FreeRTOS/FreeRTOS-Kernel` for kernel issues,
+  `FreeRTOS/coreMQTT` for a coreMQTT issue, etc. This matches the component-per-repo
+  granularity from section 2.
+
+If a detector only emits a vague `"FreeRTOS"` name, it resolves cleanly against
+*neither* system — a coreMQTT CVE won't attribute correctly if everything is lumped
+under "FreeRTOS", and a kernel-only CVE won't either.
+
+**Recommended naming approach:**
+
+- **name**: the upstream repo's own name, not the umbrella brand —
+  `FreeRTOS-Kernel` for the scheduler, `FreeRTOS-Plus-TCP`, `coreMQTT`, `corePKCS11`,
+  etc. Never just `"FreeRTOS"` for the kernel component.
+- **version**: the component's own release tag (e.g. `V11.1.0`), not an LTS bundle date.
+  If the code was pulled from an LTS bundle, record that bundle version as an extra
+  property/note, not as the component's primary version.
+- **identifiers**: attach *both* forms, since different downstream scanners query
+  different databases — CycloneDX and SPDX both support carrying `purl` and `cpe` on the
+  same component:
+  - PURL: `pkg:github/freertos/freertos-kernel@V11.1.0` (matches OSV/GHSA tooling)
+  - CPE: `cpe:2.3:o:amazon:freertos:11.1.0:*:*:*:*:*:*:*` (matches legacy NVD tooling)
+- **supplier/publisher**: `Amazon Web Services` (post-2017), kept as separate metadata
+  from `name` rather than folded into it.
+
+## 6. Detection implications
 
 - **Structural fingerprint**: the FreeRTOS-Kernel file set/naming is distinctive enough
   to flag candidates before any content-level matching — cheap first-pass filter.
@@ -95,6 +164,10 @@ FreeRTOS variant.
   components" detection logic against a real example.
 - Espressif ESP-IDF FreeRTOS is a strong candidate for the first fuzzy-hashing
   experiment (real, well-documented kernel-level fork vs. upstream).
+- Check whether NVD's CPE dictionary has additional legacy vendor/product entries for
+  FreeRTOS beyond `amazon:freertos` (e.g. an older `real_time_engineers:freertos`
+  entry) — would affect how far back CPE-based matching needs to account for naming
+  drift.
 
 Sources:
 - [FreeRTOS - Wikipedia](https://en.wikipedia.org/wiki/FreeRTOS)
@@ -108,3 +181,9 @@ Sources:
 - [SAFERTOS and OPENRTOS - FreeRTOS Partners](https://www.freertos.org/Partners/Software/SafeRTOS-and-OpenRTOS)
 - [STMicroelectronics/stm32-mw-freertos](https://github.com/STMicroelectronics/stm32-mw-freertos)
 - [FreeRTOS-Kernel LICENSE.md](https://github.com/FreeRTOS/FreeRTOS-Kernel/blob/main/LICENSE.md)
+- [FreeRTOS FAQ - GitHub Repository Structure & Versioning](https://www.freertos.org/Why-FreeRTOS/FAQs/Github-repository-structure-and-versioning/)
+- [FreeRTOS/FreeRTOS-LTS](https://github.com/FreeRTOS/FreeRTOS-LTS)
+- [FreeRTOS/coreMQTT](https://github.com/FreeRTOS/coreMQTT)
+- [NVD CPE search results for cpe:2.3:o:amazon:freertos](https://nvd.nist.gov/products/cpe/search/results?keyword=cpe%3A2.3%3Ao%3Aamazon%3Afreertos%3A*%3A*%3A*%3A*%3A*%3A*%3A*%3A*&status=FINAL%2CDEPRECATED&orderBy=CPEURI&namingFormat=2.3)
+- [CVE-2024-28115 GitHub Security Advisory - FreeRTOS/FreeRTOS-Kernel](https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r)
+- [purl-spec: types-doc/github-definition.md](https://github.com/package-url/purl-spec/blob/main/types-doc/github-definition.md)
