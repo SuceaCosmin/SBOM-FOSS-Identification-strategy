@@ -111,16 +111,28 @@ There isn't a single canonical identifier for "FreeRTOS" — two real-world vuln
 databases disagree on granularity, which affects what name/identifier a detector should
 emit for matching to actually work downstream:
 
-- **Legacy NVD/CPE dictionary** collapses everything into one coarse identifier:
-  `cpe:2.3:o:amazon:freertos:<version>:*:*:*:*:*:*:*` — vendor `amazon`, product
-  `freertos`. Note the CPE **type is `o` ("operating system"), not `a` ("application")**
-  — an easy mismatch if detection logic assumes library-type CPEs. This single CPE does
-  not distinguish kernel from FreeRTOS+TCP from coreMQTT.
+- **Legacy NVD/CPE dictionary** is not one identifier — querying it directly
+  (`services.nvd.nist.gov/rest/json/cpes/2.0?keywordSearch=freertos`) shows **three
+  distinct vendor:product pairs**:
+  1. `cpe:2.3:o:amazon:freertos:<version>:*:*:*:*:*:*:*` — despite the generic product
+     name `freertos`, the version strings in the dictionary (`10.4.3`, `1.2.2`, ...) are
+     actual **kernel release numbers**. This is, in practice, the kernel's CPE. Note the
+     CPE **type is `o` ("operating system"), not `a` ("application")** — an easy
+     mismatch if detection logic assumes library-type CPEs.
+  2. `cpe:2.3:a:amazon:amazon_web_services_freertos:<version>:*:*:*:*:*:*:*` — a
+     **separate** CPE for the old downloadable "Amazon FreeRTOS" IoT bundle, versioned
+     with a mix of early semver (`1.0.0`–`1.4.6`) and later LTS date-based versions
+     (`202011.01`). Not the kernel, not the same product as #1.
+  3. `cpe:2.3:o:amazon:freertos+fat:...` — FreeRTOS+FAT has its **own dedicated CPE**.
+     Not universal, though: no dedicated CPE was found for coreMQTT, corePKCS11, etc. —
+     those almost certainly rely on GitHub Advisories/OSV + PURL only, with no NVD/CPE
+     fallback.
 - **GitHub Security Advisories / OSV**, where current CVEs actually get published (e.g.
   [CVE-2024-28115](https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r)),
   are keyed to the **specific repo** — `FreeRTOS/FreeRTOS-Kernel` for kernel issues,
   `FreeRTOS/coreMQTT` for a coreMQTT issue, etc. This matches the component-per-repo
-  granularity from section 2.
+  granularity from section 2, and unlike NVD/CPE, covers every library, not just the
+  ones NVD happened to carve out a CPE for.
 
 If a detector only emits a vague `"FreeRTOS"` name, it resolves cleanly against
 *neither* system — a coreMQTT CVE won't attribute correctly if everything is lumped
@@ -134,11 +146,15 @@ under "FreeRTOS", and a kernel-only CVE won't either.
 - **version**: the component's own release tag (e.g. `V11.1.0`), not an LTS bundle date.
   If the code was pulled from an LTS bundle, record that bundle version as an extra
   property/note, not as the component's primary version.
-- **identifiers**: attach *both* forms, since different downstream scanners query
-  different databases — CycloneDX and SPDX both support carrying `purl` and `cpe` on the
-  same component:
-  - PURL: `pkg:github/freertos/freertos-kernel@V11.1.0` (matches OSV/GHSA tooling)
-  - CPE: `cpe:2.3:o:amazon:freertos:11.1.0:*:*:*:*:*:*:*` (matches legacy NVD tooling)
+- **identifiers**: attach *both* forms where available, since different downstream
+  scanners query different databases — CycloneDX and SPDX both support carrying `purl`
+  and `cpe` on the same component:
+  - PURL: `pkg:github/freertos/freertos-kernel@V11.1.0` (matches OSV/GHSA tooling,
+    always derivable from the upstream repo)
+  - CPE: `cpe:2.3:o:amazon:freertos:11.1.0:*:*:*:*:*:*:*` (matches legacy NVD tooling;
+    use the kernel's own version number even though the CPE product name stays generic
+    `freertos`). For libraries other than the kernel and FreeRTOS+FAT, don't assume a
+    CPE exists — look it up per-library and fall back to PURL-only if none is found.
 - **supplier/publisher**: `Amazon Web Services` (post-2017), kept as separate metadata
   from `name` rather than folded into it.
 
@@ -164,10 +180,13 @@ under "FreeRTOS", and a kernel-only CVE won't either.
   components" detection logic against a real example.
 - Espressif ESP-IDF FreeRTOS is a strong candidate for the first fuzzy-hashing
   experiment (real, well-documented kernel-level fork vs. upstream).
-- Check whether NVD's CPE dictionary has additional legacy vendor/product entries for
-  FreeRTOS beyond `amazon:freertos` (e.g. an older `real_time_engineers:freertos`
-  entry) — would affect how far back CPE-based matching needs to account for naming
-  drift.
+- Resolved: queried NVD's CPE dictionary directly — no legacy `real_time_engineers:*`
+  entries exist; only `amazon:freertos` (kernel), `amazon:amazon_web_services_freertos`
+  (AWS IoT bundle), and `amazon:freertos+fat` are present. See section 5.
+- Study [esp-idf-sbom](https://pypi.org/project/esp-idf-sbom/) as prior art: a real,
+  shipping tool that generates SPDX SBOMs for ESP-IDF projects, auto-derives PURLs from
+  component repo URLs, and reads CPEs from per-component manifest files. Relevant
+  precedent for both the corpus and the reference-corpus build-vs-reuse question.
 
 Sources:
 - [FreeRTOS - Wikipedia](https://en.wikipedia.org/wiki/FreeRTOS)
@@ -187,3 +206,5 @@ Sources:
 - [NVD CPE search results for cpe:2.3:o:amazon:freertos](https://nvd.nist.gov/products/cpe/search/results?keyword=cpe%3A2.3%3Ao%3Aamazon%3Afreertos%3A*%3A*%3A*%3A*%3A*%3A*%3A*%3A*&status=FINAL%2CDEPRECATED&orderBy=CPEURI&namingFormat=2.3)
 - [CVE-2024-28115 GitHub Security Advisory - FreeRTOS/FreeRTOS-Kernel](https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r)
 - [purl-spec: types-doc/github-definition.md](https://github.com/package-url/purl-spec/blob/main/types-doc/github-definition.md)
+- [NVD CPE API - keywordSearch=freertos](https://services.nvd.nist.gov/rest/json/cpes/2.0?keywordSearch=freertos)
+- [esp-idf-sbom on PyPI](https://pypi.org/project/esp-idf-sbom/)
