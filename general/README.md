@@ -17,6 +17,24 @@ repos does this actually correspond to?" rather than emitting one entry per bran
 
 First observed in: [components/freertos](../components/freertos/README.md#2-kernel-vs-libraries-vs-umbrella-repo--component-granularity).
 
+**A brand can be fragmented at *multiple nested levels* simultaneously, not just
+"brand vs. repo."** CMSIS turned out to have three separate, simultaneously-meaningful
+version numbers for what looks like "one" vendored thing: (1) each sub-component's own
+repo/version line (CMSIS-Core, CMSIS-DSP, CMSIS-NN, CMSIS-RTOS2/RTX, CMSIS-Driver, etc.
+are independently versioned repos, confirmed via GitHub tags — e.g. CMSIS-DSP's `v1.x`
+line and CMSIS-NN's `v7.x` line are numerically unrelated to CMSIS_6's `v6.x` line), (2)
+an umbrella **pack version** that bundles a snapshot of several sub-component versions
+together (Arm's `ARM.CMSIS.pdsc` release notes translate one pack version, e.g. `5.9.0`,
+into the real per-component versions it contains — Core 5.6.0, DSP 1.10.0, NN 3.1.0,
+etc. — a distro-release model layered on top of the independently-versioned repos), and
+(3) an in-source version macro that tracks only one specific sub-component
+(`cmsis_version.h`'s macros track CMSIS-Core specifically, and are numerically unrelated
+to both the pack version and that release's own Core sub-version string). A detector
+needs to know *which* of these three number spaces a given string/macro/tag belongs to
+before treating it as an answer to "what version is this."
+
+First observed in: [components/cmsis](../components/cmsis/README.md#2-component-granularity-cmsis-is-fragmented-at-three-nested-levels-not-one).
+
 ## SBOM identifiers: PURL and CPE disagree on granularity
 
 Two real-world vulnerability-database ecosystems exist, and they don't always agree on
@@ -123,6 +141,22 @@ on top of that. Detection logic should not assume "found a known signature" impl
 distributor bolted on around it, and emit them as distinct SBOM entries.
 
 First observed in: [components/freertos](../components/freertos/README.md#3-what-layers-typically-stack-on-top-of-the-kernel).
+
+**A vendor layer can sit inside a directory path and file-header comment that literally
+names the upstream component, while containing zero code owned by that component.**
+Confirmed directly by diffing real files: every MCU vendor's CMSIS "Device" tree (e.g.
+STMicroelectronics's `cmsis-device-f4`, vendored at
+`Drivers/CMSIS/Device/ST/STM32F4xx/...` in `STM32CubeF4`) contains vendor-authored,
+vendor-copyrighted register-definition headers and startup files that *instantiate* an
+upstream-defined template contract (Arm's CMSIS-Core ships only a generic
+`Template/Device_M` skeleton) but contain no Arm-owned code at all — yet the files live
+under a path and carry header comments that say "CMSIS" throughout. A detector keying off
+directory-name or in-comment keyword matching alone would misattribute this content to
+the upstream component's PURL/CPE/supplier instead of the vendor's own. The genuinely
+upstream-authored files (e.g. `core_cm4.h`) sit in a *sibling* directory in the same
+checkout and must be told apart from the vendor's own instantiation next to them.
+
+First observed in: [components/cmsis](../components/cmsis/README.md#the-device-specific-layer-is-not-cmsis-at-all-despite-living-in-a-folder-named-cmsis).
 
 ## Multi-file components need cross-file corroboration, not per-file matching
 

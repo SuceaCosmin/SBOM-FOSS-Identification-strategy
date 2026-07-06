@@ -30,9 +30,24 @@ findings suggest revisiting a decision.
   source, then a version-fingerprint experiment) plus ready-to-copy fingerprinting/
   reference-DB/matcher script templates, so the next component doesn't re-derive the
   process from scratch.
-- **Next up**: pick a new component to start distro-landscape research on (using the
-  `research-component` skill), or extend the mbedTLS experiment to cover the
-  4.0/TF-PSA-Crypto split.
+- **Researched (Phase 1 only)**: [CMSIS](components/cmsis/README.md) — distro-landscape
+  pass complete; version-fingerprint experiment not yet built. Confirmed the most
+  fragmented component researched so far: sub-components (Core, DSP, NN, RTOS2/RTX,
+  Driver, DAP, View, Zone, Stream, Compiler) are independently versioned/repo'd, with a
+  further umbrella "pack version" layer bundling snapshots of them and an in-source
+  `cmsis_version.h` macro tracking Core specifically — three distinct, simultaneously
+  meaningful version numbers. Also found that vendor "CMSIS/Device/<vendor>" trees (e.g.
+  STMicroelectronics's `cmsis-device-f4`) are 100% vendor-authored/copyrighted despite
+  living in a path and file headers that say "CMSIS" — confirmed by diffing real
+  STM32CubeF4 files against upstream Arm CMSIS_5 (Core files byte-identical; device
+  headers wholly ST's own). NVD has a CPE only for `cmsis-rtos` (type `o`, matching the
+  general RTOS-classification gotcha); no CPE for Core/DSP/NN/Driver/the overall pack.
+- **Next up**: CMSIS Phase 2 (version-fingerprint experiment) — track `cmsis_version.h`
+  plus 2-3 `core_cm*.h` variants from CMSIS-Core, build the reference DB from the
+  `CMSIS_5`/`CMSIS_6` tag history (mind the archived-repo split), and get a second real
+  vendor diff (NXP) beyond the one ST data point gathered in Phase 1. Extending the
+  mbedTLS experiment to cover the 4.0/TF-PSA-Crypto split remains a separately deferred
+  option too.
 
 ## Problem scope
 
