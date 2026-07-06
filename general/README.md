@@ -59,6 +59,59 @@ First observed in: [components/freertos](../components/freertos/README.md#5-nami
 
 First observed in: [components/freertos](../components/freertos/README.md#6-detection-implications).
 
+- **Sanctioned extension points have a recognizable patch *shape*, even when they don't
+  show up as a whole-file swap.** Some upstream projects define an official override
+  convention (a macro-gated "replace this behavior" mechanism) so vendors can add
+  hardware-accelerated or platform-specific code paths without freeform patching. In
+  principle this can show up as a whole upstream file being *absent*, replaced by a
+  vendor-authored companion file. In practice, checking real vendor repos (not just
+  vendor documentation) found the far more common shape is **in-place, localized edits
+  to the upstream file itself**: the vendor wraps the existing implementation in
+  `#if !defined(MODULE_ALT) ... #endif` and adds their own code in the `#else`/adjacent
+  branch, often with an explicit attribution comment (e.g. `/* NXP added ... */`) marking
+  exactly what they touched. This is still a structurally distinct, recognizable pattern
+  from arbitrary hand-patching — small, localized, macro-gated diffs clustered around
+  specific functions, frequently with an inline vendor-name comment — and worth reporting
+  as its own category ("vendor extension via sanctioned override point") rather than
+  generic "modified/forked," but a detector should look for *this shape*, not for file
+  absence, since three independent vendors checked all used the in-place form.
+
+First observed in: [components/mbedtls](../components/mbedtls/README.md#6-detection-implications)
+(confirmed via real diffs against Espressif's ESP-IDF fork, ST's `stm32-mw-mbedtls`, and
+NXP's `mbedtls` fork — all three patch in place with inline `_ALT` guards rather than
+omitting a file).
+
+- **A vendor's re-licensing of a dual-licensed component can be invisible to
+  comment-stripped content matching — check the license text unnormalized.** When a
+  component is dual-licensed (e.g. Apache-2.0 OR GPL), a vendor is free to redistribute
+  it under just one of the options, and doing so only requires editing the SPDX header
+  line inside each file's license comment block (plus the top-level `LICENSE` file) — no
+  functional code changes at all. A detector that strips comments before hashing (see
+  "in-source version strings" above) will report such files as an **exact match** to the
+  original dual-licensed release, which is correct for version/provenance identification
+  but silently misses a real difference that matters for license compliance. If license
+  accuracy is a goal (not just "which version is this"), the license header/file needs a
+  separate, unnormalized check — don't assume a vendored copy's license matches its
+  content-matched upstream release.
+
+First observed in: [components/mbedtls](../components/mbedtls/README.md#5-licensing-can-diverge-from-upstream-in-a-vendored-copy-without-any-content-change)
+(ST's `stm32-mw-mbedtls` drops the GPL option project-wide by rewriting the
+`SPDX-License-Identifier` line in every file header, while the surrounding code — and
+thus the comment-stripped fingerprint — is byte-identical to upstream).
+
+- **A vendor-authored changelog naming the exact upstream version and listing applied
+  patches, when present, is a stronger signal than any fingerprinting** — check for one
+  before falling back to content-based matching. Some vendors ship a plain-text
+  provenance file alongside a vendored copy (e.g. `st_readme.txt`) that states "moved to
+  upstream vX.Y.Z" plus a bullet list of exactly what was changed and why. This is
+  effectively free, human-authored ground truth when it exists; fingerprint/similarity
+  matching remains necessary for the (common) case where no such file is present or it's
+  gone stale, but a detector should check for this class of file first.
+
+First observed in: [components/mbedtls](../components/mbedtls/README.md#3-what-layers-typically-stack-on-top)
+(`stm32-mw-mbedtls/st_readme.txt`, which enumerates every upstream version bump and
+ST-specific patch since 2019).
+
 ## Attribution: vendored integrations are often multiple stacked components
 
 A single embedded project that appears to contain "one" recognizable open-source

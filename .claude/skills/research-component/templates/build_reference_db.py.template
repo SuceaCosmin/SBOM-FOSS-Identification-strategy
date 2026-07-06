@@ -1,0 +1,154 @@
+"""Build a local reference fingerprint database for {{REPO}} releases.
+
+TEMPLATE - fill in before running:
+  - REPO: "org/repo" (GitHub).
+  - FILES: repo-relative paths of the tracked files, chosen from real phase-1 evidence
+    (see the component's README.md "what layers stack on top" / "detection
+    implications" sections) - not an arbitrary/comprehensive file list.
+  - TAG_RE / in_scope(): the tag-name pattern and version-era range actually relevant
+    (exclude a pre-rebrand era, a too-new post-split era not yet handled, etc. - explain
+    the exclusion in a comment, same as the reasoning documented in the component's
+    README).
+  - Rename this file to build_reference_db.py.
+
+Do a quick sanity check before running for real:
+    git ls-remote --tags https://github.com/{{REPO}}.git | wc -l
+so you know roughly how many fetches this is about to make.
+
+Usage: python build_reference_db.py
+Output: reference/{{COMPONENT}}_fingerprints.json
+"""
+
+import json
+import re
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+from {{COMPONENT}}_fingerprint import fingerprint_source
+
+REPO = "{{REPO}}"
+FILES = [
+    # "path/relative/to/repo/root.c",
+]
+OUT_PATH = Path(__file__).parent / "reference" / "{{COMPONENT}}_fingerprints.json"
+
+# TEMPLATE: adjust to this component's real tagging convention. This default accepts
+# "v1.2.3" and "1.2.3" and "name-1.2.3" style tags; narrow it and the in_scope() version
+# check below to the actual release range worth tracking.
+TAG_RE = re.compile(r"^(?:[a-zA-Z]+-)?v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$")
+
+
+def list_tags_with_commits() -> dict:
+    """Tag name -> commit SHA, using the peeled (^{}) SHA for annotated tags so two
+    tag names pointing at the same commit are recognized as duplicates before any
+    file is fetched. Repos commonly double-tag releases (an old naming scheme plus a
+    newer one, both pointing at the same commit) - skipping this step wastes a full
+    extra fetch pass for no benefit."""
+    result = subprocess.run(
+        ["git", "ls-remote", "--tags", f"https://github.com/{REPO}.git"],
+        capture_output=True, text=True, check=True,
+    )
+    sha_by_tag: dict = {}
+    peeled: set = set()
+    for line in result.stdout.splitlines():
+        sha, ref = line.split("\t")
+        name = ref.split("refs/tags/", 1)[1]
+        if name.endswith("^{}"):
+            base = name[:-3]
+            sha_by_tag[base] = sha
+            peeled.add(base)
+        elif name not in peeled:
+            sha_by_tag[name] = sha
+    return sha_by_tag
+
+
+def in_scope(tag: str) -> bool:
+    m = TAG_RE.match(tag)
+    if not m:
+        return False
+    # TEMPLATE: adjust the version-range condition to this component's real scope.
+    return True
+
+
+def group_by_commit(sha_by_tag: dict) -> dict:
+    groups: dict = {}
+    for tag, sha in sha_by_tag.items():
+        if in_scope(tag):
+            groups.setdefault(sha, []).append(tag)
+    return groups
+
+
+REQUEST_DELAY_SECONDS = 0.3  # raw.githubusercontent.com rate-limits unauthenticated
+                              # bursts (HTTP 429) well under most components' fetch
+                              # volume without pacing. Don't remove this.
+
+
+def fetch_file(commit: str, filename: str) -> str | None:
+    url = f"https://raw.githubusercontent.com/{REPO}/{commit}/{filename}"
+    for attempt in range(6):
+        try:
+            time.sleep(REQUEST_DELAY_SECONDS)
+            with urllib.request.urlopen(url, timeout=15) as resp:
+                return resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            if e.code == 429 and attempt < 5:
+                backoff = 5 * (attempt + 1)
+                print(f"  429 rate-limited, backing off {backoff}s...", file=sys.stderr)
+                time.sleep(backoff)
+                continue
+            raise
+    raise RuntimeError(f"Exceeded retries fetching {url}")
+
+
+def main() -> None:
+    sha_by_tag = list_tags_with_commits()
+    groups = group_by_commit(sha_by_tag)
+    print(f"Found {len(sha_by_tag)} tags total on {REPO}, "
+          f"{sum(len(v) for v in groups.values())} in-scope, "
+          f"{len(groups)} unique commits after dedup", file=sys.stderr)
+
+    # content[filename][sha256] = {"winnow": [...], "tags": [...]} - dedup by content
+    # in addition to the by-commit dedup above, since a patch/rc release can still
+    # leave a given file byte-identical to a prior release even on a different commit.
+    content: dict = {f: {} for f in FILES}
+    tag_index: dict = {}
+
+    for i, (commit, tags) in enumerate(sorted(groups.items(), key=lambda kv: sorted(kv[1])[0]), 1):
+        entry = {}
+        for filename in FILES:
+            text = fetch_file(commit, filename)
+            if text is None:
+                continue
+            fp = fingerprint_source(text)
+            sha = fp["sha256"]
+            bucket = content[filename]
+            if sha in bucket:
+                for t in tags:
+                    if t not in bucket[sha]["tags"]:
+                        bucket[sha]["tags"].append(t)
+            else:
+                bucket[sha] = {"winnow": fp["winnow"], "tags": list(tags)}
+            entry[filename] = sha
+        if entry:
+            for t in tags:
+                tag_index[t] = entry
+        rep_tag = sorted(tags)[0]
+        print(f"[{i}/{len(groups)}] {rep_tag} ({len(tags)} alias(es)): "
+              f"{sorted(entry.keys())}", file=sys.stderr)
+
+    db = {"repo": REPO, "files": FILES, "content": content, "tags": tag_index}
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUT_PATH.write_text(json.dumps(db, separators=(",", ":")), encoding="utf-8")
+    unique_count = sum(len(bucket) for bucket in content.values())
+    print(f"Wrote {OUT_PATH} ({len(tag_index)} tags, {unique_count} unique file-contents)",
+          file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

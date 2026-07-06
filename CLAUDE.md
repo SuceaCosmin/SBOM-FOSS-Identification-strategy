@@ -18,9 +18,21 @@ findings suggest revisiting a decision.
   SBOM naming/identifier strategy, and a working version-fingerprinting experiment
   (exact-hash + winnowing similarity, with cross-file consistency checking to catch
   mixed-version integrations).
-- **Next up**: **mbedTLS** — not started yet. Begin the same way FreeRTOS did: distro
-  landscape research first (who forks/vendors it, e.g. any silicon-vendor integration
-  layers), before jumping to a detection experiment.
+- **Researched**: [mbedTLS](components/mbedtls/README.md) — governance/licensing
+  history, the 4.0/TF-PSA-Crypto repo split and its component-granularity implications,
+  vendor integration layers (confirmed by diffing real Espressif/ST/NXP forks against
+  upstream, correcting an initial docs-only hypothesis), a licensing-divergence finding
+  (ST re-licenses to Apache-2.0-only via a header-line edit invisible to comment-stripped
+  matching), and a working version-fingerprinting experiment validated against three real
+  vendor forks plus mixed-version and negative-control cases.
+- Added a reusable **`research-component` skill** (`.claude/skills/research-component/`)
+  codifying this two-phase workflow (distro-landscape research verified against real
+  source, then a version-fingerprint experiment) plus ready-to-copy fingerprinting/
+  reference-DB/matcher script templates, so the next component doesn't re-derive the
+  process from scratch.
+- **Next up**: pick a new component to start distro-landscape research on (using the
+  `research-component` skill), or extend the mbedTLS experiment to cover the
+  4.0/TF-PSA-Crypto split.
 
 ## Problem scope
 
