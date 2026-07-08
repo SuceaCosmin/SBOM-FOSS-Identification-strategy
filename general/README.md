@@ -158,6 +158,39 @@ checkout and must be told apart from the vendor's own instantiation next to them
 
 First observed in: [components/cmsis](../components/cmsis/README.md#the-device-specific-layer-is-not-cmsis-at-all-despite-living-in-a-folder-named-cmsis).
 
+## Architecture-tied standards are gated by CPU core choice, not by vendor
+
+Some "components" (CMSIS is the clearest example so far) aren't independent software a
+vendor chooses to adopt — they're the standardized interface layer that comes attached to
+licensing a specific CPU architecture. CMSIS-Core specifically is gated to the **Arm
+Cortex-M profile** (confirmed against Arm's own CMSIS_6 docs: M0/M0+/M1/M3/M4/M7/M23/M33/
+M35P/M52/M55/M85, SecurCore SC000/SC300, Arm China's STAR-MC1/MC3 — no Cortex-A or
+Cortex-R). A silicon vendor licenses Arm cores for *some* product lines and not others, so
+the same company can sit on both sides of "does this ship CMSIS" depending on which of
+their chips a given source tree targets — this is a per-product-line fact, not a
+per-vendor one.
+
+Confirmed directly (this session) across three vendors, each showing the identical split:
+
+- **NXP**: `legacy-mcux-sdk`'s `arch/` folder lists `arm`, `riscv`, `dsp56800`, and
+  `xtensa` siblings — CMSIS-Core only under the `arm` tree.
+- **Infineon**: the XMC family (Cortex-M0/M4) ships an explicit CMSIS folder; the AURIX
+  family (TriCore, Infineon's own proprietary architecture, unrelated to Arm) has zero
+  CMSIS across seven public repos checked.
+- **Renesas**: the RA family (Cortex-M23/M33/M4, M85 on newer parts) ships CMSIS-Core
+  device files in the same Device-pack shape as ST's `cmsis-device-f4`; the RX family
+  (Renesas' own proprietary architecture, descended from pre-merger Hitachi/Mitsubishi
+  lines) has no real CMSIS presence.
+
+**Practical rule**: before applying a CMSIS (or any other architecture-tied standard)
+heuristic, determine whether the specific product line's core is actually the tied
+architecture — from a part-number/datasheet lookup, not from the vendor's name or brand.
+"Vendor X uses CMSIS" is not a safe inference merely because a different product line from
+the same vendor does; and vendors with **no** known Arm-based lines can be deprioritized
+for this heuristic entirely.
+
+First observed in: [components/cmsis](../components/cmsis/README.md#7-detection-implications).
+
 ## Multi-file components need cross-file corroboration, not per-file matching
 
 For a component made of several core files, presence and version identity can't be

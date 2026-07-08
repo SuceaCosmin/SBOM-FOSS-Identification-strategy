@@ -14,9 +14,18 @@ covers what's specific to CMSIS itself.
 
 ## 1. Governance and licensing history
 
-- **CMSIS** (Cortex Microcontroller Software Interface Standard) originated as an Arm
-  specification/reference-implementation project, distributed for years only via the
-  Keil pack system (`www.keil.com/pack`), not Git.
+- **CMSIS** (**Common** Microcontroller Software Interface Standard, per the current
+  [arm.com](https://www.arm.com/technologies/cmsis) and
+  [CMSIS_6 docs](https://arm-software.github.io/CMSIS_6/latest/General/index.html))
+  originated as an Arm specification/reference-implementation project, distributed for
+  years only via the Keil pack system (`www.keil.com/pack`), not Git. **The acronym
+  expansion itself changed over time**: the archived `ARM-software/CMSIS_4` README
+  (confirmed by fetching it directly) spells it out as "**Cortex** Microcontroller
+  Software Interface Standard" — Arm re-expanded "Cortex" to "Common" sometime between
+  the v4 era and today, on a stable acronym/identifier. Not two different components
+  sharing an acronym, just one project's own branding drifting under a fixed name — worth
+  noting since a detector or doc that hardcodes one expansion could flag a mismatch
+  against a source using the other.
 - **CMSIS Version 4** and earlier: per the `ARM-software/CMSIS_4` repo's own README, "the
   CMSIS components (CORE, RTOS, DSP, Driver) ... are today licensed under BSD or zlib
   license," governed by a separate End User License Agreement PDF. `CMSIS_4` is a
@@ -161,17 +170,56 @@ contract, not a patched copy of an Arm file. Confirmed directly this session:
 - **NXP** (`nxp-mcuxpresso/legacy-mcux-sdk`, the still-active older-style monolithic SDK
   repo, `SW-Content-Register.txt` present at repo root): device folders (e.g.
   `devices/K32L2A31A/`) contain the same vendor-authored device-header/system-file
-  pattern as ST. NXP's newer SDK line (`nxp-mcuxpresso/mcuxsdk-core`, a from-scratch
-  multi-repo rewrite using Zephyr's `west` tool and a manifest/submanifest system) does
-  **not** vendor CMSIS-Core directly into that repo at all — its `arch/arm/` tree is
-  build-system glue only (`Kconfig`, `.cmake` files), meaning CMSIS-Core is pulled in as
-  an external `west`-managed dependency in the newer scheme. Also notable: NXP's own
+  pattern as ST — but this is about the *device-specific* files (`K32L2A31A.h`,
+  `system_K32L2A31A.c`), not CMSIS-Core's own generic files. **Correction from the
+  Phase 2 pass** (confirmed by reading `west.yml` directly): `legacy-mcux-sdk` does
+  **not** vendor CMSIS-Core's `core_cm*.h`/`cmsis_version.h` as static copy-paste
+  anywhere in the repo either — a repo-wide recursive search turns up zero matches. It's
+  pulled via the identical **west-managed external dependency** shape as the newer line
+  (`name: CMSIS_5, path: core/CMSIS, revision: MCUX_2.16.000`, resolving by default to
+  `nxp-mcuxpresso/CMSIS_5`, NXP's own fork of `ARM-software/CMSIS_5`). Diffed that fork's
+  four Phase-2-tracked files against the matching upstream tag (`5.9.0` — see
+  [experiments/version-fingerprint](experiments/version-fingerprint/README.md)): **all
+  four byte-identical**, a second confirmed verbatim-vendoring data point alongside ST's.
+  NXP's newer SDK line (`nxp-mcuxpresso/mcuxsdk-core`, a from-scratch multi-repo rewrite
+  using Zephyr's `west` tool and a manifest/submanifest system) does **not** vendor
+  CMSIS-Core directly into that repo at all either — its `arch/arm/` tree is build-system
+  glue only (`Kconfig`, `.cmake` files). Also notable: NXP's own
   top-level `arch/` lists `arm`, `riscv`, `dsp56800`, and `xtensa` siblings — a concrete
-  confirmation that **CMSIS only applies to the Arm Cortex-M/A subset of a given vendor's
-  silicon lineup**, not to that vendor's non-Arm cores (relevant since this repo's
-  in-scope vendor SDKs, e.g. ESP-IDF for Xtensa/RISC-V ESP32 variants, may not involve
-  CMSIS at all for those specific chips — CMSIS detection logic should gate on "is this
-  an Arm Cortex-M/A target" before expecting to find it).
+  confirmation that **CMSIS only applies to the Arm Cortex-M subset of a given vendor's
+  silicon lineup** (CMSIS-Core is Cortex-M-profile only — confirmed directly against the
+  CMSIS_6 docs, which list M0/M0+/M1/M3/M4/M7/M23/M33/M35P/M52/M55/M85, SecurCore
+  SC000/SC300, and Arm China's STAR-MC1/MC3, with no Cortex-A or Cortex-R variants), not
+  to that vendor's non-Arm cores (relevant since this repo's in-scope vendor SDKs, e.g.
+  ESP-IDF for Xtensa/RISC-V ESP32 variants, may not involve CMSIS at all for those
+  specific chips — CMSIS detection logic should gate on "is this an Arm Cortex-M target"
+  before expecting to find it).
+- **The same architecture-gated split was confirmed independently for two more vendors
+  this session, beyond NXP** — the pattern is "gated by which CPU core a given product
+  *line* licenses," not by which company makes the chip:
+  - **Infineon**: the **XMC family** (`Infineon/mtb-xmclib-cat3`) licenses Cortex-M0
+    (XMC1000) / Cortex-M4 (XMC4000) cores and ships an explicit `CMSIS` folder
+    ("CMSIS compliant device header files," confirmed directly). The **AURIX family**
+    runs **TriCore**, Infineon's own proprietary 32-bit architecture (launched 1999 as
+    "AUDO," fusing a RISC core + microcontroller + DSP in one design — nothing to do with
+    Arm), used for automotive ECUs. Checked seven public AURIX repos
+    (`illd_release_tc3x`/`tc2x`/`tc4x`, `AURIX_code_examples`, etc.) — zero CMSIS
+    references in any of them.
+  - **Renesas**: the **RA family** (`renesas/fsp`) licenses Cortex-M23/M33/M4 (RA8 parts
+    use Cortex-M85) and ships CMSIS-Core device files at
+    `ra/fsp/src/bsp/cmsis/Device/RENESAS/Include/renesas.h` — the same Device-pack shape
+    as ST's `cmsis-device-f4`, confirmed directly. The **RX family**
+    (`renesas/rx-driver-package`) is Renesas' own proprietary 32-bit architecture
+    ("Renesas Xtreme," launched 2009 post Renesas/NEC merger, descended from the
+    pre-merger Hitachi/Mitsubishi 8/16-bit lines) — checked directly, essentially no real
+    CMSIS presence (one incidental unrelated string match in an unrelated FAT filesystem
+    driver file, not a real integration). Renesas' RL78 and legacy SuperH lines are the
+    same non-Arm story, not individually checked.
+  - **Practical rule**: a CMSIS detector should determine "does this specific product
+    line's core license Arm Cortex-M" (e.g. from a part-number/datasheet lookup) before
+    applying any CMSIS heuristic — not infer it from the vendor name, since the same
+    company can straddle both sides of this line depending on which of their chips a
+    given source tree targets.
 - **ARM-software itself maintains some vendor-specific CMSIS-Driver implementations**:
   `ARM-software/NXP_LPC`, `ARM-software/NXP_iMX`, `ARM-software/NXP_Kinetis` are
   Arm-hosted repos of CMSIS-Driver implementations *for* NXP parts — an unusual
@@ -264,7 +312,7 @@ is the part a detector needs to get right for accurate `supplier` metadata.
 ## 7. Detection implications
 
 - **Structural fingerprint first**: `CMSIS/Include/core_*.h` + `CMSIS/Include/cmsis_*.h`
-  file set is a cheap, high-confidence signal for "an Arm Cortex-M/A CMSIS-Core checkout
+  file set is a cheap, high-confidence signal for "an Arm Cortex-M CMSIS-Core checkout
   is present," separately from whatever's in the sibling `CMSIS/Device/<vendor>/` tree.
 - **Version-macro anchor**: `cmsis_version.h`'s `__CM_CMSIS_VERSION_MAIN`/`_SUB` macros
   are the CMSIS-Core-specific analog of FreeRTOS's `tskKERNEL_VERSION_NUMBER` and Mbed
@@ -285,8 +333,11 @@ is the part a detector needs to get right for accurate `supplier` metadata.
   SDK (a genuine version-skew finding, exactly the scenario the FreeRTOS/mbedTLS
   cross-file-consistency check was built for), not a functional patch to Core's own files.
 - **Gate CMSIS detection on architecture**: don't expect to find CMSIS in a non-Arm target
-  tree from a vendor that also ships non-Arm silicon (confirmed via NXP's own
-  `arch/{arm,riscv,dsp56800,xtensa}` split, section 3).
+  tree from a vendor that also ships non-Arm silicon. Confirmed across three independent
+  vendors this session (section 3): NXP (`arch/{arm,riscv,dsp56800,xtensa}` split),
+  Infineon (XMC/Cortex-M ships CMSIS; AURIX/TriCore does not), and Renesas (RA/Cortex-M
+  ships CMSIS; RX's proprietary architecture does not). General form extracted to
+  [general/README.md](../../general/README.md#architecture-tied-standards-are-gated-by-cpu-core-choice-not-by-vendor).
 - **A `.pdsc` file, if present in a corpus sample, is a strong direct-disclosure signal**
   (like Mbed TLS's `st_readme.txt`) — it names exact per-sub-component versions in
   human/machine-readable XML, better ground truth than any fingerprint. Not always
@@ -296,23 +347,30 @@ is the part a detector needs to get right for accurate `supplier` metadata.
 
 ## Open questions / next steps
 
-- **Detection experiment not yet built** — this pass covered distro-landscape only
-  (Phase 1). Phase 2 (version-fingerprint experiment) is still to be done: pick CMSIS-Core
-  as the target sub-component (most universally present across the in-scope vendor
-  environments — STM32 HAL, NXP MCUXpresso, general Cortex-M bare-metal — versus DSP/NN
-  which are optional/opt-in libraries), track `cmsis_version.h` plus 2-3 of the more
-  stable `core_cm*.h` variants, and build a reference DB from `ARM-software/CMSIS_5` +
-  `CMSIS_6` tag history (mind the repo split across two archived+active repos when
-  building the tag-fetch list).
-- **Only one real vendor fork was diffed this session (STMicroelectronics)** — NXP's
-  older `legacy-mcux-sdk` and newer `mcuxsdk-core` were both surveyed structurally but a
-  byte-level diff of NXP's own CMSIS-Core copy against a matching upstream tag was not
-  performed. Worth doing before the phase-2 corpus is finalized, for a second confirmed
-  "verbatim vendoring" data point (or a correction, if NXP turns out to patch something
-  Core-related — not assumed, just not yet checked).
-- **CMSIS-NN's date-based-to-semver tag transition** (section 2) needs a concrete tag
-  regex/filter decision when phase 2 is built — don't assume every tag in that repo's
-  history is directly comparable across the scheme change.
+- **Phase 2 (version-fingerprint experiment) is done** — see
+  [experiments/version-fingerprint](experiments/version-fingerprint/README.md). Tracks
+  `cmsis_version.h` (the version-macro anchor) plus `core_cm0.h`/`core_cm4.h`/`core_cm33.h`
+  (spanning Armv6-M/v7-M/v8-M), reference DB built from both `ARM-software/CMSIS_5`
+  (13 releases) and `ARM-software/CMSIS_6` (4 releases) tag history, validated against a
+  real ST fork, a real NXP fork, a synthetic mixed-version case, and a negative control —
+  all four verdicts came out as expected.
+- **A second real vendor fork was diffed (NXP)**, resolving the prior open item. Corrected
+  a Phase 1 gap in the process: `legacy-mcux-sdk` doesn't vendor CMSIS-Core's generic files
+  as static copy-paste at all — it pulls them via a **west-managed external dependency**
+  (`core/CMSIS` → `nxp-mcuxpresso/CMSIS_5` fork, tag `MCUX_2.16.000`), the same
+  external-dependency shape Phase 1 only previously confirmed for NXP's *newer*
+  `mcuxsdk-core` line. Diffed against the correct upstream tag (`5.9.0` — not the `5.6.0`
+  a naive read of the version macro would suggest, see the experiment README), all four
+  tracked files are **byte-identical** — a second confirmed verbatim-vendoring data point,
+  matching ST's. **Still open**: a genuinely *modified* real CMSIS-Core fork was never
+  found (both real forks checked vendor verbatim) — Renesas's `renesas/fsp`
+  (`ra/fsp/src/bsp/cmsis/Device/RENESAS/Include/`, confirmed present separately this
+  session) is a candidate third data point if a modified case is still needed.
+- **CMSIS-NN's date-based-to-semver tag transition** (section 2) — the concrete decision
+  (bucket by which tag-regex a release matches, `^\d{2}\.\d{2}$` vs.
+  `^v(\d+)\.(\d+)\.(\d+)$`, never compare across buckets numerically) is now documented in
+  [experiments/version-fingerprint/README.md](experiments/version-fingerprint/README.md#cmsis-nn-tag-scheme-decision-documented-not-implemented---cmsis-nn-is-out-of-this-experiments-scope) —
+  not implemented, since CMSIS-NN itself remains out of this experiment's scope.
 - **Re-check CMSIS-NN's CVE exposure periodically** — currently zero advisories, but the
   reasoning in section 4 (inference kernels are a more plausible future target than
   header/macro components) suggests this could change as the component matures and sees
@@ -330,8 +388,14 @@ is the part a detector needs to get right for accurate `supplier` metadata.
   question, not decided in this pass.
 
 Sources:
-- [CMSIS - arm.com](https://www.arm.com/technologies/cmsis)
+- [CMSIS - arm.com](https://www.arm.com/technologies/cmsis) — current acronym expansion
+  ("Common Microcontroller Software Interface Standard"), cross-checked against
+  [keil.arm.com/cmsis](https://www.keil.arm.com/cmsis) (same expansion; `developer.arm.com/.../cmsis`
+  redirects here) and [CMSIS_6 docs](https://arm-software.github.io/CMSIS_6/latest/General/index.html)
+  (same expansion).
 - [GitHub - ARM-software/CMSIS_4 (README, fetched directly this session)](https://github.com/ARM-software/CMSIS_4)
+  — older "Cortex Microcontroller Software Interface Standard" expansion, confirmed
+  directly in this repo's own README text.
 - [GitHub - ARM-software/CMSIS_5](https://github.com/ARM-software/CMSIS_5)
 - [GitHub - ARM-software/CMSIS_6](https://github.com/ARM-software/CMSIS_6)
 - [CMSIS_6/README.md (fetched directly this session)](https://github.com/ARM-software/CMSIS_6/blob/main/README.md)
@@ -359,3 +423,14 @@ Sources:
 - [STMicroelectronics/cmsis-device-f4 (formerly cmsis_device_f4, rename confirmed via redirect this session)](https://github.com/STMicroelectronics/cmsis-device-f4)
 - [nxp-mcuxpresso/legacy-mcux-sdk (structure inspected directly this session, incl. SW-Content-Register.txt)](https://github.com/nxp-mcuxpresso/legacy-mcux-sdk)
 - [nxp-mcuxpresso/mcuxsdk-core (structure and SBOM.spdx.json/SCR.txt fetched and parsed directly this session)](https://github.com/nxp-mcuxpresso/mcuxsdk-core)
+- [CMSIS_6 Core documentation — supported processor list (fetched directly this session)](https://arm-software.github.io/CMSIS_6/latest/Core/index.html)
+- [Infineon/mtb-xmclib-cat3 (structure inspected directly this session — confirmed CMSIS folder/device headers, Cortex-M0/M4)](https://github.com/Infineon/mtb-xmclib-cat3)
+- Infineon AURIX public repos checked directly this session for CMSIS references (zero hits in all): [illd_release_tc3x](https://github.com/Infineon/illd_release_tc3x), [illd_release_tc2x](https://github.com/Infineon/illd_release_tc2x), [illd_release_tc4x](https://github.com/Infineon/illd_release_tc4x), [AURIX_code_examples](https://github.com/Infineon/AURIX_code_examples).
+- [Wikipedia — Infineon TriCore architecture](https://en.wikipedia.org/wiki/Infineon_TriCore)
+- [renesas/fsp (GitHub code search + direct file fetch this session, confirmed `ra/fsp/src/bsp/cmsis/Device/RENESAS/Include/renesas.h` and `bsp_api.h`'s CMSIS-CORE include)](https://github.com/renesas/fsp)
+- [renesas/rx-driver-package (GitHub code search this session — no real CMSIS integration found)](https://github.com/renesas/rx-driver-package)
+- [Wikipedia — Renesas RX architecture](https://en.wikipedia.org/wiki/Renesas_RX)
+- [nxp-mcuxpresso/legacy-mcux-sdk west.yml (fetched directly this session — confirmed the `CMSIS_5`/`core/CMSIS` west-manifest entry pointing at `nxp-mcuxpresso/CMSIS_5@MCUX_2.16.000`)](https://github.com/nxp-mcuxpresso/legacy-mcux-sdk/blob/master/west.yml)
+- [nxp-mcuxpresso/CMSIS_5 (NXP's fork of ARM-software/CMSIS_5, fetched and diffed directly this session at tag `MCUX_2.16.000` — byte-identical to upstream `5.9.0` across all four Phase-2-tracked files)](https://github.com/nxp-mcuxpresso/CMSIS_5)
+- Phase 2 (version-fingerprint experiment): [experiments/version-fingerprint](experiments/version-fingerprint/README.md)
+  — full source list for the reference-DB build and corpus in that experiment's own README.
