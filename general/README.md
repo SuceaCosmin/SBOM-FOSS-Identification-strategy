@@ -5,6 +5,16 @@ specific ones. Per-component folders (`components/<name>/README.md`) should link
 here instead of restating these — if a principle turns out to be wrong or incomplete for
 a new component, update it here rather than forking it.
 
+Topic-specific general docs in this folder:
+
+- [existing-fingerprint-datasets.md](existing-fingerprint-datasets.md) — survey +
+  empirical test (against this repo's ground-truth corpus) of reusable precomputed
+  fingerprint/hash datasets (SCANOSS OSSKB, Software Heritage, ClearlyDefined,
+  PurlDB/MatchCode, CENTRIS). Bottom line: excellent recall, unusable-as-is
+  attribution. Stance: **reuse-first** — whether the attribution gap can be closed on
+  top of reused data (instead of curated per-component DBs) is the doc's open
+  investigation list for future sessions.
+
 ## Component granularity
 
 A "component" for SBOM purposes should map to an **independently-versioned upstream

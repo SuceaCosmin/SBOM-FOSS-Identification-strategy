@@ -54,9 +54,25 @@ findings suggest revisiting a decision.
   copy-paste, correcting a Phase 1 gap — both real forks turned out **byte-identical to
   upstream**, i.e. verbatim vendoring, not patched), a synthetic mixed-version case, and a
   negative control.
-- **Next up**: no component has an open next-phase item right now — picking a wholly new
-  component to research is the main option. See "Low-priority deferred follow-ups" below
-  for CMSIS/mbedTLS loose ends that are explicitly parked, not forgotten.
+- **Researched (cross-cutting)**: existing precomputed fingerprint datasets/knowledge
+  bases ([general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md)) —
+  surveyed SCANOSS OSSKB (free winnowing-fingerprint API + CC0 downloadable dataset +
+  GPL-2.0 self-hostable mining stack), Software Heritage, ClearlyDefined,
+  PurlDB/MatchCode, CENTRIS; then tested OSSKB empirically against this repo's
+  ground-truth corpus. Result: recall is excellent (all real vendor-fork files matched;
+  a synthetically modified file existing in no public repo still matched at 84% via
+  snippets), but raw attribution names *an arbitrary containing repo* with that repo's
+  versions/licenses (an Espressif-patched mbedTLS file attributed to Realtek's
+  `ameba-rtos`; the modified file attributed to the Rebol3 interpreter with a
+  completely wrong license list).
+- **Next up**: the dataset-reuse investigation is the open thread — see the "Open
+  investigation items" in
+  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md)
+  (attribution post-processing over OSSKB output, an OSV.dev vuln-scanning fitness
+  test on raw vs corrected purls, inspecting the downloadable CC0 dataset, a `minr`
+  self-hosting experiment, metadata-mapping layers). Picking a wholly new component to
+  research remains the alternative. See "Low-priority deferred follow-ups" below for
+  CMSIS/mbedTLS loose ends that are explicitly parked, not forgotten.
 
 ## Low-priority deferred follow-ups
 
@@ -114,12 +130,27 @@ future session doesn't have to re-derive that they're low priority from scratch.
    `#define`s, author comments, embedded identifiers.
 4. Binary/firmware artifact analysis is out of scope for now — source-level only.
 
-## Reference corpus question (open)
+## Reference corpus question — stance settled, fitness investigation open
 
-Whether to build a curated reference database of known C OSS components from scratch,
-or lean on existing external sources (ScanCode LicenseDB, ClearlyDefined, OSS Index,
-FOSSology, etc.), is an **open question this research should explore**, not a decision
-already made. Document tradeoffs as you find them.
+Researched empirically on 2026-07-08 — findings, tradeoffs, and open items in
+[general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md).
+
+**Settled stance (Cosmin)**: **reuse-first** — prefer existing datasets/knowledge bases
+(SCANOSS OSSKB and its CC0 open dataset, Software Heritage, ClearlyDefined, PurlDB)
+over building our own wherever possible; we can't match the effort the OSS community
+has already invested in mining. Building our own artifacts (e.g. the curated
+per-component reference DBs from this repo's experiments) is the gap-filler for what
+existing datasets demonstrably can't do, not the default.
+
+**The bar**: the end goal is efficiently identifying components *and mapping their
+associated information* (canonical identity/PURL, version, license) well enough to
+generate SBOMs that can drive **vulnerability scanning**. The empirical test showed
+existing datasets fully cover recall/identification, but their raw attribution output
+(arbitrary containing repo + that repo's versions/licenses) would feed wrong purls to a
+vuln scanner. Whether that gap can be closed *on top of* reused data (post-processing,
+the offline CC0 dataset, alias tables) — rather than by falling back to curated DBs —
+is **not yet investigated**; that's the open-items list in the doc above, deliberately
+left for future sessions.
 
 ## SBOM output format
 
