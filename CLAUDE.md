@@ -65,6 +65,9 @@ findings suggest revisiting a decision.
   versions/licenses (an Espressif-patched mbedTLS file attributed to Realtek's
   `ameba-rtos`; the modified file attributed to the Rebol3 interpreter with a
   completely wrong license list).
+- **Roadmap**: a prioritized, automotive-first list of candidate components to research
+  next lives in [general/component-roadmap.md](general/component-roadmap.md) (written
+  2026-07-08) — consult it when picking a new component instead of re-deriving candidates.
 - **Next up**: the dataset-reuse investigation is the open thread — see the "Open
   investigation items" in
   [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md)
