@@ -25,7 +25,7 @@ DBs from our experiments do. The two are complementary layers, not substitutes.
 | Source | What it is | Fingerprint type | Reusable? |
 |---|---|---|---|
 | [SCANOSS OSSKB](https://osskb.org) (run by the [Software Transparency Foundation](https://www.softwaretransparency.org)) | Free, no-key API over fingerprints mined from ~250M URLs / 100M+ files | Winnowing (WFP) — same algorithm family as our experiments; file- and snippet-level | Yes — free API, fair-use terms |
-| [osskb-core-open-dataset](https://github.com/Software-Transparency-Foundation/osskb-core-open-dataset) | Downloadable fingerprints of ~2M most-popular GitHub repos, via HTTPS/FTP (`osskb.st.foundation`) | Same WFP format | Yes — **CC0-1.0**, unrestricted |
+| [osskb-core-open-dataset](https://github.com/Software-Transparency-Foundation/osskb-core-open-dataset) | Downloadable fingerprints of ~2M most-popular GitHub repos, via HTTPS/FTP (`osskb.st.foundation`) — inspected 2026-07-13: ~1.2 TiB LDB shards, records carry one exemplar URL + count, **no metadata** (see below) | LDB tables: exact MD5 (`file-url`) + winnowing (`wfp`) | Yes — **CC0-1.0**, unrestricted |
 | SCANOSS open stack: [engine](https://github.com/scanoss/engine), [minr](https://github.com/scanoss/minr), LDB | Self-hostable matching engine + mining tool to build your **own** KB in the same format | Winnowing | Yes — **GPL-2.0** (matters if embedded in a product; fine if invoked as a separate process/service) |
 | [Software Heritage](https://archive.softwareheritage.org/api/) | Content-addressed archive of (approximately) all public source code; `content/sha256:<h>` lookup + provenance endpoints | Exact hashes only (sha1, sha1_git, sha256) — no fuzzy matching | Yes — free API (rate-limited anonymous tier) |
 | [ClearlyDefined](https://docs.clearlydefined.io/docs/get-involved/using-data) | License/attribution metadata per package coordinate, harvested-data includes per-file sha1/sha256 | Exact hashes, keyed by package coordinates | Yes, but license-metadata-focused and coordinate-centric |
@@ -66,6 +66,150 @@ banner comment, an internal identifier renamed throughout, a project-specific
 Software Heritage, for comparison, confirmed it knows the exact unmodified ST file by
 sha256 (returned its SWHID `swh:1:cnt:e1b81a...`) — useful as a free "does this exact
 file exist anywhere in public OSS?" oracle, but exact-match only by design.
+
+## Follow-up: free-API availability / rate-limit test (2026-07-13)
+
+Motivation: an HTTP 503 "rate limit reached" response was encountered when using the
+free REST API directly, raising the suspicion that the public endpoint might be
+flooded to the point of being unusable. Tested
+by scanning progressively larger slices of a real checkout of the
+[FreeRTOS/FreeRTOS](https://github.com/FreeRTOS/FreeRTOS) umbrella repo with
+`scanoss-py` 1.54.0 (no API key):
+
+| Scan target | Files returned | Wall time | Errors |
+|---|---|---|---|
+| `FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI` | 3 | ~5 s | none |
+| `FreeRTOS-Plus/Source/Reliance-Edge` | 64 | 7.9 s | none |
+| `Demo/CORTEX_MPU_M7_NUCLEO_H743ZI2_GCC_IAR_Keil` | 317 | 64 s | none |
+| `Demo/Common` | 546 | 24 s | none |
+
+~930 files scanned back-to-back in one sitting, **zero 503s**, KB current (daily
+version `26.07.13` — same-day freshness). The API is not persistently flooded.
+
+The documented limits explain the 503 seen earlier: the Software Transparency
+Foundation's [limit page](https://www.softwaretransparency.org/limit) states
+**10,000 API calls per hour for anonymous users** (50,000 for sponsors), returning
+**503** when exceeded — and notes the trigger can be "too many API calls from your
+location", i.e. the quota is per source location/IP. Two practical consequences:
+
+- A 503 can be caused by *other* users behind the same NAT/CGNAT or by regional
+  bursts, and clears on its own — treat it as transient back-pressure, not outage.
+- Client batching matters enormously for staying under the quota: `scanoss-py`
+  POSTs WFP fingerprints in multi-file batches, so ~930 files consumed only a
+  handful of API calls; naive one-request-per-file REST usage burns the same quota
+  ~two orders of magnitude faster. Any generator using the free API should batch
+  WFPs, and needs 503-aware retry/backoff regardless.
+
+### Reproduced same-day with SBOM Workbench — the trigger is request *rate*, not volume
+
+The 503 was reproduced the same evening with **SCANOSS SBOM Workbench 1.26.1**
+scanning the full FreeRTOS checkout (11,584 files after filtering). The Workbench's
+`project.log` + `bad_request-*.txt` debug dumps made the mechanics fully visible:
+
+- The Workbench (via its bundled `scanoss.js` scanner) **does batch** — the failed
+  request carried an 11-file WFP payload — but the batches are tiny and dynamic:
+  878 requests carried 4,060 files, **avg 4.6 files/request** (215 requests carried
+  a single file; max seen was 16). Batch size is not user-configurable anywhere in
+  the UI or project config.
+- Those 878 requests went out in **under 2 minutes (~8 requests/second)** before the
+  server answered `503 {"error":"Rate limit exceeded","retry_after":18905}` — a
+  ~5.25-hour penalty, far longer than a rolling one-hour window would produce.
+- **The ban is location/IP-wide and shared across clients** — with one nuance.
+  One minute after the Workbench's 503, a tiny 1-POST `scanoss-py` scan from the
+  same machine *succeeded* (initially suggesting a per-client limiter). But ~18
+  minutes later a 64-file `scanoss-py` scan got 503 with `retry_after: 17832` —
+  exactly the Workbench's 18,905-second window counting down. So all clients behind
+  the IP share one bucket; the limiter merely tolerates an occasional small request
+  (trickle refill) while sustained multi-request scans are refused for the full
+  window.
+- On 503, `scanoss-py` logs "Aborting current thread" — it does **not** sleep out
+  the server's `retry_after` and resume. Its `--retry` flag covers transient
+  failures, not rate-limit bans.
+
+Practical read for the eventual generator: the free API is genuinely usable for
+scans in the thousands-of-files range, but the anonymous per-location bucket is
+shallow enough that one full-firmware-tree scan with an inefficient client
+(~2,500 small requests for 11.5k files) exhausts it and locks the whole IP out
+for ~5 hours. Batching fat and pacing slow stretches the same bucket much
+further; an API key (sponsor/commercial tier) raises it; and any tool built on
+the free tier must parse the 503 body and honour `retry_after` itself. For
+full-tree scans in SBOM Workbench specifically there is no batching knob to
+turn — pre-filter the tree or use a key.
+
+### Configuring `scanoss-py` batching properly for large scans
+
+`scanoss-py` batches by **payload size, not file count**: it concatenates per-file
+WFP fingerprint blocks and flushes a POST to `/scan/direct` whenever the buffer
+reaches `--post-size` (in KB, default 32), with `--threads` (default 5) concurrent
+posting threads. Measured on this repo's FreeRTOS corpus, a C source file averages
+~3.2 KB of WFP (546 files in `Demo/Common` → 1.77 MB), so the defaults translate to
+roughly **10 files per request** — for reference, SBOM Workbench 1.26.1's
+non-configurable scanner averaged 4.6.
+
+The knobs that matter, and a configuration that stretches the anonymous quota:
+
+```
+scanoss-py scan <dir> \
+  --post-size 128 \   # KB per POST (default 32) → ~40 C files/request instead of ~10
+  --threads 2 \       # concurrent posts (default 5) → tame the requests-per-second rate
+  --retry 5 \         # transient-failure retries (default 5); does NOT handle 503 bans
+  --timeout 300 \     # per-request timeout in seconds (default 180); raise with big posts
+  --output results.json
+```
+
+- `--post-size` is the request-count lever: quadrupling it cuts the number of API
+  calls ~4× for the same tree. Larger payloads take longer per request, so raise
+  `--timeout` alongside. (Upper bound accepted by the server not probed — the
+  rate-limit ban landed before that experiment; treat 64–256 KB as the sane range.)
+- `--threads` is the request-rate lever: the empirical difference between tripping
+  the limiter (~8 req/s) and not (~2 req/s) was pacing, so fewer threads is the
+  conservative choice for big trees.
+- Trim the payload before it exists: `--skip-extension`/`--skip-folder`/
+  `--skip-size` exclude noise files client-side (the KB happily matches `.url`
+  shortcuts and other non-source files, which is pure quota waste). Do **not**
+  use `--skip-snippets` to save quota for this repo's use case — snippet matching
+  is precisely what detects locally-modified vendored code (the priority-1
+  target).
+- Decouple fingerprinting from scanning for resumability:
+  `scanoss-py fingerprint <dir> -o tree.wfp` runs fully offline (no API calls),
+  then `scanoss-py scan --wfp tree.wfp` posts it. On a rate-limit abort, the
+  fingerprints survive and the scan can be re-run after `retry_after` without
+  re-hashing the tree; splitting the `.wfp` on `file=` boundaries also allows
+  resuming from where the 503 struck.
+
+### New attribution data points from the same scans
+
+The FreeRTOS umbrella repo is itself a vendoring aggregate, so these scans doubled as
+fresh attribution evidence — all consistent with the 2026-07-08 pattern, and adding
+one worse case:
+
+- **Verbatim, unmodified third-party files can get an actively wrong license, not
+  just a wrong repo**: all 64 files of Reliance-Edge (Datalight/Tuxera's filesystem,
+  file headers plainly **GPLv2**-or-commercial) came back attributed to
+  `pkg:github/freertos/freertos` with license **MIT** (`component_declared` of the
+  containing repo). The 2026-07-08 tests needed a *modified* file to break license
+  attribution; this shows byte-identical vendored files break it too whenever the
+  matcher picks the aggregate repo. For a license-compliance consumer this is the
+  worst failure mode: copyleft reported as permissive.
+- **lwIP split across two containing repos**: the same `Demo/Common` scan attributed
+  100 files to `pkg:github/ajaybhargav/lwip_nat` (a personal fork) and 72 to the
+  canonical `pkg:github/lwip-tcpip/lwip` — one component, two purls, neither pinned
+  to an lwIP release. Cross-file consistency checking would flag this immediately;
+  per-file answers hide it.
+- **CMSIS attributed to a personal Bitbucket mirror**: `pkg:bitbucket/rsherrymsa/cmsis-5`
+  (5 files) beat `pkg:github/arm-software/cmsis_5` (3 files) within a single scan;
+  other files went to one-off hobbyist repos (`ua3reo-ddc-transceiver`,
+  `stm32cubeide-workshop-2019`).
+- Minor but telling: OSSKB matched a Windows `ReadMe.url` shortcut file at 100% — the
+  KB indexes everything in mined repos, so non-source noise comes back with confident
+  matches and needs filtering client-side.
+
+None of this changes the reuse-first stance; it sharpens open item 1 (attribution
+post-processing) with a stronger requirement: the fix must work even for *verbatim*
+files inside aggregate repos (Reliance-Edge case), not just modified ones, and item 3's
+question — whether the offline dataset exposes **all** containing repos per fingerprint
+— becomes the crux, since the lwIP/CMSIS splits show the API's single-repo answer is
+close to arbitrary.
 
 ## What this means: recall vs. attribution are different problems
 
@@ -118,7 +262,7 @@ Reuse does **not** buy (and curated per-component reference DBs remain necessary
   linking into a differently-licensed product is not). The *dataset* being CC0 is the
   permissive part.
 
-## Strategic stance (established with Cosmin, 2026-07-08)
+## Strategic stance (established 2026-07-08)
 
 **Reuse-first.** Wherever an existing dataset/knowledge base can carry part of the
 pipeline, prefer reusing it over building our own — we cannot realistically match the
@@ -156,20 +300,111 @@ open investigation, deliberately left for future sessions:
    our ground-truth corpus and run it through OSV.dev; compare the CVE sets against
    what the *correct* upstream purl+version returns. This quantifies exactly how much
    the attribution gap costs at the vuln-scanning end, on real data.
-3. **The downloadable CC0 dataset** (`osskb-core-open-dataset`) — fetch and inspect:
-   actual size, record format, and critically whether the offline data exposes *all*
-   containing repos per fingerprint (the free API returns one), which would make
-   attribution post-processing (item 1) much stronger.
-4. **`minr` self-hosting experiment** — mine our three researched components into a
-   self-hosted LDB knowledge base and compare match quality against this repo's
-   bespoke reference DBs; if equivalent, the generator can adopt SCANOSS's open
-   WFP/LDB format instead of a bespoke one (reuse of *format and tooling*, not just
-   data).
+3. ~~**The downloadable CC0 dataset** (`osskb-core-open-dataset`) — fetch and inspect~~
+   **RESOLVED 2026-07-13** — inspected empirically, see
+   [experiments/osskb-open-dataset](experiments/osskb-open-dataset/README.md) and
+   the "Open-dataset inspection" section below. Verdict: the offline data exposes
+   **one** exemplar URL per file hash plus a *count* of containing URLs — not the
+   list. Attribution post-processing (item 1) cannot be built on it; the count is
+   however a valuable new routing signal. Item 1 therefore depends on the hosted
+   API, self-mining, or GitHub-side resolution — not on the offline dataset.
+4. **Self-mining implications (`minr`) — designated next investigation
+   (task added 2026-07-13, elevated by the open-dataset findings above).**
+   With item 3 resolved negatively (the offline dataset can't carry attribution),
+   self-mining is the remaining reuse-first path to an offline KB that *can*. The
+   task, concretely:
+   - **Baseline experiment**: mine the three researched components (FreeRTOS,
+     mbedTLS, CMSIS — upstreams plus the known vendor forks from `components/*/
+     corpus/`) into a self-hosted LDB KB with `minr`, and compare match quality
+     against this repo's bespoke per-component reference DBs on the existing
+     ground-truth corpus. If equivalent, the generator can adopt SCANOSS's open
+     WFP/LDB format and tooling instead of a bespoke format.
+   - **Attribution by construction**: when we choose what to mine, every mined URL
+     is a known component/version — the arbitrary-exemplar problem disappears for
+     curated components. Verify the mined KB reproduces what the curated DBs
+     already do: canonical identity, version pinning, cross-file consistency
+     inputs.
+   - **The URL-list gap**: check whether mining the same file from multiple
+     sources (upstream + several vendor forks) yields *all* containing URLs per
+     hash in the local KB — i.e. whether self-mining recovers exactly the
+     multiplicity data the open dataset withholds (its `count` field proves the
+     full KB has it; item 3 showed the CC0 export drops it).
+   - **Operational cost**: measure mining time, KB size, and update effort per
+     component/release — the numbers that decide whether "mine the supported
+     component list" scales to a company-standard scanner (the 50+-project
+     scenario in the feasibility section above) or stays a research tool.
+   - **License boundary**: `minr`/LDB/engine are GPL-2.0 — validate the
+     service/process-boundary integration pattern (mine and query as separate
+     processes; no linking into differently-licensed code) and document it as a
+     constraint for the generator repo.
+   - **Hybrid check**: can a `minr`-mined curated KB and the CC0 `file-url` table
+     coexist in one lookup path (curated-first, open-dataset fallback with
+     count-based routing), giving offline attribution for supported components
+     *and* offline recall for everything else?
 5. **Metadata-mapping layers** — evaluate ClearlyDefined and PurlDB as the
    "associated information" enrichment step (license, declared metadata) on top of
    whatever identification layer wins; also check Software Heritage's provenance
    (`whereis`) endpoints for earliest-occurrence data as a tiebreaker between
    containing repos.
+
+## Open-dataset inspection (2026-07-13) — what the offline CC0 data actually is
+
+Full experiment write-up:
+[experiments/osskb-open-dataset](experiments/osskb-open-dataset/README.md)
+(includes a clean-room ~60-line Python LDB shard reader and sampling stats).
+Headline facts:
+
+- Two LDB-format tables: `file-url` (~97 GiB — file MD5 → record) and `wfp`
+  (~1.14 TiB — winnowing fingerprints), 256 hash-prefix shards each; downloadable
+  per-shard, so targeted inspection cost only ~1.1 GiB (3 shards).
+- **Snapshot staleness is material**: dataset `version.json` says KB `25.09.28`,
+  while the hosted API served KB `26.07.13` the same day — the open data trails
+  the live KB by ~9.5 months.
+- **Record schema is `path, exemplar-URL, count`** — one arbitrary containing URL
+  (in a 23k-record sample: 100% GitHub archive zips), plus a count of how many
+  URLs the KB knows contain the file (median 3, p99 210, max 12,486; 38% count=1).
+  No purl, no license, no version, no component name, no full URL list.
+- Ground-truth lookups mirror the API's attribution behavior: upstream-identical
+  `core_cm4.h` → an **arduino-pico release zip** (count 1564); ESP-IDF's patched
+  `bignum.c` → the esp-idf zip (right vendor by luck — the API said Realtek
+  `ameba-rtos` for the same hash); Reliance-Edge `core.c` → **absent entirely**
+  (recall gap vs the hosted KB, which matches it 100%).
+
+Net: the open dataset is an offline **recall oracle with a spread indicator**, not
+an attribution source. The count field is real added value (count 1 → exemplar URL
+is probably the true origin; high count → ubiquitous file, exemplar meaningless,
+canonical resolution mandatory) — a signal the hosted API doesn't even return.
+
+## Feasibility: OSSKB as the backbone of a company-standard SBOM scanner (assessed 2026-07-13)
+
+Scenario assessed: an internal SBOM generator rolled out as the standard across
+50+ projects with large codebases. Conclusions from the empirical work above:
+
+- **Free API tier: not viable as the standard path.** The anonymous quota
+  (10k calls/hour) is per-location and shared: all CI runners and developers
+  behind one corporate NAT share a single bucket, one inefficient client locks
+  everyone out for ~5 hours (demonstrated first-hand), and there is no SLA. Fine
+  for research, prototyping, occasional scans.
+- **Sponsored tier (50k/hour): arithmetically workable, structurally fragile.**
+  Same shared bucket, same lockout failure mode, same no-SLA fair-use terms, and
+  the same data-egress objection (WFP fingerprints of proprietary firmware leave
+  the network). Usable as a transition step, not as a foundation.
+- **Open dataset only (no self-hosted SCANOSS services): not sufficient alone.**
+  CC0 licensing, fully offline, no rate limits, no egress — the best operational
+  profile of all options, and the `file-url` table is trivially hostable
+  (97 GiB). But per the inspection above it carries no attribution metadata at
+  all, misses files the live KB has, and trails it by months. It can serve as the
+  offline Tier-3 recall net + count-based routing signal — nothing more.
+- **What a company-grade architecture actually needs**: (a) an identification
+  layer — offline `file-url` exact-hash + (if snippet recall on modified code is
+  required) either the `wfp` table with a custom matcher or a self-hosted GPL
+  engine behind a service boundary; (b) an attribution layer — this repo's
+  curated per-component reference DBs and/or `minr`-mined KBs of the supported
+  component list (open item 4), since neither API nor dataset provides canonical
+  identity; (c) incremental scanning with content-hash caching so re-scans only
+  touch changed files; (d) if the hosted API is used at all, WFP batching, paced
+  request rates, and `retry_after`-aware backoff (see the `scanoss-py`
+  configuration section above).
 
 ## Recommendation (interim, pending the investigation above)
 
@@ -183,8 +418,12 @@ form depends on how investigation items 1–4 turn out:
    this; whether a reused dataset plus post-processing can replace or shrink this
    layer is exactly open items 1–3. Until then the curated DBs stay the validated
    mechanism — but should be treated as the gap-filler, not the center of gravity.
-3. **Tier 3 (new, optional, online)** — OSSKB (or a self-hosted mined KB) as a
-   breadth/recall net for files matching no curated component: emit "unidentified OSS
-   detected (containing repos: …)" findings and use them as the signal for which
-   component to support next. Software Heritage's exact-hash lookup is a second free
-   oracle for "is this exact file public?"
+3. **Tier 3 (new, optional)** — OSSKB as a breadth/recall net for files matching no
+   curated component: emit "unidentified OSS detected (containing repos: …)"
+   findings and use them as the signal for which component to support next. Two
+   forms, now both validated: the online API (full KB, freshest, rate-limited,
+   egress concerns) and the offline CC0 `file-url` table (97 GiB, self-hostable,
+   ~9-month-stale snapshot, exact-hash only — but adds the containing-URL *count*
+   as a routing signal: count 1 → trust the exemplar URL as origin; high count →
+   requires canonical resolution). Software Heritage's exact-hash lookup is a
+   second free oracle for "is this exact file public?"

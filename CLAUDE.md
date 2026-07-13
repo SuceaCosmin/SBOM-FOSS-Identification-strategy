@@ -9,7 +9,7 @@ generator built in a **separate** repository — do not implement a generator he
 the detection research and prototypes that will inform it.
 
 When you (Claude) start a session in this repo, treat the scope below as settled context
-established with the user (Cosmin) — don't re-ask these questions, but do flag if new
+established with the user — don't re-ask these questions, but do flag if new
 findings suggest revisiting a decision.
 
 ## Current status
@@ -64,17 +64,43 @@ findings suggest revisiting a decision.
   snippets), but raw attribution names *an arbitrary containing repo* with that repo's
   versions/licenses (an Espressif-patched mbedTLS file attributed to Realtek's
   `ameba-rtos`; the modified file attributed to the Rebol3 interpreter with a
-  completely wrong license list).
+  completely wrong license list). Follow-up (2026-07-13, documented in the same file):
+  free-API availability is fine for batched, paced scans — ~930 FreeRTOS-repo files
+  scanned with zero 503s via `scanoss-py` — but the 503 "Rate limit exceeded" was
+  reproduced with SBOM Workbench 1.26.1 (a full 11.5k-file tree at ~4.6 files/request,
+  ~8 req/s), which exhausted the shared per-location bucket and locked the IP out for
+  ~5 hours (`retry_after` ≈ 18,900 s, confirmed shared when `scanoss-py` subsequently
+  503'd on the same countdown). Proper `scanoss-py` batching config (post-size/threads/
+  offline-fingerprint split) is documented in the same file. Same scans added a
+  worse attribution case: *verbatim* GPLv2 Reliance-Edge files inside the FreeRTOS
+  umbrella repo reported as `pkg:github/freertos/freertos`, license MIT. Second
+  follow-up (2026-07-13, same day): the **CC0 open dataset was downloaded and
+  inspected** (open item 3 resolved — see
+  [general/experiments/osskb-open-dataset](general/experiments/osskb-open-dataset/README.md)):
+  ~1.2 TiB of LDB shards, snapshot ~9.5 months behind the live KB; each `file-url`
+  record is `path, one-exemplar-URL, count-of-containing-URLs` with **no
+  purl/license/version metadata and no full URL list** — so attribution
+  post-processing can't be built on the offline data, though the count field is a
+  new routing signal (count 1 → exemplar is likely the true origin). A clean-room
+  Python LDB reader lives in that experiment folder. A company-scale feasibility
+  assessment (free/sponsored/dataset-only tiers for a 50+-project standard scanner)
+  is documented in the same file's "Feasibility" section.
 - **Roadmap**: a prioritized, automotive-first list of candidate components to research
   next lives in [general/component-roadmap.md](general/component-roadmap.md) (written
   2026-07-08) — consult it when picking a new component instead of re-deriving candidates.
-- **Next up**: the dataset-reuse investigation is the open thread — see the "Open
-  investigation items" in
-  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md)
-  (attribution post-processing over OSSKB output, an OSV.dev vuln-scanning fitness
-  test on raw vs corrected purls, inspecting the downloadable CC0 dataset, a `minr`
-  self-hosting experiment, metadata-mapping layers). Picking a wholly new component to
-  research remains the alternative. See "Low-priority deferred follow-ups" below for
+- **Next up**: the **self-mining (`minr`) investigation** is the designated next
+  task (added 2026-07-13) — open investigation item 4 in
+  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
+  expanded into concrete subtasks there: baseline mining of the three researched
+  components vs the bespoke reference DBs, attribution-by-construction validation,
+  whether self-mining recovers the full containing-URL list the CC0 export drops,
+  operational-cost measurements for the company-scale scenario, the GPL
+  process-boundary pattern, and a hybrid curated-KB + CC0-fallback lookup path.
+  Other open items remain (attribution post-processing — now known to require
+  online/mined data since the offline dataset lacks the URL list; the OSV.dev
+  vuln-scanning fitness test; metadata-mapping layers). The CC0-dataset inspection
+  item is done (2026-07-13). Picking a wholly new component to research remains the
+  alternative. See "Low-priority deferred follow-ups" below for
   CMSIS/mbedTLS loose ends that are explicitly parked, not forgotten.
 
 ## Low-priority deferred follow-ups
@@ -138,7 +164,7 @@ future session doesn't have to re-derive that they're low priority from scratch.
 Researched empirically on 2026-07-08 — findings, tradeoffs, and open items in
 [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md).
 
-**Settled stance (Cosmin)**: **reuse-first** — prefer existing datasets/knowledge bases
+**Settled stance (2026-07-08)**: **reuse-first** — prefer existing datasets/knowledge bases
 (SCANOSS OSSKB and its CC0 open dataset, Software Heritage, ClearlyDefined, PurlDB)
 over building our own wherever possible; we can't match the effort the OSS community
 has already invested in mining. Building our own artifacts (e.g. the curated

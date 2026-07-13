@@ -2,7 +2,8 @@
 
 A prioritized list of FOSS C components worth researching in this repo, ordered by
 **likelihood of appearing (vendored/copy-pasted) in automotive products** — AUTOSAR and
-non-AUTOSAR alike — per Cosmin's request (2026-07-08). Within each tier, components are
+non-AUTOSAR alike — automotive-first prioritization decided 2026-07-08. Within each
+tier, components are
 roughly ordered by expected prevalence × detection-research value.
 
 Already researched (see `components/`): **FreeRTOS**, **mbedTLS**, **CMSIS**.
