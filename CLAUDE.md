@@ -105,12 +105,17 @@ findings suggest revisiting a decision.
   whether self-mining recovers the full containing-URL list the CC0 export drops,
   operational-cost measurements for the company-scale scenario, the GPL
   process-boundary pattern, and a hybrid curated-KB + CC0-fallback lookup path.
-  Other open items remain (attribution post-processing — now known to require
-  online/mined data since the offline dataset lacks the URL list; the OSV.dev
-  vuln-scanning fitness test; metadata-mapping layers). The CC0-dataset inspection
-  item is done (2026-07-13). Picking a wholly new component to research remains the
-  alternative. See "Low-priority deferred follow-ups" below for
-  CMSIS/mbedTLS loose ends that are explicitly parked, not forgotten.
+  The 2026-07-16 decision (see the Decision paragraph in the reference-corpus
+  section below) upgrades this task's framing: minr is no longer "an alternative
+  to explore" but **the industrialization of the chosen backbone** (curated
+  attribution-by-construction), with the bespoke per-component DBs as its
+  validation ground truth. Other open items remain (attribution post-processing —
+  now known to require online/mined data since the offline dataset lacks the URL
+  list; the OSV.dev vuln-scanning fitness test; metadata-mapping layers). The
+  CC0-dataset inspection item is done (2026-07-13, wfp table included 2026-07-16).
+  Picking a wholly new component to research remains the alternative. See
+  "Low-priority deferred follow-ups" below for CMSIS/mbedTLS loose ends that are
+  explicitly parked, not forgotten.
 
 ## Low-priority deferred follow-ups
 

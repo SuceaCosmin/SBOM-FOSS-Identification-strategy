@@ -337,10 +337,12 @@ open investigation, deliberately left for future sessions:
      service/process-boundary integration pattern (mine and query as separate
      processes; no linking into differently-licensed code) and document it as a
      constraint for the generator repo.
-   - **Hybrid check**: can a `minr`-mined curated KB and the CC0 `file-url` table
-     coexist in one lookup path (curated-first, open-dataset fallback with
-     count-based routing), giving offline attribution for supported components
-     *and* offline recall for everything else?
+   - **Hybrid check**: can a `minr`-mined curated KB and the CC0 tables coexist
+     in one lookup path (curated-first, open-dataset fallback with count-based
+     routing), giving offline attribution for supported components *and* offline
+     recall for everything else? Since 2026-07-16 the fallback can include the
+     `wfp` table too — offline snippet matching is validated (see the experiment
+     README's wfp section), so the hybrid isn't limited to exact-hash recall.
 5. **Metadata-mapping layers** — evaluate ClearlyDefined and PurlDB as the
    "associated information" enrichment step (license, declared metadata) on top of
    whatever identification layer wins; also check Software Heritage's provenance
