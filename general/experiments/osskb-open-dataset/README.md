@@ -163,6 +163,38 @@ For two corpus files whose exact version is in the KB (`bignum.c` ESP-IDF fork,
 from a locally generated `scanoss-py wfp` fingerprint (little-endian confirmed,
 big-endian 0 matches).
 
+### How the 32-bit key is computed (SCANOSS winnowing, from `scanoss-py` source)
+
+The key is **not** a per-line hash — it identifies a ~30-character normalized
+code fragment, sampled sparsely. From `scanoss/winnowing.py` (`GRAM = 30`,
+`WINDOW = 64`):
+
+1. **Normalize**: drop every non-alphanumeric byte entirely (whitespace,
+   newlines, punctuation, operators), lowercase the rest — the file becomes one
+   continuous character stream. Newlines only advance a line counter.
+2. **Gram**: slide a 30-character window over that stream one character at a
+   time; CRC32-C each 30-gram. A gram typically spans ~1–3 real code lines.
+3. **Winnow**: over a rolling window of the last 64 gram hashes, keep the
+   minimum, emitting it only when it changes — thinning ~40k overlapping gram
+   hashes for a `bignum.c`-sized file down to ~1,000 fingerprints (about one
+   per line or two).
+4. Emit `crc32c(min_hash)` (hashed again to rebalance the min-skewed
+   distribution) as 8 hex chars, tagged with the current line number.
+
+The 16-byte MD5 in each record is the **whole-file MD5 of a containing file**
+(the same key `file-url` uses); the 2-byte line number is where the fragment
+sits in *that* file — an annotation, not hashed content.
+
+Robustness properties that follow directly: immune to reformatting,
+whitespace, line-ending, and case changes (all normalized away); an edit only
+breaks the fingerprints whose grams physically overlap it, so partially
+modified files keep matching everywhere else. Limits: **identifier renames
+break the fingerprints at each rename site** (characters are kept as-is — no
+tokenization/abstraction), and **comment text is fingerprinted too** (only
+non-alphanumerics are stripped), so rewording a header changes that region's
+hashes. Same winnowing family as this repo's per-component experiments, so
+these properties carry over.
+
 ### Worked examples — what a wfp lookup actually returns (extracted 2026-07-16)
 
 Kept verbatim (like the `file-url` examples above) so future sessions can see
