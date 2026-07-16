@@ -84,7 +84,16 @@ findings suggest revisiting a decision.
   new routing signal (count 1 → exemplar is likely the true origin). A clean-room
   Python LDB reader lives in that experiment folder. A company-scale feasibility
   assessment (free/sponsored/dataset-only tiers for a 50+-project standard scanner)
-  is documented in the same file's "Feasibility" section.
+  is documented in the same file's "Feasibility" section. Third follow-up
+  (2026-07-16): the **`wfp` (winnowing) table was also inspected** — one 4.4 GiB
+  shard downloaded, fixed-record LDB variant cracked clean-room
+  (`hash → (file MD5, line)` inverted index, record layout validated against
+  locally generated `scanoss-py` fingerprints), and **offline snippet matching
+  proven end-to-end**: the Espressif-modified `tasks.c`, absent from the snapshot
+  as an exact file, was pinned to its own esp-idf lineage by snippet-hash voting
+  (`wfp_lookup.py`/`wfp_pipeline.py` in the same experiment folder). So the
+  offline dataset can serve both verbatim and modified-copy detection;
+  attribution remains its gap.
 - **Roadmap**: a prioritized, automotive-first list of candidate components to research
   next lives in [general/component-roadmap.md](general/component-roadmap.md) (written
   2026-07-08) — consult it when picking a new component instead of re-deriving candidates.

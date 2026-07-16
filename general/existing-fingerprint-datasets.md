@@ -356,7 +356,18 @@ Headline facts:
 
 - Two LDB-format tables: `file-url` (~97 GiB — file MD5 → record) and `wfp`
   (~1.14 TiB — winnowing fingerprints), 256 hash-prefix shards each; downloadable
-  per-shard, so targeted inspection cost only ~1.1 GiB (3 shards).
+  per-shard, so targeted inspection cost only ~5.5 GiB (3 file-url shards +
+  1 wfp shard).
+- **`wfp` table inspected 2026-07-16**: an inverted index
+  `32-bit winnowing hash → (file MD5, line)` pairs (~450M distinct hashes,
+  ~64B records; ~143 records/hash mean, heavier for common C code). Format
+  cracked clean-room; **offline snippet matching validated end-to-end** — the
+  Espressif-modified `tasks.c` (exact MD5 absent from the snapshot) was pinned
+  to its own esp-idf lineage by vote-across-snippet-hashes using one wfp shard
+  plus the file-url shards. Modified-copy detection therefore *can* ride the
+  offline dataset (at a 1.24 TiB storage price); attribution still can't.
+  Note the wfp shards (2025-Jul-03) are ~3 months staler than file-url —
+  the two tables aren't mutually consistent snapshots.
 - **Snapshot staleness is material**: dataset `version.json` says KB `25.09.28`,
   while the hosted API served KB `26.07.13` the same day — the open data trails
   the live KB by ~9.5 months.
@@ -397,8 +408,9 @@ Scenario assessed: an internal SBOM generator rolled out as the standard across
   offline Tier-3 recall net + count-based routing signal — nothing more.
 - **What a company-grade architecture actually needs**: (a) an identification
   layer — offline `file-url` exact-hash + (if snippet recall on modified code is
-  required) either the `wfp` table with a custom matcher or a self-hosted GPL
-  engine behind a service boundary; (b) an attribution layer — this repo's
+  required) either the `wfp` table with a custom matcher (validated feasible
+  2026-07-16 — a few hundred lines of Python, no GPL runtime; see the
+  experiment) or a self-hosted GPL engine behind a service boundary; (b) an attribution layer — this repo's
   curated per-component reference DBs and/or `minr`-mined KBs of the supported
   component list (open item 4), since neither API nor dataset provides canonical
   identity; (c) incremental scanning with content-hash caching so re-scans only

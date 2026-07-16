@@ -24,7 +24,8 @@ useful "spread" indicator, not an attribution source.
   sharded by first byte of the file MD5):
   - `file-url`: ~97 GiB total (~381 MiB/shard) — file MD5 → record above.
   - `wfp`: ~1.14 TiB total (~4.5 GiB/shard) — winnowing snippet fingerprints
-    (not inspected in this experiment; shard timestamps 2025-Jul-03).
+    (shard timestamps 2025-Jul-03; inspected 2026-07-16, see the dedicated
+    section below).
 - `file-url.cfg` = `16,0,1,0`: 16-byte keys (full MD5), variable-length records.
 - Scale estimate from map-slot sampling: ~500M distinct file hashes across all 256
   shards (~2M per shard).
@@ -127,6 +128,91 @@ What these examples demonstrate about usable signal:
 - `count` distribution: min 1, median 3, p90 28, p99 210, max 12,486;
   38% of files have count = 1 (unique to a single URL).
 
+## The `wfp` table (inspected 2026-07-16) — offline snippet matching works
+
+**Question**: the `file-url` table only covers verbatim files (exact MD5 —
+any one-byte modification defeats it). Can the offline dataset also serve the
+repo's *primary* target, locally-modified vendored source, via its winnowing
+(`wfp`) table? One shard (`wfp/39.ldb`, 4.41 GiB) was downloaded and the
+format cracked the same clean-room way (layout learned from `scanoss/ldb`
+sources, reimplemented in [`wfp_lookup.py`](wfp_lookup.py)).
+
+**Answer: yes, mechanically.** The table is an inverted index
+`32-bit winnowing hash → list of (file MD5, line number)`, and a
+vote-across-snippet-hashes matcher over it reproduces the hosted API's
+modified-file recall entirely offline — with the same attribution
+limitations as `file-url`, since file MD5s still resolve only to
+`path, exemplar-URL, count`.
+
+### Format (differs from `file-url` in three ways)
+
+`wfp.cfg` = `4,18,1,0`: 4-byte keys, **fixed 18-byte records**.
+
+1. The key (the winnowing hash, big-endian hex as emitted in `.wfp` files) is
+   fully consumed by shard byte + 3 map-index bytes — nodes carry **no subkey**.
+2. For fixed-record tables the node's 2-byte size field counts **records, not
+   bytes** (LDB writes `records` there when `rec_ln > 0`, byte-length otherwise
+   — the file-url reader misparses wfp nodes as "1 byte of data" silently).
+3. Node data is raw concatenated 18-byte records — no group headers, no
+   per-record size prefixes.
+
+Record layout, empirically validated: `[file MD5 (16)][line number (2 LE)]`.
+For two corpus files whose exact version is in the KB (`bignum.c` ESP-IDF fork,
+`core_cm4.h` CMSIS 5.9.0), every snippet hash landing in shard `39` (5/5 and
+6/6) returned a record with **that file's exact MD5 and the exact line number**
+from a locally generated `scanoss-py wfp` fingerprint (little-endian confirmed,
+big-endian 0 matches).
+
+### Scale and fanout (shard `39` sampling)
+
+- ~10.4% of the 16.7M map slots are occupied → ~1.7M distinct hashes/shard,
+  ~450M across 256 shards (~10% of the 32-bit hash space).
+- Mean ~143 records per hash (random keys); for *our* C-corpus snippet hashes
+  the fanout is heavier: median ~300, max 1,982 records per hash. Total table
+  ≈ 64 billion (MD5, line) pairs ≈ 1.14 TiB.
+- Nodes are append-granular (many single-record nodes observed), so one lookup
+  may walk a long node chain — fine for research, would want re-collation for
+  production hosting.
+- **Staleness**: wfp shards are dated 2025-Jul-03 — ~3 months *older* than the
+  file-url table (`25.09.28`), i.e. ~12.5 months behind the live KB at
+  inspection time. The two tables are not even mutually consistent snapshots.
+
+### End-to-end modified-file demo ([`wfp_pipeline.py`](wfp_pipeline.py))
+
+Ground truth: `tasks.c` from the real ESP-IDF FreeRTOS fork (Espressif-patched,
+this exact version absent from the KB snapshot — 0 of its snippet hashes'
+records contain its MD5). Pipeline: local `.wfp` → shard lookup for the 11
+hashes with first byte `0x39` → vote over returned MD5s → resolve candidates
+via the downloaded `file-url` shards:
+
+```
+tasks.wfp: md5 9e1201e368c44994f161a5833d048e41, 3589 snippet hashes, 11 usable
+distinct candidate file md5s: 2536; 8 md5s hit 11/11 votes
+best resolvable candidate (8/11 votes, md5 0b63a3f1…):
+  -> components/freertos/FreeRTOS-Kernel/tasks.c
+     https://github.com/espressif/esp-idf/archive/v5.1.2.zip (count 10)
+```
+
+The modified file was pinned to its own vendor-fork lineage (an earlier
+esp-idf release) using nothing but offline data — the snippet analogue of the
+hosted API's 84%-match result. Caveats: with all 256 wfp shards the vote would
+use all 3,589 hashes, not 11; the 2,159 count-1 candidates show snippet noise
+needs the co-occurrence vote (single shared hashes mean little); and candidate
+MD5s still inherit `file-url`'s arbitrary-exemplar attribution problem.
+
+### Consequences
+
+- The offline dataset can cover **both** detection tiers — verbatim
+  (`file-url`) *and* modified-copy (`wfp`) — at a storage price: 97 GiB vs
+  1.24 TiB. A custom matcher is a few hundred lines of Python, no GPL runtime
+  needed (format knowledge only).
+- Attribution remains the missing layer in both tables; the wfp path
+  *amplifies* the need for canonical resolution because it emits candidate
+  *sets* (here: 8 equally-voted MD5s, presumably adjacent esp-idf releases).
+- Line numbers in records enable range/coverage scoring (contiguous matched
+  regions vs scattered single hashes) — same signal the hosted engine uses for
+  its match percentage.
+
 ## Consequences for the reuse-first strategy
 
 1. **Attribution post-processing cannot ride on the offline dataset** — the
@@ -146,9 +232,16 @@ What these examples demonstrate about usable signal:
    reference DBs, the hosted API, or self-mining (`minr`) — reshaping open items
    1 and 4 accordingly.
 
-Scripts: [`ldb_lookup.py`](ldb_lookup.py) (single-key lookup),
-[`ldb_sample.py`](ldb_sample.py) (random-sampling schema statistics),
-[`ldb_pretty.py`](ldb_pretty.py) (pretty-print sample records — random entries or
-by MD5-prefix search — used to produce the worked examples above). All operate
-on shard files downloaded to a local directory; shards are ~381 MiB each and are
-**not** checked into this repo.
+Scripts — all operate on locally downloaded shard files (~381 MiB per
+`file-url` shard, ~4.5 GiB per `wfp` shard), **not** checked into this repo:
+
+- [`ldb_lookup.py`](ldb_lookup.py) — `file-url` single-key lookup (16-byte-key,
+  variable-record LDB reader).
+- [`ldb_sample.py`](ldb_sample.py) — `file-url` random-sampling schema statistics.
+- [`ldb_pretty.py`](ldb_pretty.py) — pretty-print `file-url` records (random or
+  by MD5-prefix search) — produced the worked examples above.
+- [`wfp_lookup.py`](wfp_lookup.py) — `wfp` table reader (4-byte-key,
+  fixed-18-byte-record variant) + `check` mode that cross-validates a local
+  `scanoss-py` `.wfp` fingerprint file against a shard.
+- [`wfp_pipeline.py`](wfp_pipeline.py) — end-to-end offline snippet matcher:
+  `.wfp` → wfp-shard votes → `file-url` resolution (the modified-`tasks.c` demo).
