@@ -116,6 +116,25 @@ findings suggest revisiting a decision.
   Picking a wholly new component to research remains the alternative. See
   "Low-priority deferred follow-ups" below for CMSIS/mbedTLS loose ends that are
   explicitly parked, not forgotten.
+- **Open topic (queued 2026-07-16, not started)**: **identifying OSS components
+  delivered as prebuilt static libraries (`*.a`/`*.lib`) plus public headers** —
+  a common vendor-SDK distribution shape (e.g. closed-source middleware wrapping
+  OSS, silicon-vendor binary blobs bundling FreeRTOS/mbedTLS/lwIP builds) that
+  all of this repo's current techniques miss, since they assume vendored
+  *source*. The investigation, when picked up, should survey candidate signals
+  without presuming one: the headers themselves (still source — current
+  fingerprinting applies directly); archive-level metadata (`.a` is an `ar`
+  archive of `.o` members — member names often preserve upstream source
+  filenames); embedded strings (version banners like `FreeRTOS V10.x`,
+  `MBEDTLS_VERSION_STRING`, license text, panic/assert format strings with
+  source paths); symbol tables (`nm`-visible function-name sets are a
+  high-signal fingerprint of a component and its version surface); and
+  function-level binary similarity for stripped/LTO cases (the hard end:
+  compiler/flag variance — candidate tools to evaluate include Ghidra BSim,
+  FunctionSimSearch/binary CFG hashing). Note this **partially revises the
+  "binary analysis out of scope" line** in the problem scope below — scoped to
+  static-library + header bundles, not general firmware-image analysis. Not
+  scheduled; documented so it isn't lost.
 
 ## Low-priority deferred follow-ups
 
@@ -172,6 +191,8 @@ future session doesn't have to re-derive that they're low priority from scratch.
 3. **Metadata/string heuristics** — license headers, version macros, distinctive
    `#define`s, author comments, embedded identifiers.
 4. Binary/firmware artifact analysis is out of scope for now — source-level only.
+   *(One scoped exception queued 2026-07-16 but not started: static-library
+   (`*.a`) + header bundles — see the "Open topic" bullet in Current status.)*
 
 ## Reference corpus question — stance settled, fitness investigation open
 
