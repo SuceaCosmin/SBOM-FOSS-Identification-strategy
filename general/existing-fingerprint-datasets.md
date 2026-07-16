@@ -441,6 +441,43 @@ form depends on how investigation items 1–4 turn out:
    as origin; high count → requires canonical resolution). Software Heritage's
    exact-hash lookup is a second free oracle for "is this exact file public?"
 
+## The commercial layer above OSSKB (researched 2026-07-16)
+
+Reference facts for the "commercial dependency on SCANOSS's private KB" branch
+named in the decision below — so if that fallback is ever considered, the
+options and rough costs are already on record (web research 2026-07-16; treat
+prices as floors, real deployments need a quote).
+
+- **Structure**: the Software Transparency Foundation (non-profit) runs the
+  free OSSKB; **SCANOSS** (the company, [scanoss.com](https://scanoss.com/))
+  sells the *full* knowledge base behind it. There is no separately named
+  attribution product — the commercial product **is the KB subscription**,
+  delivered as shared SaaS, dedicated SaaS, or **on-premises** (a full,
+  continuously updated KB mirror in the same LDB format this experiment
+  reverse-engineered — no CC0-export staleness, no dropped metadata, and
+  on-prem resolves the fingerprint-egress objection).
+- **What the paid KB adds over the free tiers**: the correlation data the free
+  paths lack — full containing-URL lists per file plus purl/version/license
+  tables per URL — and enrichment datasets sold on top
+  ([product page](https://scanoss.com/product/)): License (obligations/
+  attribution/compatibility), Security (correlation to NVD/OSV/GitHub
+  Advisories), Encryption (ECCN/export), Geo Provenance, AI Governance.
+- **Pricing** ([pricing page](https://scanoss.com/pricing/), 12-month
+  subscriptions): small dev teams **from €35,000/yr**, medium **from
+  €53,000/yr**, enterprise custom (ELA, multi-year discounts). Between free
+  and paid sits the sponsored API tier (50k req/hour) already covered in the
+  feasibility section — free, but same shared-bucket/no-SLA/egress caveats.
+- **Free-tier terms are narrower than assumed**: STF materials describe the
+  free OSSKB as intended for *academic use and sole contributors*, explicitly
+  not suitable for commercial use — stronger language than the "fair-use"
+  framing elsewhere in this doc, and further confirmation of the feasibility
+  section's "not viable as the standard path" conclusion.
+- **Effect on the decision below**: the fallback branch is now *priced* — for
+  a bounded embedded-C component list, curated/self-mined attribution competes
+  against a recurring five-figure subscription. If `minr` operational costs
+  (open item 4) come out worse than expected, this is the honest comparison
+  number.
+
 ## Decision (2026-07-16): curated reference DBs are the backbone; OSSKB is the recall net
 
 With both OSSKB access paths now empirically characterized (hosted API
@@ -479,7 +516,8 @@ dimensions are not equally fixable:
   verbatim GPLv2 Reliance-Edge files** — a compliance land-mine). The CC0
   export drops the URL list and all metadata (proven by direct inspection), so
   attribution post-processing cannot be built on it. Fixing attribution means
-  either a commercial dependency on SCANOSS's private KB or reconstructing
+  either a commercial dependency on SCANOSS's private KB (priced from
+  €35k/yr — see "The commercial layer above OSSKB" above) or reconstructing
   origin knowledge ourselves — which is the curated approach by another name.
 - **What OSSKB genuinely won**: recall is commodity (both offline tables
   usable via a few hundred lines of clean-room Python, CC0, no rate limits, no
