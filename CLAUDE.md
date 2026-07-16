@@ -178,17 +178,34 @@ Researched empirically on 2026-07-08 — findings, tradeoffs, and open items in
 over building our own wherever possible; we can't match the effort the OSS community
 has already invested in mining. Building our own artifacts (e.g. the curated
 per-component reference DBs from this repo's experiments) is the gap-filler for what
-existing datasets demonstrably can't do, not the default.
+existing datasets demonstrably can't do, not the default. *(Refined 2026-07-16 — see
+the Decision paragraph below: reuse-first survives for recall, but for attribution
+the relationship inverted.)*
 
 **The bar**: the end goal is efficiently identifying components *and mapping their
 associated information* (canonical identity/PURL, version, license) well enough to
 generate SBOMs that can drive **vulnerability scanning**. The empirical test showed
 existing datasets fully cover recall/identification, but their raw attribution output
 (arbitrary containing repo + that repo's versions/licenses) would feed wrong purls to a
-vuln scanner. Whether that gap can be closed *on top of* reused data (post-processing,
-the offline CC0 dataset, alias tables) — rather than by falling back to curated DBs —
-is **not yet investigated**; that's the open-items list in the doc above, deliberately
-left for future sessions.
+vuln scanner. Whether that gap can be closed *on top of* reused data is now
+partially answered: it demonstrably **cannot** be closed on the offline CC0 dataset
+(no URL list, no metadata — proven by direct inspection 2026-07-13/16), leaving
+online or self-mined data as the only substrate; the remaining paths are the
+open-items list in the doc above.
+
+**Decision (2026-07-16)** (full rationale in
+[general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
+"Decision" section): comparing the two approaches explored so far, the **curated
+per-component reference-DB approach is the backbone**, because the bar is attribution
+and OSSKB's attribution gap is structural (unfixable on free data at any effort
+level), while the curated approach's coverage gap closes linearly over a small,
+stable embedded-C component universe. OSSKB's offline tables remain a *subordinate*
+recall/routing net (recall is commodity; the `count` field routes; "known OSS, not a
+supported component" findings feed the roadmap), the hosted API at most a freshness
+fallback. The queued `minr` investigation is the industrialization of curation
+(attribution-by-construction), where the two approaches converge. Flip condition:
+revisit only if scope becomes arbitrary/unbounded codebases (audit tooling) instead
+of a standard scanner for known embedded projects.
 
 ## SBOM output format
 

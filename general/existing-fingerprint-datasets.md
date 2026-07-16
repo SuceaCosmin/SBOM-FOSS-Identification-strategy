@@ -418,7 +418,7 @@ Scenario assessed: an internal SBOM generator rolled out as the standard across
   request rates, and `retry_after`-aware backoff (see the `scanoss-py`
   configuration section above).
 
-## Recommendation (interim, pending the investigation above)
+## Recommendation (interim, 2026-07-08 — Tier 2 framing superseded by the decision section below)
 
 Slots into the existing [two-tier design](README.md#recommended-default-offline-first-online-as-an-additive-fallback)
 as a **third, additive layer**, with the reuse-first caveat that Tier 2's long-term
@@ -434,8 +434,71 @@ form depends on how investigation items 1–4 turn out:
    curated component: emit "unidentified OSS detected (containing repos: …)"
    findings and use them as the signal for which component to support next. Two
    forms, now both validated: the online API (full KB, freshest, rate-limited,
-   egress concerns) and the offline CC0 `file-url` table (97 GiB, self-hostable,
-   ~9-month-stale snapshot, exact-hash only — but adds the containing-URL *count*
-   as a routing signal: count 1 → trust the exemplar URL as origin; high count →
-   requires canonical resolution). Software Heritage's exact-hash lookup is a
-   second free oracle for "is this exact file public?"
+   egress concerns) and the offline CC0 tables (97 GiB `file-url` exact-hash,
+   ~9-month-stale snapshot, plus — validated 2026-07-16 — the 1.14 TiB `wfp`
+   table for snippet recall on modified files; `file-url` adds the
+   containing-URL *count* as a routing signal: count 1 → trust the exemplar URL
+   as origin; high count → requires canonical resolution). Software Heritage's
+   exact-hash lookup is a second free oracle for "is this exact file public?"
+
+## Decision (2026-07-16): curated reference DBs are the backbone; OSSKB is the recall net
+
+With both OSSKB access paths now empirically characterized (hosted API
+2026-07-08/13, offline CC0 dataset incl. the `wfp` table 2026-07-13/16), the
+two approaches explored by this repo can be compared conclusively. This
+supersedes the interim recommendation's framing of the curated DBs as
+"gap-filler, not the center of gravity" — the evidence points the other way.
+
+**Decision: the curated per-component reference-DB approach is the more
+feasible of the two and becomes the backbone. OSSKB cannot meet this repo's
+bar standalone at any effort level; it is retained as a subordinate
+recall/routing tier.**
+
+Rationale — the two approaches fail in different dimensions, and the
+dimensions are not equally fixable:
+
+- **The bar is attribution, not recall.** The success criterion (settled in
+  "The bar" in this doc's companion section in [CLAUDE.md](../CLAUDE.md)) is
+  canonical purl + version + license good enough to drive vulnerability
+  scanning. Recall was never the bottleneck: OSSKB matched everything we threw
+  at it, including a file existing in no public repo (84% via snippets).
+  Attribution is the scarce resource, and it is exactly what OSSKB
+  structurally lacks.
+- **The curated approach's gap (coverage) closes linearly with bounded
+  effort.** One component ≈ one research session using the
+  `research-component` skill + templates; the target domain (embedded/
+  automotive C) has a small, stable component universe (see
+  [component-roadmap.md](component-roadmap.md)). Everything covered is covered
+  *correctly end-to-end*: right purl, right version (validated against real
+  ST/NXP/Espressif forks, mixed-version and modified-fork cases), right
+  license (caught the ST Apache-2.0 relicensing invisible to comment-stripped
+  matching).
+- **The OSSKB approach's gap (attribution) is structural and not fixable on
+  the free data.** The hosted API names an arbitrary containing repo with that
+  repo's licenses (Realtek `ameba-rtos` for Espressif's mbedTLS; **MIT for
+  verbatim GPLv2 Reliance-Edge files** — a compliance land-mine). The CC0
+  export drops the URL list and all metadata (proven by direct inspection), so
+  attribution post-processing cannot be built on it. Fixing attribution means
+  either a commercial dependency on SCANOSS's private KB or reconstructing
+  origin knowledge ourselves — which is the curated approach by another name.
+- **What OSSKB genuinely won**: recall is commodity (both offline tables
+  usable via a few hundred lines of clean-room Python, CC0, no rate limits, no
+  fingerprint egress), the containing-URL `count` is a routing signal the API
+  doesn't even return, and "known OSS but not a supported component" findings
+  are the discovery feed for which component to curate next.
+
+**Resulting shape — a primary with a safety net, not a 50/50 hybrid**:
+curated/self-mined reference DBs as the authoritative identification +
+attribution core for the supported component list; offline OSSKB tables as
+the recall net and router beneath it; the hosted API at most as a freshness
+fallback. The queued `minr` investigation (open item 4) is the
+industrialization of the curated approach — attribution-by-construction,
+generated per release instead of hand-built — so the two approaches converge
+there, with this repo's bespoke DBs as validation ground truth.
+
+**Flip condition** (recorded so the decision is revisited for the right
+reason): if the scanner's scope ever becomes arbitrary unknown codebases with
+an unbounded component universe (due-diligence/audit tooling rather than a
+standard scanner for known embedded projects), per-component curation cannot
+keep up and the KB-plus-post-processing path would have to be reopened. That
+is not the current problem statement.
