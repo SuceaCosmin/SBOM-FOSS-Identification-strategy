@@ -163,6 +163,46 @@ For two corpus files whose exact version is in the KB (`bignum.c` ESP-IDF fork,
 from a locally generated `scanoss-py wfp` fingerprint (little-endian confirmed,
 big-endian 0 matches).
 
+### Worked examples — what a wfp lookup actually returns (extracted 2026-07-16)
+
+Kept verbatim (like the `file-url` examples above) so future sessions can see
+the shape of the data without re-downloading a shard. Produced with
+`wfp_lookup.py lookup` against `wfp/39.ldb`; the "local .wfp says" annotations
+come from fingerprinting the corpus files with `scanoss-py wfp`.
+
+```
+== bignum.c (ESP-IDF fork): snippet hash 3959dcd4 (local .wfp: line 1648) -> 177 records
+   [   0] md5=05b9e69994fe67a1eaa34a43a0f2b280 line=11667
+   [   1] md5=05ec094ebbec83f2d48b689dc31217b8 line=68
+   [   2] md5=0657be7e3198b0dedeb445c7d6fce4b3 line=53
+   [   3] md5=0b9f689e2a7a1061286fe123276d0487 line=10325
+   ...
+   [ 132] md5=c9a1eaf1be80997078c630d56455228f line=1648   <-- ground-truth file, exact line
+
+== bignum.c (ESP-IDF fork): snippet hash 399df0bf (local .wfp: line 671) -> 285 records
+   [   0] md5=007b9bcafc173bf1f90dea42364c1110 line=535
+   [   1] md5=00ae0549f74c81b3094440cfe13509aa line=736
+   ...
+   [ 224] md5=c9a1eaf1be80997078c630d56455228f line=671    <-- ground-truth file, exact line
+
+== core_cm4.h (CMSIS 5.9.0): snippet hash 39541f1a (local .wfp: line 994) -> 736 records
+   [   0] md5=0005379845514c3b3019df75e0cd5d3e line=939
+   [   1] md5=0090ac54a11bd24c007c8e0a20283c40 line=864
+   [   2] md5=01b1162f6b1eb3c20e082cf9979a7187 line=849
+   ...
+   [  34] md5=0b50476c9eb684ea3d9e3c1c08aa24bd line=994    <-- ground-truth file, exact line
+```
+
+Reading these: one 32-bit snippet hash maps to **hundreds of files** that all
+contain that snippet — each record is just "this file MD5 contains it at this
+line". The same code fragment sits at line 68 in one file and line 11667 in
+another (vendored inside amalgamations/different versions). Nothing identifies
+which record is "right"; identification comes only from the *co-occurrence* of
+many snippet hashes agreeing on the same MD5 (the vote in `wfp_pipeline.py`),
+and the returned MD5s must still be resolved through `file-url` (or better) for
+any naming — the two-level `hash → MD5 → exemplar-URL` chain is the entire
+offline story.
+
 ### Scale and fanout (shard `39` sampling)
 
 - ~10.4% of the 16.7M map slots are occupied → ~1.7M distinct hashes/shard,
