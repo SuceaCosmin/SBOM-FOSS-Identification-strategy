@@ -419,6 +419,21 @@ bulk) shrinks that ~3–4×, i.e. **~100–300 MB — comfortably bundleable ins
 scanner deployment**, vindicating the two-tier rollout model (thin artifact
 everywhere, full KB central for evidence).
 
+**Queued follow-up (2026-07-18): plain-JSON artifact feasibility.** Evaluate
+making the *canonical* export format plain, pretty-printed JSON instead of a
+gzipped blob — rationale: the artifact is the scanner's reference data, and a
+directly inspectable/diffable file lets a technical user verify what the
+scanner trusts instead of trusting it blindly (the same auditability bar an
+SBOM tool asks of everyone else's supply chain). To measure/decide: plain and
+pretty-printed sizes at 3-component and extrapolated scale (gz 48 MB likely
+≈200–250 MB compact / ≈350–450 MB pretty); whether splitting per component
+(one browsable file each, e.g. `freertos.json`, plus a tiny manifest) keeps
+files human-navigable; and whether compression should be demoted to a
+transport-only encoding (registry/download) with plain JSON on disk. Interacts
+with the binary-wfp-encoding idea above — the likely landing zone is a hybrid:
+human-auditable JSON for `releases` + `files` (the attribution-bearing parts),
+with the bulky machine-only `wfp` index either separate or binary.
+
 ### Verdict so far
 
 `minr` does industrialize the curated approach: one command per release with

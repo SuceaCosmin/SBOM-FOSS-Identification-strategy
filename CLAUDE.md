@@ -141,7 +141,11 @@ findings suggest revisiting a decision.
   experiment README). Known refinements: widen snippet-tier sets to windows
   before intersecting (coherent heavy forks over-trigger MIXED), and the
   normalized-hash tier for header-only edits. Remaining subtasks: hybrid
-  curated-first/CC0-fallback lookup path.
+  curated-first/CC0-fallback lookup path; **plain-JSON artifact feasibility**
+  (queued 2026-07-18 — evaluate pretty-printed inspectable JSON as the
+  canonical export format, compression as transport-only, likely hybrid with
+  per-component splits; auditability rationale + measurement plan in the
+  experiment README).
 - **Next up (designated 2026-07-18): the OSV.dev vulnerability-scanning fitness
   test** — open item 2 in
   [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
