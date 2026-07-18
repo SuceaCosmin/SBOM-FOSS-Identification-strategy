@@ -129,9 +129,32 @@ findings suggest revisiting a decision.
   table natively stores one record per containing release (verified: shared
   `core_cm0.h` hash → both 5.8.0 and 5.9.0 records), so the bespoke
   tag-set/window/consistency logic ports as a thin post-processor over the KB
-  (ldb CLI or the osskb experiment's clean-room Python reader). Remaining
-  subtasks: hybrid curated-first/CC0-fallback lookup path;
-  operational-cost extrapolation to the full roadmap list.
+  (ldb CLI or the osskb experiment's clean-room Python reader). **Lightweight-export prototype done (2026-07-18)**:
+  the whole 3-component KB exported clean-room to one **48 MB gzipped JSON**
+  (`export_lightweight.py`), and `validate_export.py` reproduced all 12 corpus
+  ground truths from the artifact alone — fixing the engine's fake-mix problem
+  (verbatim CMSIS trees → CONSISTENT 5.9.0 via release-set intersection) and
+  improving modified-fork version assignment (NXP mbedTLS → exactly 2.28.10);
+  extrapolates to ~100–300 MB for the full roadmap → two-tier rollout model
+  validated (thin bundled artifact + central full KB for evidence; the
+  KB-as-versioned-pulled-artifact distribution strategy is documented in the
+  experiment README). Known refinements: widen snippet-tier sets to windows
+  before intersecting (coherent heavy forks over-trigger MIXED), and the
+  normalized-hash tier for header-only edits. Remaining subtasks: hybrid
+  curated-first/CC0-fallback lookup path.
+- **Next up (designated 2026-07-18): the OSV.dev vulnerability-scanning fitness
+  test** — open item 2 in
+  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
+  reframed there now that the pipeline produces validated purl+version output
+  end-to-end: probe OSV.dev with the corpus ground truths (mbedTLS 2.28.x /
+  FreeRTOS 10.4.x have well-documented CVEs) and test purl recognition
+  (GitHub-flavored vs ecosystem coordinates), version-set behavior against OSV
+  ranges, and the CMSIS umbrella-granularity effect. This exercises the
+  research's actual end-goal bar (SBOMs that drive vuln scanning) and feeds the
+  metadata-mapping open item. Runner-up alternative if breadth is preferred:
+  lwIP as the fourth component (roadmap Tier 1 #1 — now cheap via the minr
+  pipeline, stresses the port-layer-vs-core question), or FatFs as the
+  adversarial no-git-upstream case.
   The 2026-07-16 decision (see the Decision paragraph in the reference-corpus
   section below) upgrades this task's framing: minr is no longer "an alternative
   to explore" but **the industrialization of the chosen backbone** (curated

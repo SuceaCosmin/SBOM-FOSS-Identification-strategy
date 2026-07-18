@@ -57,6 +57,43 @@ reference DBs.
 - `scanoss/engine`'s default branch is `main` while ldb/minr use `master` — trivial,
   but it broke the first scripted build.
 
+## Reproducing the artifact (`results/export.json.gz` — gitignored, regenerable)
+
+The 48 MB export artifact is deliberately **not** committed; this exact chain
+rebuilds it from nothing but this folder + upstream GitHub (all steps ran
+2026-07-18 on Docker Desktop/WSL2; `<repo>` = this repository's root):
+
+```sh
+# 1. Build the GPL stack container (ldb/minr/engine from source)
+docker build -t scanoss-stack general/experiments/minr-self-mining/
+
+# 2. Mine all three components into a persistent KB volume (~11 min total)
+for c in freertos mbedtls cmsis; do
+  docker run --rm -v scanoss-ldb:/var/lib/ldb -v "<repo>:/repo:ro" scanoss-stack \
+    bash /repo/general/experiments/minr-self-mining/mine_$c.sh
+done
+
+# 3. Collapse LDB's zero-filled map preallocation (103 GB-class -> ~2 GB)
+docker run --rm -v scanoss-ldb:/var/lib/ldb scanoss-stack \
+  find /var/lib/ldb/oss -name "*.ldb" -exec fallocate -d {} \;
+
+# 4. Export the lightweight artifact (~9 min, clean-room reader, no GPL)
+docker run --rm -v scanoss-ldb:/var/lib/ldb:ro -v "<repo>:/repo" python:3.12-slim \
+  python /repo/general/experiments/minr-self-mining/export_lightweight.py \
+  /var/lib/ldb/oss /repo/general/experiments/minr-self-mining/results/export.json.gz
+
+# 5. Validate against the ground-truth corpus (host: python + scanoss-py)
+python general/experiments/minr-self-mining/validate_export.py \
+  general/experiments/minr-self-mining/results/export.json.gz \
+  components/freertos/corpus/* components/mbedtls/corpus/* components/cmsis/corpus/*
+```
+
+Caveat on bit-exactness: re-mining pulls whatever the GitHub tag archives serve
+*today*, so a rebuilt artifact is content-equivalent but not guaranteed
+byte-identical to the 2026-07-18 one (and release tags could in principle move).
+The scan *results* in `results/*/` are committed, so any regeneration can be
+diffed against the recorded ground-truth outcomes.
+
 ## Results (FreeRTOS baseline, 2026-07-18)
 
 ### 1. Attribution by construction: confirmed
@@ -301,6 +338,86 @@ vs 1.2 TiB for the CC0 world-KB that carries *less* information per entry
 imports would trim several GB more. Mining effort at this scale, extrapolating
 ~2–5 min per dozen releases: **on the order of an hour or two of wall time for
 the entire component list**, trivially parallelizable and incremental per release.
+
+### Queued follow-up (2026-07-18, not started): lightweight-export prototype + rollout model
+
+The KB's runtime format need not be its storage format. Since the LDB layout is
+readable clean-room (~200 lines of Python, already written for
+[osskb-open-dataset](../osskb-open-dataset/README.md)), a **compact export** —
+per-file hashes + winnowing prints + full containing-release sets, *no* sources,
+no quality/copyright — should collapse the shippable identification artifact from
+GBs to tens of MB, embeddable directly in a scanner, GPL-free at runtime. The
+prototype should measure: export size for the 3-component KB, whether the ported
+bespoke matcher (tag-set/window/consistency logic) over the export reproduces the
+baseline results, and what's lost vs the full engine (snippet line-map evidence
+needs sources).
+
+This prototype also decides the **rollout model** for the company-scale scenario
+(discussed 2026-07-18). Candidate models:
+
+1. **Bundle the full KB per machine** — simplest, fully offline; real cost is
+   re-shipping on every KB refresh, not disk (~40 GB × N machines is a rounding
+   error and should not drive the decision).
+2. **Self-hosted REST service** — SCANOSS's own API protocol over our engine;
+   existing clients (`scanoss-py`, SBOM Workbench) work unchanged, fingerprints
+   stay in-house, no rate limits. Costs: an always-on SPOF, a network dependency
+   in CI/air-gapped environments, and *unversioned answers* (a live API replies
+   from whatever the KB contains that day).
+3. **KB as a versioned pulled artifact** (preferred direction, noted 2026-07-18):
+   publish each KB build to an internal artifact registry as a pinned, versioned
+   blob (like a container image); scanners pull-and-cache on first use and scan
+   locally. The KB being ~95% zeros means the compressed artifact shrinks to
+   roughly real-data size (single-digit GB even at full-roadmap scale; zstd of a
+   sparse tar). This keeps the central single-source-of-truth and one update
+   point *without* operating a service, and gives **SBOM reproducibility for
+   free**: a scan pinned to "KB snapshot 26.07" provably yields the same answer
+   when regenerated later — compliance-grade behavior a live API can't offer.
+4. **Two-tier (likely end state)**: the thin export (this prototype) bundled
+   offline in every scanner for identification + attribution; the full KB —
+   distributed per model 3, or served per model 2 — only for evidence/deep-dive
+   queries (snippet line maps need the `sources` table).
+
+## Results (lightweight-export prototype, 2026-07-18)
+
+`export_lightweight.py` (clean-room LDB walk, no GPL code in the export path or
+artifact) emitted the whole 3-component / 32-release identification KB as
+**one 48.1 MB gzipped JSON**: 32 release records, 10,341 file→release-set
+entries, 445,774 snippet-hash→(file,line) entries. Sources and the detection
+tables stay in the full KB by design (evidence tier). Export walk: ~9 min
+single-threaded (dominated by reading sparse maps; `SEEK_DATA`/parallelism
+would cut it to seconds — not worth it for a prototype).
+
+`validate_export.py` then rescanned **all twelve corpus trees using only the
+artifact** (exact-MD5 tier + snippet-vote tier over locally generated
+`scanoss-py` fingerprints + the bespoke cross-file release-set intersection):
+
+- **All 12 tree-level identifications correct** — right purl, component, and
+  declared license everywhere; both negative controls cleanly NOT IDENTIFIED.
+- **The engine's fake-mix problem is fixed**: the verbatim CMSIS vendor trees
+  (which the engine reported as 5.8/5.9 mixes) now yield
+  `CONSISTENT — all files coexist in release(s): 5.9.0` via set intersection;
+  both genuine synthetic mixes still trigger the MIXED warning with the rogue
+  file correctly isolated (`core_cm4.h`→5.6.0, `bignum.c`→3.5.0,
+  `queue.c`→11.0.0).
+- **Version assignment improved over the engine on modified forks too**: NXP's
+  4-of-5-modified mbedTLS fork intersects to exactly 2.28.10; Espressif's
+  mbedTLS fork to {3.6.1, 3.6.2} — honestly containing the true 3.6.2 base the
+  engine's point answer missed; FreeRTOS `tasks.c` snippet-voted to 10.5.1, the
+  documented fork base.
+- **Known refinements surfaced** (both already-known lessons, now with a
+  concrete fix location): (a) snippet-tier release sets are near-point answers,
+  so heavily modified *coherent* forks (esp-idf FreeRTOS, ST mbedTLS) can
+  over-trigger the MIXED verdict — the snippet tier should widen to a
+  version window / union of top candidates before intersecting; (b) tiny files
+  are snippet-noisy (ST's `version.h` at 38 snippets dragged to 3.5.0) — the
+  normalized-hash tier would exact-match those SPDX-only edits and pull ST's
+  intersection to exactly {3.6.6}.
+
+**Size extrapolation**: 48 MB/gz for 3 components → order **0.5 GB for the full
+30–50-repo roadmap** as naive JSON; a binary encoding of the wfp index (the
+bulk) shrinks that ~3–4×, i.e. **~100–300 MB — comfortably bundleable inside a
+scanner deployment**, vindicating the two-tier rollout model (thin artifact
+everywhere, full KB central for evidence).
 
 ### Verdict so far
 

@@ -296,10 +296,20 @@ open investigation, deliberately left for future sessions:
    vendored copy sits deeper); fork-relationship lookups via the GitHub API; a small
    curated repo→upstream alias table (orders of magnitude cheaper than curating
    fingerprint DBs).
-2. **Vulnerability-scanning fitness test** — take OSSKB's raw purl+version output for
-   our ground-truth corpus and run it through OSV.dev; compare the CVE sets against
-   what the *correct* upstream purl+version returns. This quantifies exactly how much
-   the attribution gap costs at the vuln-scanning end, on real data.
+2. **Vulnerability-scanning fitness test — designated next task (2026-07-18)** —
+   feed purl+version output into OSV.dev and check that real, known CVEs come
+   back. Originally framed around OSSKB's raw output (quantifying what the
+   attribution gap costs at the vuln-scanning end); now that the self-mining
+   pipeline (open item 4) produces *validated* purl+version answers end-to-end,
+   the primary question inverts: **does our own pipeline's output drive OSV.dev
+   correctly?** Concretely: probe with the corpus ground truths (mbedTLS 2.28.x
+   and FreeRTOS 10.4.x have well-documented CVEs); test whether OSV recognizes
+   the GitHub-flavored purls we declare (`pkg:github/mbed-tls/mbedtls`) or needs
+   ecosystem/`pkg:generic` coordinates; how version *sets* like {3.6.1, 3.6.2}
+   behave against OSV version ranges; and whether the CMSIS umbrella-granularity
+   choice breaks lookup. Feeds directly into item 5 (metadata-mapping layers).
+   The original OSSKB-raw-output comparison remains worth running alongside, as
+   the quantified "cost of the attribution gap" number.
 3. ~~**The downloadable CC0 dataset** (`osskb-core-open-dataset`) — fetch and inspect~~
    **RESOLVED 2026-07-13** — inspected empirically, see
    [experiments/osskb-open-dataset](experiments/osskb-open-dataset/README.md) and
@@ -336,7 +346,14 @@ open investigation, deliberately left for future sessions:
    **full containing-release list is stored natively in the self-mined `file`
    table** (one record per containing URL, verified by direct ldb lookup) — the
    recover-the-URL-list subtask is answered by construction, and the bespoke
-   version logic can run as a thin post-processor over the minr KB.
+   version logic can run as a thin post-processor over the minr KB. The
+   **lightweight-export prototype ran the same day**: the 3-component KB
+   exported clean-room to one 48 MB gzipped JSON, and a matcher using only that
+   artifact reproduced all 12 corpus ground truths — release-set intersection
+   fixed the engine's fake-mix reporting and sharpened modified-fork version
+   assignment; extrapolates to ~100–300 MB for the full roadmap list, validating
+   the two-tier rollout (thin bundled artifact for identification, central
+   versioned full KB for evidence — models documented in the experiment README).
    The task, concretely:
    - **Baseline experiment**: mine the three researched components (FreeRTOS,
      mbedTLS, CMSIS — upstreams plus the known vendor forks from `components/*/

@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# Regenerable KB export artifacts (see general/experiments/minr-self-mining/README.md
+# "Reproducing the artifact" — rebuilt from the mining scripts + exporter)
+general/experiments/minr-self-mining/results/export.json.gz
