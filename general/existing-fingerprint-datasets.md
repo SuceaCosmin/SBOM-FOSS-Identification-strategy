@@ -308,11 +308,36 @@ open investigation, deliberately left for future sessions:
    list. Attribution post-processing (item 1) cannot be built on it; the count is
    however a valuable new routing signal. Item 1 therefore depends on the hosted
    API, self-mining, or GitHub-side resolution — not on the offline dataset.
-4. **Self-mining implications (`minr`) — designated next investigation
-   (task added 2026-07-13, elevated by the open-dataset findings above).**
+4. **Self-mining implications (`minr`) — investigation started 2026-07-18**
+   (task added 2026-07-13, elevated by the open-dataset findings above).
    With item 3 resolved negatively (the offline dataset can't carry attribution),
-   self-mining is the remaining reuse-first path to an offline KB that *can*. The
-   task, concretely:
+   self-mining is the remaining reuse-first path to an offline KB that *can*.
+   **First results** (FreeRTOS baseline, in
+   [experiments/minr-self-mining](experiments/minr-self-mining/README.md)):
+   attribution-by-construction confirmed end-to-end (declared purl/version/license
+   round-trip into every match); verbatim + mixed-version corpus trees matched
+   exactly; the modified esp-idf fork detected via snippets but version-pinned to a
+   near-neighbor point release instead of a window; 13 releases mined+imported in
+   5m24s; KB disk size dominated by a ~21 GB-per-table zero-filled-map
+   preallocation floor (103 GB for one component), collapsed to 408 MB by
+   hole-punching with identical scan results. **mbedTLS baseline (same day)**:
+   12 releases into the same KB in 3m25s (KB → 1.4 GB allocated); attribution
+   again perfect incl. a clean cJSON negative control; NXP's 4-of-5-files-modified
+   2.28.10 fork pinned exactly by snippet voting; ST's SPDX-header relicense edit
+   knocked its whole tree off the exact-MD5 tier (tree-scale confirmation of the
+   normalized-hash-tier requirement); release-shared file content gets an
+   arbitrary single-version tie-break (the bespoke tag-set/window layer remains
+   better for version assignment). **CMSIS baseline (same day)**: 7 releases
+   across the CMSIS_5/CMSIS_6 split in 1m44s (KB → 2.0 GB for all three
+   components / 32 releases); attribution perfect, control clean — and two
+   closing findings: engine per-file version tie-breaks make a verbatim
+   single-release tree indistinguishable from a mixed-version tree (the bespoke
+   cross-file tag-set intersection is the differentiator), and the
+   **full containing-release list is stored natively in the self-mined `file`
+   table** (one record per containing URL, verified by direct ldb lookup) — the
+   recover-the-URL-list subtask is answered by construction, and the bespoke
+   version logic can run as a thin post-processor over the minr KB.
+   The task, concretely:
    - **Baseline experiment**: mine the three researched components (FreeRTOS,
      mbedTLS, CMSIS — upstreams plus the known vendor forks from `components/*/
      corpus/`) into a self-hosted LDB KB with `minr`, and compare match quality

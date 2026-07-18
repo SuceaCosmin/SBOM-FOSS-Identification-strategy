@@ -1,0 +1,218 @@
+{
+  "/repo/components/cmsis/corpus/nxp-legacy-mcux-sdk/CMSIS/Include/cmsis_version.h": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "4d1478bdc703e7712834fb798c29a5d7",
+      "source_hash": "4d1478bdc703e7712834fb798c29a5d7",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "5/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/arm-software/cmsis_5"
+      ],
+      "vendor": "ARM-software",
+      "component": "CMSIS",
+      "version": "5.9.0",
+      "latest": "5.9.0",
+      "url": "https://github.com/ARM-software/CMSIS_5",
+      "status": "pending",
+      "release_date": "2022-05-02",
+      "file": "CMSIS/Core/Include/cmsis_version.h",
+      "url_hash": "50cc2b8f979228cc12430f4a2c7743bd",
+      "licenses": [
+        {
+          "name": "Apache-2.0",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/Apache-2.0.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (c) 2009-2022 ARM Limited. All rights reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "28aeffa28076",
+        "flags": "0",
+        "elapsed": "0.007375s"
+      }
+    }
+  ],
+  "/repo/components/cmsis/corpus/nxp-legacy-mcux-sdk/CMSIS/Include/core_cm0.h": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "3da60937604dd39bd7b4c584a936b1f9",
+      "source_hash": "3da60937604dd39bd7b4c584a936b1f9",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/arm-software/cmsis_5"
+      ],
+      "vendor": "ARM-software",
+      "component": "CMSIS",
+      "version": "5.8.0",
+      "latest": "5.9.0",
+      "url": "https://github.com/ARM-software/CMSIS_5",
+      "status": "pending",
+      "release_date": "2021-06-29",
+      "file": "CMSIS/Core/Include/core_cm0.h",
+      "url_hash": "640821a249f05c02a9586d0c57c49789",
+      "licenses": [
+        {
+          "name": "Apache-2.0",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/Apache-2.0.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (c) 2009-2019 Arm Limited. All rights reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "28aeffa28076",
+        "flags": "0",
+        "elapsed": "0.008274s"
+      }
+    }
+  ],
+  "/repo/components/cmsis/corpus/nxp-legacy-mcux-sdk/CMSIS/Include/core_cm33.h": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "1cf3742dac45b634a950e6ea0a325203",
+      "source_hash": "1cf3742dac45b634a950e6ea0a325203",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/arm-software/cmsis_5"
+      ],
+      "vendor": "ARM-software",
+      "component": "CMSIS",
+      "version": "5.9.0",
+      "latest": "5.9.0",
+      "url": "https://github.com/ARM-software/CMSIS_5",
+      "status": "pending",
+      "release_date": "2022-05-02",
+      "file": "CMSIS/Core/Include/core_cm33.h",
+      "url_hash": "50cc2b8f979228cc12430f4a2c7743bd",
+      "licenses": [
+        {
+          "name": "Apache-2.0",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/Apache-2.0.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (c) 2009-2021 Arm Limited. All rights reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "28aeffa28076",
+        "flags": "0",
+        "elapsed": "0.012333s"
+      }
+    }
+  ],
+  "/repo/components/cmsis/corpus/nxp-legacy-mcux-sdk/CMSIS/Include/core_cm4.h": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "0b50476c9eb684ea3d9e3c1c08aa24bd",
+      "source_hash": "0b50476c9eb684ea3d9e3c1c08aa24bd",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/arm-software/cmsis_5"
+      ],
+      "vendor": "ARM-software",
+      "component": "CMSIS",
+      "version": "5.8.0",
+      "latest": "5.9.0",
+      "url": "https://github.com/ARM-software/CMSIS_5",
+      "status": "pending",
+      "release_date": "2021-06-29",
+      "file": "CMSIS/Core/Include/core_cm4.h",
+      "url_hash": "640821a249f05c02a9586d0c57c49789",
+      "licenses": [
+        {
+          "name": "Apache-2.0",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/Apache-2.0.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (c) 2009-2020 Arm Limited. All rights reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "28aeffa28076",
+        "flags": "0",
+        "elapsed": "0.016693s"
+      }
+    }
+  ]
+}

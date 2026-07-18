@@ -1,0 +1,154 @@
+{
+  "/repo/components/freertos/corpus/mixed-version-synthetic/list.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "319e3c938206055f3180fc4bfd06b846",
+      "source_hash": "319e3c938206055f3180fc4bfd06b846",
+      "file_url": " ",
+      "quality": [],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "10.4.3",
+      "latest": "10.4.3",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2020-12-15",
+      "file": "list.c",
+      "url_hash": "1c95fbc3fb3d80a89dcdba05f2ee80ae",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2020 Amazon.com; Inc. or its affiliates.  All Rights Reserved. ",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.008939s"
+      }
+    }
+  ],
+  "/repo/components/freertos/corpus/mixed-version-synthetic/queue.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "81f4c1a021004af9e5733803021299d5",
+      "source_hash": "81f4c1a021004af9e5733803021299d5",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "11.0.0",
+      "latest": "11.0.0",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2023-12-18",
+      "file": "queue.c",
+      "url_hash": "04ab3b015f0acf73d7a86ec74bf18ede",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2021 Amazon.com; Inc. or its affiliates.  All Rights Reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.009240s"
+      }
+    }
+  ],
+  "/repo/components/freertos/corpus/mixed-version-synthetic/tasks.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "b8cc04dc3278391e191045c194f2e96e",
+      "source_hash": "b8cc04dc3278391e191045c194f2e96e",
+      "file_url": " ",
+      "quality": [],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "10.4.3",
+      "latest": "10.4.3",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2020-12-15",
+      "file": "tasks.c",
+      "url_hash": "1c95fbc3fb3d80a89dcdba05f2ee80ae",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2020 Amazon.com; Inc. or its affiliates.  All Rights Reserved. ",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.011559s"
+      }
+    }
+  ]
+}

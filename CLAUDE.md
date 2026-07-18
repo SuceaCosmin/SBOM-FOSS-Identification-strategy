@@ -97,14 +97,41 @@ findings suggest revisiting a decision.
 - **Roadmap**: a prioritized, automotive-first list of candidate components to research
   next lives in [general/component-roadmap.md](general/component-roadmap.md) (written
   2026-07-08) — consult it when picking a new component instead of re-deriving candidates.
-- **Next up**: the **self-mining (`minr`) investigation** is the designated next
-  task (added 2026-07-13) — open investigation item 4 in
-  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
-  expanded into concrete subtasks there: baseline mining of the three researched
-  components vs the bespoke reference DBs, attribution-by-construction validation,
-  whether self-mining recovers the full containing-URL list the CC0 export drops,
-  operational-cost measurements for the company-scale scenario, the GPL
-  process-boundary pattern, and a hybrid curated-KB + CC0-fallback lookup path.
+- **In progress**: the **self-mining (`minr`) investigation** (open item 4 in
+  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md))
+  — **started 2026-07-18**, first results in
+  [general/experiments/minr-self-mining](general/experiments/minr-self-mining/README.md):
+  the full GPL stack (ldb/minr/engine) built and run in Docker; 13 FreeRTOS-Kernel
+  releases mined with declared metadata and imported in 5m24s;
+  **attribution-by-construction confirmed** (declared purl/version/license
+  round-trip into every match — the arbitrary-repo failure mode is structurally
+  impossible in a curated KB); verbatim (NXP → V11.2.0) and mixed-version corpus
+  trees matched exactly; the modified esp-idf fork detected via snippets (93–99%)
+  but version-pinned to a near-neighbor point release (bespoke matcher's
+  version-window output remains better for that); raw-MD5 exact matching shown
+  fragile to header-comment edits (Espressif's `list.c`); LDB disk = ~21 GB/table
+  zero-filled-map preallocation floor (103 GB for one component), **resolved** by
+  hole-punching (`fallocate --dig-holes`: 103 GB → 408 MB allocated, scan results
+  identical — copies must be sparse-aware). **mbedTLS baseline also done
+  (2026-07-18)**: 12 releases mined into the same KB in 3m25s (KB → 1.4 GB
+  allocated, wfp-dominated); attribution again perfect across all four real/
+  synthetic trees and the cJSON negative control returned no match; NXP's heavily
+  modified 2.28.10 fork version-pinned *exactly* via snippets, while ST's tree
+  showed the raw-MD5 fragility finding at full scale (the SPDX-header edit pushes
+  the whole tree to snippet path) and release-shared content showed the engine's
+  arbitrary version tie-break (3.6.0 files reported as 3.6.1). **CMSIS baseline
+  also done (2026-07-18)**: 7 releases across the CMSIS_5/CMSIS_6 repo split in
+  1m44s (KB → 2.0 GB); attribution perfect, negative control clean, synthetic
+  mix's rogue `core_cm4.h` isolated — but the verbatim-5.9.0 vendor trees came
+  out looking like 5.8/5.9 mixes (per-file tie-breaks on release-shared content),
+  i.e. **engine output can't distinguish a verbatim tree from a mixed tree**;
+  and the **containing-URL-list subtask resolved by construction**: the `file`
+  table natively stores one record per containing release (verified: shared
+  `core_cm0.h` hash → both 5.8.0 and 5.9.0 records), so the bespoke
+  tag-set/window/consistency logic ports as a thin post-processor over the KB
+  (ldb CLI or the osskb experiment's clean-room Python reader). Remaining
+  subtasks: hybrid curated-first/CC0-fallback lookup path;
+  operational-cost extrapolation to the full roadmap list.
   The 2026-07-16 decision (see the Decision paragraph in the reference-corpus
   section below) upgrades this task's framing: minr is no longer "an alternative
   to explore" but **the industrialization of the chosen backbone** (curated
@@ -272,3 +299,7 @@ there's real content.
   trying to answer and what the result was, so it doesn't become an unexplained script.
 - When citing external tools/projects, name them explicitly (e.g. "ScanOSS", "TLSH",
   "ssdeep") rather than vague references — this repo is meant to be a durable reference.
+- **JSON files checked into this repo must be pretty-printed** (indented, one field
+  per line), never single-line blobs — they're read by humans browsing findings, not
+  just by scripts. When a tool emits compact JSON (e.g. `scanoss` scan output), pipe
+  it through `jq .` / `python -m json.tool` before saving.

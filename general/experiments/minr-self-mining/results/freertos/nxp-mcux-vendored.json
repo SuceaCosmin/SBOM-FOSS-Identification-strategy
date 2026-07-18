@@ -1,0 +1,164 @@
+{
+  "/repo/components/freertos/corpus/nxp-mcux-vendored/list.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "5cd6e29ee7e76170879e6bb3add95280",
+      "source_hash": "5cd6e29ee7e76170879e6bb3add95280",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "5/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "11.2.0",
+      "latest": "11.2.0",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2025-03-04",
+      "file": "list.c",
+      "url_hash": "4444449c13b422154140ad4a1c1ac669",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2021 Amazon.com; Inc. or its affiliates. All Rights Reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.017406s"
+      }
+    }
+  ],
+  "/repo/components/freertos/corpus/nxp-mcux-vendored/queue.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "761ea337fb4398af40be245ef75d8b8c",
+      "source_hash": "761ea337fb4398af40be245ef75d8b8c",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "11.2.0",
+      "latest": "11.2.0",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2025-03-04",
+      "file": "queue.c",
+      "url_hash": "4444449c13b422154140ad4a1c1ac669",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2021 Amazon.com; Inc. or its affiliates. All Rights Reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.015884s"
+      }
+    }
+  ],
+  "/repo/components/freertos/corpus/nxp-mcux-vendored/tasks.c": [
+    {
+      "id": "file",
+      "lines": "all",
+      "oss_lines": "all",
+      "matched": "100%",
+      "file_hash": "d9244f168b0e51fde4c8d4b3b91c56fc",
+      "source_hash": "d9244f168b0e51fde4c8d4b3b91c56fc",
+      "file_url": " ",
+      "quality": [
+        {
+          "score": "3/5",
+          "source": "best_practices"
+        }
+      ],
+      "cryptography": [],
+      "purl": [
+        "pkg:github/freertos/freertos-kernel"
+      ],
+      "vendor": "FreeRTOS",
+      "component": "FreeRTOS-Kernel",
+      "version": "11.2.0",
+      "latest": "11.2.0",
+      "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel",
+      "status": "pending",
+      "release_date": "2025-03-04",
+      "file": "tasks.c",
+      "url_hash": "4444449c13b422154140ad4a1c1ac669",
+      "licenses": [
+        {
+          "name": "MIT",
+          "source": "component_declared",
+          "url": "https://spdx.org/licenses/MIT.html"
+        }
+      ],
+      "url_stats": {},
+      "copyrights": [
+        {
+          "name": "Copyright (C) 2021 Amazon.com; Inc. or its affiliates. All Rights Reserved.",
+          "source": "file_header"
+        }
+      ],
+      "server": {
+        "version": "5.4.27",
+        "kb_version": {
+          "monthly": "26.07",
+          "daily": "26.07.18"
+        },
+        "hostname": "a4ec74c78fd5",
+        "flags": "0",
+        "elapsed": "0.019243s"
+      }
+    }
+  ]
+}
