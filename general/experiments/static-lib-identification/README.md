@@ -214,22 +214,90 @@ manifest-vs-detected discrepancies are themselves a valuable scanner output.
    into the delivered binary. Worth noting for eventual SBOM semantics
    (`.a` evidence is closer to the deployed artifact).
 
-## Next steps (in rough order)
+## Symbol-set version-fingerprint prototype (2026-07-21) — VALIDATED
 
-1. **Symbol-set version fingerprinting prototype**: build a small reference
-   DB of nanopb releases (defined `pb_*` symbol surface per version — nanopb
-   is ideal: small, clean tags, and we have a real hidden-copy ground truth
-   in `sidewalk_fsk_ble.a`); try to version-pin the embedded copy. Then
-   repeat for mbedTLS (symbol surface across 2.x/3.x should version-bucket
-   well) and validate against `libmbedcrypto.a` = 3.5.0 ground truth.
-2. Decide handling of **member-name normalization** (`.c.obj` vs `.o`,
-   possible name truncation in ancient `ar` formats).
-3. Survey **IAR/ticlang flavor variance** on symbol sets (expected: none for
-   C symbols; verify).
-4. Check the remaining TI-authored 588 libs wholesale for OSS symbol
-   signatures (batch scan, not one-by-one).
-5. The hard tier (stripped/LTO/no member names) stays parked until a real
-   artifact exhibiting it shows up; this SDK does not.
+The designated next step was built and validated the same day. Three scripts,
+all clean-room (no binutils/compiler dependency anywhere):
+
+- **`extract_symbols.py`** — parses the ar format and each member's ELF
+  symbol table directly (ELF32 *and* ELF64 little-endian; GNU + BSD member
+  naming); emits defined GLOBAL/WEAK symbols per member and flat.
+- **`mine_ref_symbols.py`** — builds the per-release reference sets **from
+  source, no compilation**: checks out each git tag and extracts candidate
+  external function names from the component's headers by prototype-pattern
+  matching (comment/preprocessor-stripped). Confirms the no-compiler thesis:
+  reference mining is a source-only operation, exactly like minr's.
+- **`match_symbols.py`** — ports the tag-set/window logic: observed symbols
+  must be a *subset* of a release's set (config-gated builds), releases
+  ranked by fewest soft absences; discriminating symbols listed as evidence.
+- Reference DBs checked in: `nanopb_ref_symbols.json` (26 releases,
+  0.3.6–0.4.9.1), `mbedtls_ref_symbols.json` (18 releases,
+  v2.28.0–v3.6.7).
+
+### Results (all ground truths hit, negative controls clean)
+
+| Target | Truth | Result |
+|---|---|---|
+| `libext_nanopb.a` (labeled prebuilt) | 0.3.9.3 (its own `pb.h`) | window {0.3.9 … 0.3.9.3} — truth inside, 4 releases wide |
+| nanopb hidden inside `sidewalk_fsk_ble.a` | undeclared | identical window {0.3.9 … 0.3.9.3} — pinned from symbols alone inside a 209-member proprietary blob |
+| `libmbedcrypto.a` | 3.5.0 (bundled `build_info.h`) | window {v3.5.0, v3.5.1, v3.5.2} — truth inside, 3 releases wide; 752/763 observed symbols known to DB |
+| `fatfs.a` vs nanopb DB | negative | NO MATCH |
+| `OneLib.a` (BLE stack) vs mbedTLS DB | negative | NO MATCH |
+
+**The mbedTLS result also positively refutes the vendor manifest**: observed
+symbols like `mbedtls_ct_memcpy_if` exist only in ≥ v3.5.0, so the manifest's
+claimed 3.4.0 is *excluded by binary evidence*, not just contradicted by the
+bundled headers. Detection out-performed the vendor's own declaration.
+
+### Prototype findings / limitations
+
+- **`libmbedcrypto.a` is an x86-64 host build** (ELF64, `e_machine=62`,
+  GCC/Ubuntu 20.04) shipped inside an ARM SDK — build detritus in
+  `library/` from TI's CMake run. Scanner lesson: parse arch-agnostically
+  (symbol names don't care), and treat "which architecture" as metadata,
+  not a filter.
+- Header-prototype mining misses **data symbols** (`extern const ...
+  mbedtls_ecdsa_info` etc. — no `(` after the name): 11/763 observed
+  symbols unknown to the DB. Harmless here; a data-declaration pattern can
+  close it later.
+- Version windows from symbols are **3–4 point releases wide** on these two
+  components — coarser than source hashing (as predicted) but exactly the
+  window-shaped output the existing consistency logic already handles.
+- One mined-set artifact (`psa_get_and_lock_key_slot_with_policy` appearing
+  version-bound when it shouldn't be) shows prototype-regex mining has
+  noise; a tree-sitter-grade extractor would clean it up if needed.
+
+## Next steps (decided 2026-07-21, in priority order)
+
+Principle: the prototype proved the concept — next moves either test its
+failure modes cheaply or connect it to the system it belongs to; no
+gold-plating.
+
+1. **De-risking sweeps** (one short session, tooling already exists):
+   - **gcc/IAR/ticlang variance check** — diff extracted symbol sets across
+     the three toolchain flavors of the *same* lib version (SPIFFS/FatFs
+     ship all three). Empirically verifies the compiler-independence claim
+     the whole tier rests on, instead of taking it on faith.
+   - **Batch-scan all 588 TI-authored libs** against both reference DBs:
+     false-positive stress test at scale (they should overwhelmingly say
+     NO MATCH) + hunt for more undeclared OSS (the nanopb precedent), and
+     the output doubles as a whole-SDK composition-report demo.
+2. **Integrate, don't expand**: fold symbol reference sets into the
+   minr-experiment lightweight-export artifact design (the mined JSONs are
+   a few hundred KB — trivial next to the 48 MB artifact). Makes the symbol
+   tier a first-class evidence type of the curated-KB backbone rather than
+   a side experiment. Mostly a design/writeup task.
+3. **Return to the deferred OSV.dev fitness test** — with the static-lib
+   scenario covered, the biggest program-level unknown is again the output
+   end (does purl+version output drive vuln scanning correctly?). The
+   mbedTLS result supplies a fresh test case: a shipping SDK whose binary
+   contains 3.5.x (known CVEs) while its manifest claims 3.4.0 — exactly
+   the story an SBOM-to-vuln-scan pipeline exists to tell.
+
+Deliberately deferred (polish, not risk): data-symbol mining (the 11/763
+unknown gap), member-name normalization policy (`.c.obj` vs `.o`,
+truncation in ancient ar formats), and the stripped/LTO hard tier (parked
+until a real artifact exhibits it; this SDK does not).
 
 ## Commands used (Cygwin binutils on Windows, PowerShell)
 

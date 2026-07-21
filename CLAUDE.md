@@ -178,10 +178,28 @@ findings suggest revisiting a decision.
   headers say 3.5.0), and Code Composer Studio has no SBOM-generation
   capability (it only ships ScanCode-generated SPDX for TI's compiler RTS) —
   so vendor manifests are a harvest/corroboration tier, not a substitute
-  for detection. **Next step designated: symbol-set version-fingerprint
-  prototype** — per-version defined-symbol reference DB, starting with
-  nanopb (real hidden-copy ground truth in the sidewalk lib) then mbedTLS
-  (`libmbedcrypto.a` = 3.5.0 ground truth from bundled headers).
+  for detection. **Symbol-set version-fingerprint prototype built and
+  validated (2026-07-21, same README)**: clean-room ar+ELF32/64 extractor,
+  source-only reference mining (git tag checkout + header prototype
+  patterns — the no-compiler thesis confirmed), and a subset-tolerant
+  window matcher. All ground truths hit: both nanopb copies (labeled
+  prebuilt *and* the hidden copy inside the proprietary sidewalk blob) →
+  window {0.3.9…0.3.9.3} containing the true 0.3.9.3; `libmbedcrypto.a` →
+  window {v3.5.0–v3.5.2} containing the true 3.5.0, **positively excluding
+  the manifest's claimed 3.4.0 from binary evidence alone**; both negative
+  controls NO MATCH. Bonus finding: `libmbedcrypto.a` is an x86-64 *host*
+  build shipped in the ARM SDK (build detritus — scanners must be
+  arch-agnostic). Windows are 3–4 point releases wide (coarser than source
+  hashing, as expected; same window-shaped output the consistency logic
+  handles). **Next steps decided 2026-07-21** (details in the experiment
+  README): (1) de-risking sweeps — gcc/IAR/ticlang symbol-set variance
+  check on same-version libs + batch-scan of all 588 TI-authored libs
+  (false-positive stress test / hidden-OSS hunt); (2) integrate symbol
+  reference sets into the lightweight-export artifact design; (3) then the
+  deferred OSV.dev fitness test reclaims the next-up slot, with the
+  manifest-says-3.4.0/binary-says-3.5.x mbedTLS case as a fresh test
+  input. Deferred as polish: data-symbol mining, member-name normalization
+  policy, stripped/LTO hard tier (parked until a real artifact).
 - **Deferred behind it (was next-up, designated 2026-07-18): the OSV.dev
   vulnerability-scanning fitness test** — open item 2 in
   [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
