@@ -146,8 +146,44 @@ findings suggest revisiting a decision.
   canonical export format, compression as transport-only, likely hybrid with
   per-component splits; auditability rationale + measurement plan in the
   experiment README).
-- **Next up (designated 2026-07-18): the OSV.dev vulnerability-scanning fitness
-  test** — open item 2 in
+- **In progress (promoted and started 2026-07-21): the static-library
+  (`*.a` + headers) identification investigation** — the open topic queued
+  2026-07-16, promoted over the OSV.dev fitness test by explicit decision
+  2026-07-21 (the pipeline isn't at the vuln-scanning stage yet; a real-world
+  TI encounter made this scenario concrete). **First triage session done
+  (2026-07-21)**, findings in
+  [general/experiments/static-lib-identification](general/experiments/static-lib-identification/README.md):
+  surveyed the locally installed TI SimpleLink CC13xx/CC26xx SDK 8.33.00.16
+  (684 archives, 1.4 GB; gcc/IAR/ticlang × several cores). All four cheap
+  signals validated with stock Cygwin binutils: `ar` member names preserve
+  upstream filenames (FatFs/mbedTLS member sets unmistakable and even
+  version-indicative); `nm` defined-symbol sets readable for both GCC and
+  IAR ELF and are the natural port of the tag-set fingerprinting approach;
+  `strings` is **confirm-only** (mbedTLS's `"3.5.0"` literal got compiled
+  into instruction immediates — absence proves nothing); bundled
+  source/headers often make the binary question moot (mbedTLS/FatFs/SPIFFS
+  ship full source next to the libs). Headline case: **nanopb embedded
+  wholesale and unannounced inside the proprietary 10.5 MB
+  `sidewalk_fsk_ble.a`** (members + `pb_*` symbols, no license strings) —
+  the opaque-carrier scenario proven on a shipping SDK. Also: TI's
+  `third_party\ecc` is TI-proprietary with a **no-disassembly license
+  clause** (limits how deep binary-similarity tiers may legally go —
+  metadata-tier signals must carry the load), and IAR `freertos.a` contains
+  only `portasm.s.o` (archive names mislead in both directions). **Vendor
+  SBOM/manifest reuse checked (2026-07-21, same README)**: TI ships a real
+  per-component manifest HTML at the SDK root and upstream SBOMs ride along
+  in vendored trees (AWS's `sbom.spdx` for FreeRTOS v10.5.1 with per-file
+  SHA1s), but the manifest is demonstrably unreliable on this very SDK
+  (nanopb entirely undeclared; Mbed-TLS declared 3.4.0 while shipped
+  headers say 3.5.0), and Code Composer Studio has no SBOM-generation
+  capability (it only ships ScanCode-generated SPDX for TI's compiler RTS) —
+  so vendor manifests are a harvest/corroboration tier, not a substitute
+  for detection. **Next step designated: symbol-set version-fingerprint
+  prototype** — per-version defined-symbol reference DB, starting with
+  nanopb (real hidden-copy ground truth in the sidewalk lib) then mbedTLS
+  (`libmbedcrypto.a` = 3.5.0 ground truth from bundled headers).
+- **Deferred behind it (was next-up, designated 2026-07-18): the OSV.dev
+  vulnerability-scanning fitness test** — open item 2 in
   [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
   reframed there now that the pipeline produces validated purl+version output
   end-to-end: probe OSV.dev with the corpus ground truths (mbedTLS 2.28.x /
@@ -187,8 +223,20 @@ findings suggest revisiting a decision.
   compiler/flag variance — candidate tools to evaluate include Ghidra BSim,
   FunctionSimSearch/binary CFG hashing). Note this **partially revises the
   "binary analysis out of scope" line** in the problem scope below — scoped to
-  static-library + header bundles, not general firmware-image analysis. Not
-  scheduled; documented so it isn't lost.
+  static-library + header bundles, not general firmware-image analysis.
+  **Re-raised 2026-07-21 with a concrete real-world case**: encountered in
+  practice in **Texas Instruments SDKs associated with Bluetooth Low Energy**
+  (the SimpleLink CC13xx/CC26xx family — the BLE stack ships as prebuilt
+  static libraries bundled with public headers, with only a thin app/profile
+  layer in source). This makes the topic no longer hypothetical, and the
+  artifact is obtainable: SimpleLink SDKs are freely downloadable from ti.com,
+  so the survey signals (ar member names, nm symbol tables, embedded strings,
+  header fingerprinting) can be run against the real thing locally — though
+  TI's license terms likely preclude checking the binaries into this repo as
+  corpus, so findings would be recorded as docs + scripts rather than
+  redistributable corpus files. **Promoted and started 2026-07-21** — see the
+  "In progress" bullet above and
+  [general/experiments/static-lib-identification](general/experiments/static-lib-identification/README.md).
 
 ## Low-priority deferred follow-ups
 
