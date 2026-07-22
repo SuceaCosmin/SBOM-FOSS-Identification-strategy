@@ -14,6 +14,17 @@ Topic-specific general docs in this folder:
   attribution. Stance: **reuse-first** — whether the attribution gap can be closed on
   top of reused data (instead of curated per-component DBs) is the doc's open
   investigation list for future sessions.
+- [fingerprint-detection-roadmap.md](fingerprint-detection-roadmap.md) — catalogue of
+  every fingerprint-based detection *technique* (exact hash, winnowing, file/tag-set,
+  symbol-set, AST, constant-table, function-level, fuzzy, binary CFG, …), marking
+  which are covered here and logging the uncovered ones as **low-priority TODOs**.
+  The technique counterpart to [component-roadmap.md](component-roadmap.md).
+- [sbom-generator-architecture.md](sbom-generator-architecture.md) — durable handoff
+  of architectural recommendations for the (separate) SBOM generator, grounded in
+  this repo's findings: curated-KB backbone, two-tier distribution,
+  evidence-producer/resolver split, selectable profiles, per-finding provenance, the
+  metadata-vs-disassembly legal boundary, canonical attribution, version windows.
+  Detection-core modelling only — output serialization stays out of scope.
 
 ## Component granularity
 

@@ -8,6 +8,13 @@ submodules with clean provenance). The findings from this repo will later inform
 generator built in a **separate** repository — do not implement a generator here, only
 the detection research and prototypes that will inform it.
 
+**Scope note (widened 2026-07-22)**: capturing *architectural recommendations/hints*
+for how the eventual generator should be modelled — grounded in this repo's findings,
+as a durable handoff — is now **in scope**, collected in
+[general/sbom-generator-architecture.md](general/sbom-generator-architecture.md).
+This does **not** change the two hard exclusions: don't build the generator here, and
+don't design output serialization (CycloneDX/SPDX) here (see "SBOM output format").
+
 When you (Claude) start a session in this repo, treat the scope below as settled context
 established with the user — don't re-ask these questions, but do flag if new
 findings suggest revisiting a decision.
@@ -97,6 +104,18 @@ findings suggest revisiting a decision.
 - **Roadmap**: a prioritized, automotive-first list of candidate components to research
   next lives in [general/component-roadmap.md](general/component-roadmap.md) (written
   2026-07-08) — consult it when picking a new component instead of re-deriving candidates.
+- **Technique roadmap** (added 2026-07-22):
+  [general/fingerprint-detection-roadmap.md](general/fingerprint-detection-roadmap.md)
+  catalogues every fingerprint *technique* (covered vs. not) and logs the uncovered
+  ones — AST-normalized (top), constant/data-table, function-level, fuzzy/MinHash,
+  binary CFG (parked) — as **low-priority TODOs**. Consult before proposing a "new"
+  detection idea.
+- **Architecture handoff** (added 2026-07-22, per the scope widening):
+  [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md)
+  collects architectural recommendations for the separate generator, each traced to a
+  finding (curated-KB backbone, two-tier distribution, evidence-producer/resolver
+  split, selectable profiles, per-finding provenance, metadata-vs-disassembly legal
+  boundary, canonical attribution, version windows). Detection-core modelling only.
 - **In progress**: the **self-mining (`minr`) investigation** (open item 4 in
   [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md))
   — **started 2026-07-18**, first results in
@@ -318,16 +337,28 @@ future session doesn't have to re-derive that they're low priority from scratch.
 
 ## Detection approaches under research
 
+The full catalogue of fingerprint techniques — covered vs. not, with priorities —
+lives in
+[general/fingerprint-detection-roadmap.md](general/fingerprint-detection-roadmap.md);
+consult it before proposing a "new" technique. The high-level families:
+
 1. **File/hash-based matching** — normalized-content hashing against known OSS file
-   versions (ScanCode/ORT-style).
+   versions (ScanCode/ORT-style). *(Covered.)*
 2. **Fingerprint/similarity matching** — token or AST-level fingerprints (winnowing,
    MinHash, fuzzy hashing) to catch modified copies. This is the highest-priority
-   technique given the "locally modified" focus above.
+   technique given the "locally modified" focus above. *(Token-winnowing covered;
+   AST/MinHash/fuzzy are logged as low-priority TODOs in the roadmap — AST is the
+   top uncovered one, targeting the identifier-rename case winnowing half-misses.)*
 3. **Metadata/string heuristics** — license headers, version macros, distinctive
-   `#define`s, author comments, embedded identifiers.
-4. Binary/firmware artifact analysis is out of scope for now — source-level only.
-   *(One scoped exception queued 2026-07-16 but not started: static-library
-   (`*.a`) + header bundles — see the "Open topic" bullet in Current status.)*
+   `#define`s, author comments, embedded identifiers. *(Used as a confirm-only
+   corroboration layer.)*
+4. **Symbol-set / static-library tier** — defined-symbol and `ar` member-name
+   fingerprints for prebuilt `*.a` + header bundles (the 2026-07-16 scoped exception
+   to "binary out of scope", promoted and validated 2026-07-21/22). Constant/data-
+   table fingerprinting and binary CFG/BSim similarity are the uncovered/parked
+   binary tiers in the roadmap.
+5. General firmware-image binary analysis remains out of scope — source-level plus
+   the static-library-bundle exception only.
 
 ## Reference corpus question — stance settled, fitness investigation open
 
@@ -372,7 +403,14 @@ of a standard scanner for known embedded projects.
 
 Both **CycloneDX** and **SPDX** are eventual targets, but format design is out of scope
 for this repo — the generator (and its format handling) lives elsewhere. Don't spend
-research effort on output serialization here.
+research effort on output *serialization* here.
+
+Note the boundary against the 2026-07-22 scope widening: capturing *architectural*
+recommendations for the generator's **detection/identification core** (evidence
+producers, resolver, attribution, provenance, tier selection) is now in scope
+([general/sbom-generator-architecture.md](general/sbom-generator-architecture.md)) —
+but the *serialization format* is still not. Architecture of how identity is decided:
+in scope. How it's written to CycloneDX/SPDX bytes: out of scope.
 
 ## Repository layout
 
