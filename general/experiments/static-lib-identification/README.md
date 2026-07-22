@@ -231,8 +231,9 @@ all clean-room (no binutils/compiler dependency anywhere):
   must be a *subset* of a release's set (config-gated builds), releases
   ranked by fewest soft absences; discriminating symbols listed as evidence.
 - Reference DBs checked in: `nanopb_ref_symbols.json` (26 releases,
-  0.3.6–0.4.9.1), `mbedtls_ref_symbols.json` (18 releases,
-  v2.28.0–v3.6.7).
+  0.3.6–0.4.9.1), `mbedtls_ref_symbols.json` (18 releases v2.28.0–v3.6.7
+  at prototype time; widened 2026-07-22 to 25 releases,
+  mbedtls-2.16.0–v3.6.7, for the Wi-SUN arbitration below).
 
 ### Results (all ground truths hit, negative controls clean)
 
@@ -267,21 +268,97 @@ bundled headers. Detection out-performed the vendor's own declaration.
   version-bound when it shouldn't be) shows prototype-regex mining has
   noise; a tree-sitter-grade extractor would clean it up if needed.
 
+## De-risking sweeps (2026-07-22) — both DONE, claim verified, new finding
+
+The two sweeps decided as next step 1 were run in one session. Two new
+scripts: `toolchain_variance.py` (sweep a), `batch_scan.py` (sweep b).
+
+### Sweep (a): gcc/IAR/ticlang symbol-set variance — CLAIM HOLDS
+
+`toolchain_variance.py` collected every lib shipped in multiple toolchain
+flavors (fatfs, spiffs ×2 variants, ecc, psa_crypto — 13 (lib, core)
+groups) and diffed defined-globals sets across toolchains and across CPU
+cores (m0p/m4/m4f/m33f):
+
+- **Component-API symbol sets are identical across gcc/IAR/ticlang in every
+  group**, and identical across cores within each toolchain. The
+  compiler-independence claim the symbol tier rests on is now empirical.
+- The only differences found, both benign and both instructive:
+  - **IAR emits compiler-internal helper symbols** (`__iar_cc..0x<hash>`)
+    inside ordinary objects (seen in `ff.c.obj`, `ramdisk.c.obj`,
+    psa_crypto). Unmistakable prefix, never collides with a component
+    prefix filter — the existing prefix-filtered matcher is immune.
+  - **fatfs.a's ticlang flavor has one extra member** (`ffcio.c.obj`, TI's
+    C-I/O shim, bringing `ffcio_*`/`mkdir`/`rmdir`) — a genuine
+    build-content difference, not compiler variance. Same-named archives
+    can differ in *what TI compiled in* per toolchain; the subset-tolerant
+    matcher absorbs this by design.
+
+### Sweep (b): batch-scan of all 588 TI-authored libs — ZERO false positives, new undeclared-OSS find
+
+`batch_scan.py source\ti nanopb_ref_symbols.json mbedtls_ref_symbols.json`:
+588 libs scanned, 0 unreadable, **556 NO MATCH, 32 hits — every hit a
+genuine embedded OSS copy**:
+
+- **2 nanopb carriers**: `sidewalk_fsk_ble.a` (the known case) **plus
+  `sidewalk_ble.a`** — a second proprietary Sidewalk blob carrying the same
+  hidden nanopb (same 33 symbols, same window).
+- **30 Wi-SUN hits — the new headline**: every `ti_wisunfan\lib\**\
+  wisun_{br,coap,rn}_mbed_ns_tls_lib_*.a` (IAR + ticlang × m33f/m4f ×
+  freertos/tirtos7) **embeds a full mbedTLS** (267 members incl. `aes.c.o`,
+  `bignum.c.o`, `ssl_tls.c.o`, `x509_crt.c.o`; 569–600 matched
+  `mbedtls_*`/`psa_*` symbols).
+
+### The Wi-SUN mbedTLS version: four sources, four answers, binary wins
+
+The version story turned into the strongest manifest-vs-evidence case yet.
+For the mbedTLS inside the Wi-SUN libs:
+
+| Source | Claim |
+|---|---|
+| TI manifest ("Mbed-OS mbedtls") | **5.15.7** — an Mbed-OS release number, not an mbedTLS version; obtained-from points at `ARMmbed/mbed-os` |
+| Shipped tree `source\third_party\ti_wisunfan\mbedtls\VERSION.txt` | mbedtls-**2.22.0** |
+| Same tree's `inc\mbedtls\version.h` | *internally inconsistent*: `MBEDTLS_VERSION_NUMBER 0x02160000` (= 2.16.0) but `MBEDTLS_VERSION_STRING "2.22.0"` |
+| **Symbol-set match (this experiment)** | **exactly mbedtls-2.22.0** |
+
+To arbitrate, the reference DB was widened with 7 pre-2.28 tags
+(`mbedtls-2.16.0`, `-2.16.12`, `-2.22.0`, `-2.24.0`, `-2.25.0`, `-2.26.0`,
+`-2.27.0` — mined from a fresh blob-filtered clone; note old releases use
+`mbedtls-X.Y.Z` tag naming, not `vX.Y.Z`; PSA headers are in-repo from
+2.22 on, so no crypto-submodule gap). Result: the presence-consistent
+window **collapsed from {v2.28.0, v2.28.5, v2.28.10} to exactly
+{mbedtls-2.22.0}** across all 30 libs. Pinning evidence:
+
+- `psa_get_key_slot` + `psa_validate_persistent_key_parameters` — 2.22-era
+  PSA internals, gone by 2.24/2.28 → **excludes everything newer**;
+- 103 observed symbols don't exist in 2.16.12 → **excludes the 2.16 line**
+  (refuting the stale `MBEDTLS_VERSION_NUMBER`).
+
+Takeaways: (1) the manifest strikes again — a third error class (component
+declared under an umbrella product's version number); (2) *the shipped
+source tree's own version header can be self-contradictory* — even
+"read the version macro" needs corroboration; (3) widening the reference
+DB is the cheap lever that turns a coarse window into an exact pin —
+window width is a function of DB tag coverage, not just of the technique;
+(4) SBOM/vuln relevance: 2.22.0 is a long-EOL non-LTS release (2020) with
+many CVEs fixed only in later 2.28.x — precisely what a vuln scan needs
+to know and what the manifest's "5.15.7" would hide.
+
+Note on window semantics: `batch_scan.py` reports the full
+presence-consistent release list; `match_symbols.py` additionally ranks it
+by fewest soft absences ("best window") — e.g. the nanopb hits list
+11 presence-consistent releases 0.3.9…0.3.9.10, of which the best-ranked
+window is the 0.3.9…0.3.9.3 reported for the original prototype run.
+
 ## Next steps (decided 2026-07-21, in priority order)
 
 Principle: the prototype proved the concept — next moves either test its
 failure modes cheaply or connect it to the system it belongs to; no
 gold-plating.
 
-1. **De-risking sweeps** (one short session, tooling already exists):
-   - **gcc/IAR/ticlang variance check** — diff extracted symbol sets across
-     the three toolchain flavors of the *same* lib version (SPIFFS/FatFs
-     ship all three). Empirically verifies the compiler-independence claim
-     the whole tier rests on, instead of taking it on faith.
-   - **Batch-scan all 588 TI-authored libs** against both reference DBs:
-     false-positive stress test at scale (they should overwhelmingly say
-     NO MATCH) + hunt for more undeclared OSS (the nanopb precedent), and
-     the output doubles as a whole-SDK composition-report demo.
+1. ~~**De-risking sweeps**~~ — **DONE 2026-07-22**, see section above:
+   compiler-independence verified (sweep a), 588-lib scan clean of false
+   positives and surfaced the undeclared Wi-SUN mbedTLS 2.22.0 (sweep b).
 2. **Integrate, don't expand**: fold symbol reference sets into the
    minr-experiment lightweight-export artifact design (the mined JSONs are
    a few hundred KB — trivial next to the 48 MB artifact). Makes the symbol
@@ -292,7 +369,10 @@ gold-plating.
    end (does purl+version output drive vuln scanning correctly?). The
    mbedTLS result supplies a fresh test case: a shipping SDK whose binary
    contains 3.5.x (known CVEs) while its manifest claims 3.4.0 — exactly
-   the story an SBOM-to-vuln-scan pipeline exists to tell.
+   the story an SBOM-to-vuln-scan pipeline exists to tell. The sweep added
+   a second, stronger one: the Wi-SUN libs' embedded mbedTLS 2.22.0
+   (long-EOL, misdeclared as "5.15.7") — probe what OSV returns for a
+   purl pinned to 2.22.0.
 
 Deliberately deferred (polish, not risk): data-symbol mining (the 11/763
 unknown gap), member-name normalization policy (`.c.obj` vs `.o`,

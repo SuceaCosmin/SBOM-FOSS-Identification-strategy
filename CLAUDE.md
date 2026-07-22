@@ -191,14 +191,29 @@ findings suggest revisiting a decision.
   build shipped in the ARM SDK (build detritus — scanners must be
   arch-agnostic). Windows are 3–4 point releases wide (coarser than source
   hashing, as expected; same window-shaped output the consistency logic
-  handles). **Next steps decided 2026-07-21** (details in the experiment
-  README): (1) de-risking sweeps — gcc/IAR/ticlang symbol-set variance
-  check on same-version libs + batch-scan of all 588 TI-authored libs
-  (false-positive stress test / hidden-OSS hunt); (2) integrate symbol
-  reference sets into the lightweight-export artifact design; (3) then the
-  deferred OSV.dev fitness test reclaims the next-up slot, with the
-  manifest-says-3.4.0/binary-says-3.5.x mbedTLS case as a fresh test
-  input. Deferred as polish: data-symbol mining, member-name normalization
+  handles). **De-risking sweeps done (2026-07-22)**, findings in the same
+  README: (a) compiler-independence **verified empirically** — component
+  symbol sets identical across gcc/IAR/ticlang and across cores for every
+  multi-flavor lib in the SDK (only diffs: IAR-internal `__iar_cc..`
+  helpers, filterable by prefix, and one genuine build-content difference —
+  ticlang fatfs bundles an extra TI `ffcio` shim member); (b) batch-scan
+  of all 588 TI-authored libs (`batch_scan.py`): **zero false positives**
+  (556 NO MATCH) and 32 hits all genuine — the 2 known Sidewalk/nanopb
+  carriers plus a **new headline finding: all 30 `ti_wisunfan`
+  `wisun_*_mbed_ns_tls_lib_*.a` libs embed a full mbedTLS**, which four
+  sources version four ways (manifest: "Mbed-OS mbedtls 5.15.7"; shipped
+  tree VERSION.txt: 2.22.0; that tree's version.h: number says 2.16.0 but
+  string says 2.22.0; symbols: after widening the reference DB with 7
+  pre-2.28 tags, the window collapsed to **exactly mbedtls-2.22.0** — a
+  long-EOL release, pinned by 2.22-era PSA internals absent both before
+  and after). Lessons: reference-DB tag coverage, not technique, sets
+  window width; even shipped version headers can self-contradict.
+  **Next steps** (renumbered): (1) integrate symbol
+  reference sets into the lightweight-export artifact design; (2) then the
+  deferred OSV.dev fitness test reclaims the next-up slot, with two fresh
+  test inputs: the manifest-says-3.4.0/binary-says-3.5.x mbedTLS case and
+  the Wi-SUN embedded 2.22.0 (EOL, misdeclared as "5.15.7").
+  Deferred as polish: data-symbol mining, member-name normalization
   policy, stripped/LTO hard tier (parked until a real artifact).
 - **Deferred behind it (was next-up, designated 2026-07-18): the OSV.dev
   vulnerability-scanning fitness test** — open item 2 in
