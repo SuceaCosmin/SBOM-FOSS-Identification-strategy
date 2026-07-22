@@ -57,7 +57,11 @@ priority. **Parked**: real but deliberately deferred (legal or out-of-corpus).
   (symbol-set extractor + source-mined reference DBs + subset-tolerant window
   matcher; member-name reading as the cheap first pass). Note #4's reference sets
   are **mined from source headers**, so the same tier detects a headers-only drop
-  (no `.c`, no `.a`) for free.
+  (no `.c`, no `.a`) for free. As of 2026-07-22 #4 is **folded into the
+  lightweight-export artifact** as a tier-labeled `tiers.symbol` producer
+  alongside the exact (#1) and winnowing (#2) tiers, resolving through the same
+  canonical `releases` table — see
+  [experiments/minr-self-mining](experiments/minr-self-mining/README.md#tier-labeled-artifact--symbol-tier-fold-in-schema-2-2026-07-22).
 - **#6 / #7** — used as fast corroboration layers. #6 is documented under
   "Detection technique patterns" in [README.md](README.md) (in-source version
   strings survive modification; copyright-header era as a coarse signal) and as the

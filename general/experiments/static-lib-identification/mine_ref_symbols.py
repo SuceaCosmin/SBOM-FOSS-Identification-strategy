@@ -70,6 +70,15 @@ def main():
                     help="regex alternation of symbol prefixes, e.g. 'pb_' "
                          "or 'mbedtls_|psa_'")
     ap.add_argument("--component", default=None)
+    # canonical-attribution fields — carried into the lightweight-export symbol
+    # tier so matches resolve to a canonical purl/license (see
+    # ../minr-self-mining/symbol_tier.py). Optional for backward compatibility.
+    ap.add_argument("--purl", default=None)
+    ap.add_argument("--license", default=None)
+    ap.add_argument("--vendor", default=None)
+    ap.add_argument("--tag-version-re", default=r"^(?:v)?(.+)$",
+                    help="regex whose group 1 maps a git tag to a version "
+                         "(e.g. '^(?:mbedtls-|v)?(.+)$' for mbedTLS)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -82,6 +91,10 @@ def main():
 
     out = {
         "component": args.component or os.path.basename(args.repo.rstrip("/\\")),
+        "purl": args.purl,
+        "license": args.license,
+        "vendor": args.vendor,
+        "tag_version_re": args.tag_version_re,
         "mined_from": "header prototype patterns (no compilation)",
         "prefix": args.prefix,
         "header_globs": args.headers,

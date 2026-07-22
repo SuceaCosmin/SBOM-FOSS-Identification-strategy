@@ -27,7 +27,14 @@ from pathlib import Path
 
 def load_export(path):
     with gzip.open(path, "rt", encoding="utf-8") as f:
-        return json.load(f)
+        art = json.load(f)
+    # Accept both schema 1 (flat files/wfp) and schema 2 (tier-labeled). This
+    # validator exercises the source-side tiers (exact + winnowing); the symbol
+    # tier is validated separately by symbol_tier.py match.
+    if art.get("schema") == 2:
+        art["files"] = art["tiers"]["exact"]["files"]
+        art["wfp"] = art["tiers"]["winnowing"]["wfp"]
+    return art
 
 
 def parse_multi_wfp(text):

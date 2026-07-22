@@ -1,5 +1,9 @@
 {
   "component": "mbedtls",
+  "purl": "pkg:github/mbed-tls/mbedtls",
+  "license": "Apache-2.0",
+  "vendor": "Mbed-TLS",
+  "tag_version_re": "^(?:mbedtls-|v)?(.+)$",
   "mined_from": "header prototype patterns (no compilation)",
   "prefix": "mbedtls_|psa_",
   "header_globs": [

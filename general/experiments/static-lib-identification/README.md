@@ -359,11 +359,20 @@ gold-plating.
 1. ~~**De-risking sweeps**~~ — **DONE 2026-07-22**, see section above:
    compiler-independence verified (sweep a), 588-lib scan clean of false
    positives and surfaced the undeclared Wi-SUN mbedTLS 2.22.0 (sweep b).
-2. **Integrate, don't expand**: fold symbol reference sets into the
-   minr-experiment lightweight-export artifact design (the mined JSONs are
-   a few hundred KB — trivial next to the 48 MB artifact). Makes the symbol
-   tier a first-class evidence type of the curated-KB backbone rather than
-   a side experiment. Mostly a design/writeup task.
+2. ~~**Integrate, don't expand**~~ — **DONE 2026-07-22**: symbol reference sets
+   folded into the lightweight-export artifact as a tier-labeled, first-class
+   evidence type. See
+   [minr-self-mining](../minr-self-mining/README.md#tier-labeled-artifact--symbol-tier-fold-in-schema-2-2026-07-22):
+   the artifact is now schema 2 (shared canonical `releases` + a `tiers` map,
+   each tagged with its roadmap technique number), `symbol_tier.py` builds/merges
+   the symbol tier reconciling `(component, version)` against the KB
+   (nanopb minted whole, mbedTLS's overlapping versions reconciled; +0.2 MB),
+   and `symbol_tier.py match` reproduced every static-lib ground truth from the
+   merged artifact alone (nanopb both carriers → 0.3.9.3 window; `libmbedcrypto`
+   → {3.5.0–3.5.2} excluding the manifest's 3.4.0; Wi-SUN → exactly 2.22.0;
+   TI-authored negative control → NO MATCH), each resolving to a canonical purl.
+   The `purl`/`license`/`vendor`/`tag_version_re` fields added to the two
+   `*_ref_symbols.json` DBs here are what makes that canonical resolution work.
 3. **Return to the deferred OSV.dev fitness test** — with the static-lib
    scenario covered, the biggest program-level unknown is again the output
    end (does purl+version output drive vuln scanning correctly?). The

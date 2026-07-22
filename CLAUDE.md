@@ -227,8 +227,24 @@ findings suggest revisiting a decision.
   long-EOL release, pinned by 2.22-era PSA internals absent both before
   and after). Lessons: reference-DB tag coverage, not technique, sets
   window width; even shipped version headers can self-contradict.
-  **Next steps** (renumbered): (1) integrate symbol
-  reference sets into the lightweight-export artifact design; (2) then the
+  **Symbol tier folded into the lightweight-export artifact (2026-07-22,
+  step 1 done)**: the artifact is now **tier-labeled schema 2** — a shared
+  canonical `releases` table plus a `tiers` map where each tier declares its
+  fingerprint-roadmap technique number (`exact`=1, `winnowing`=2, `symbol`=4).
+  `symbol_tier.py` (in the minr-self-mining experiment) builds a symbol-tier
+  fragment from the mined `*_ref_symbols.json` DBs and merges it into the
+  export, **reconciling by `(component, version)`**: mbedTLS's 8 KB-overlapping
+  versions reused existing release-ids, its 17 pre-2.28 versions and all 26
+  nanopb versions minted with `source_tier: "symbol"` (nanopb enters the
+  artifact purely via this tier; cost +0.2 MB on 48 MB). `symbol_tier.py match`
+  reproduced every static-lib ground truth **from the merged artifact alone**
+  (both nanopb carriers → 0.3.9.3 window; `libmbedcrypto` → {3.5.0–3.5.2},
+  excluding the manifest's 3.4.0; Wi-SUN → exactly 2.22.0; TI-authored negative
+  control → NO MATCH), each resolving to a canonical purl — attribution by
+  construction in the symbol domain too. This realizes architecture recs. 3–4
+  (tiers as independently-selectable producers over one resolver). Details in
+  [general/experiments/minr-self-mining/README.md](general/experiments/minr-self-mining/README.md)
+  "Tier-labeled artifact + symbol-tier fold-in". **Next step (2)**: the
   deferred OSV.dev fitness test reclaims the next-up slot, with two fresh
   test inputs: the manifest-says-3.4.0/binary-says-3.5.x mbedTLS case and
   the Wi-SUN embedded 2.22.0 (EOL, misdeclared as "5.15.7").

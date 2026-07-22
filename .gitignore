@@ -4,3 +4,7 @@ __pycache__/
 # Regenerable KB export artifacts (see general/experiments/minr-self-mining/README.md
 # "Reproducing the artifact" — rebuilt from the mining scripts + exporter)
 general/experiments/minr-self-mining/results/export.json.gz
+# Symbol-tier fold-in outputs (regenerable via symbol_tier.py build/merge; the
+# merged artifact is 48 MB, the fragment's reconciled ids couple to a specific export)
+general/experiments/minr-self-mining/results/export_with_symbols.json.gz
+general/experiments/minr-self-mining/results/symbol_tier.json

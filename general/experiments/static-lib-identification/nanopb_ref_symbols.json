@@ -1,5 +1,9 @@
 {
   "component": "nanopb",
+  "purl": "pkg:github/nanopb/nanopb",
+  "license": "Zlib",
+  "vendor": "nanopb",
+  "tag_version_re": "^(?:v)?(.+)$",
   "mined_from": "header prototype patterns (no compilation)",
   "prefix": "pb_",
   "header_globs": [

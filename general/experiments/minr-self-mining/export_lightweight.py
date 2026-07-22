@@ -5,11 +5,18 @@ Clean-room LDB traversal (same on-disk format knowledge as
 general/experiments/osskb-open-dataset/{ldb_lookup,wfp_lookup}.py — no LDB code
 reused, so no GPL entanglement in the export path or the artifact).
 
-Exported per KB:
+Emits the tier-labeled schema-2 artifact (see README "Tier-labeled artifact"
+and symbol_tier.py): a shared canonical `releases` table plus a `tiers` map,
+each tier declaring its fingerprint-roadmap technique number so a scan profile
+can select tiers.
+
   releases: url-id -> declared -d metadata (vendor, component, version, date,
-            license, purl, source URL)          [url table]
-  files:    file-md5 -> {release url-ids, exemplar path}   [file table]
-  wfp:      32-bit winnowing hash -> [[file-md5, line], ...]  [wfp table]
+            license, purl, source URL) + source_tier   [url table]
+  tiers.exact.files:     file-md5 -> {release url-ids, exemplar path} [file table]
+  tiers.winnowing.wfp:   32-bit winnowing hash -> [[file-md5, line]]  [wfp table]
+
+The symbol tier (technique #4, static libraries) is folded in afterwards by
+symbol_tier.py from the mined *_ref_symbols.json DBs — it is not in the LDB KB.
 
 Deliberately NOT exported: sources (evidence tier stays in the full KB),
 license/copyright/quality detections (available on demand from the full KB).
@@ -109,9 +116,11 @@ def main():
     for key, recs in walk_table(kb_dir / "url"):
         # record: vendor,component,version,date,license,purl,url (CSV text)
         fields = recs[0].decode("utf-8", errors="replace").split(",")
-        releases[key] = dict(zip(
+        rec = dict(zip(
             ["vendor", "component", "version", "date", "license", "purl", "url"],
             fields))
+        rec["source_tier"] = "file"      # provenance; symbol tier mints "symbol"
+        releases[key] = rec
 
     files = {}
     for key, recs in walk_table(kb_dir / "file"):
@@ -126,11 +135,14 @@ def main():
         wfp[key] = [[r[:16].hex(), u16(r, 16)] for r in recs]
 
     artifact = {
+        "schema": 2,
         "generated": time.strftime("%Y-%m-%d"),
         "source_kb": str(kb_dir),
         "releases": releases,
-        "files": files,
-        "wfp": wfp,
+        "tiers": {
+            "exact": {"technique": 1, "unit": "file-md5", "files": files},
+            "winnowing": {"technique": 2, "unit": "winnowing-hash", "wfp": wfp},
+        },
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(out_path, "wt", encoding="utf-8") as f:

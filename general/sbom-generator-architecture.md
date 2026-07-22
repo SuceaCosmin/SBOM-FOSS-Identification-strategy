@@ -66,6 +66,13 @@ version-window, supporting evidence, confidence)`; the resolver fuses them.
   [experiments/static-lib-identification](experiments/static-lib-identification/README.md)
   ("tiered pipeline mirrors the source-side design"); the roadmap's "why enumerate"
   section.
+- **Realized (2026-07-22)**: the lightweight-export artifact is now
+  tier-labeled — a shared canonical `releases` table plus a `tiers` map where
+  each tier declares its roadmap technique number (`exact`=1, `winnowing`=2,
+  `symbol`=4). The symbol tier was folded in this way as a proof that a producer
+  drops in without touching the others or the resolver, and that a profile can
+  select tiers by loading a subset of `tiers`. See
+  [experiments/minr-self-mining](experiments/minr-self-mining/README.md#tier-labeled-artifact--symbol-tier-fold-in-schema-2-2026-07-22).
 
 ## 4. Expose selectable detection criteria as named profiles
 

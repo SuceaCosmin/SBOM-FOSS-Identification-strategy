@@ -434,7 +434,99 @@ with the binary-wfp-encoding idea above — the likely landing zone is a hybrid:
 human-auditable JSON for `releases` + `files` (the attribution-bearing parts),
 with the bulky machine-only `wfp` index either separate or binary.
 
-### Verdict so far
+## Tier-labeled artifact + symbol-tier fold-in (schema 2, 2026-07-22)
+
+This is step 2 of the static-library roadmap
+([static-lib-identification](../static-lib-identification/README.md)):
+*integrate, don't expand* — fold the static-library **symbol tier** (roadmap
+technique #4) into this artifact so it's a first-class evidence type of the
+curated-KB backbone rather than a side experiment, and label every tier so the
+artifact doubles as the **selectable-criteria substrate** the generator
+architecture calls for (recs. 3–4 in
+[../sbom-generator-architecture.md](../sbom-generator-architecture.md)).
+
+### Schema 2 — shape
+
+`export_lightweight.py` now emits a tier-labeled artifact: a **shared canonical
+`releases` table** plus a `tiers` map, each tier tagged with its
+fingerprint-roadmap technique number (so a scan *profile* selects tiers by
+loading a subset of `tiers`):
+
+```
+{ "schema": 2,
+  "releases": { <id>: {vendor,component,version,date,license,purl,url,source_tier} },
+  "tiers": {
+    "exact":     {"technique": 1, "unit": "file-md5",       "files": {md5:{releases,path}}},
+    "winnowing": {"technique": 2, "unit": "winnowing-hash", "wfp":   {hash:[[md5,line]]}},
+    "symbol":    {"technique": 4, "unit": "defined-globals",
+                  "components": {name:{prefix, releases:{<id>:[sym,...]}}}}
+  } }
+```
+
+Schema 1 (`{releases,files,wfp}`) is still accepted everywhere via a one-line
+normalization shim (`validate_export.load_export`, `symbol_tier.to_schema2`), so
+the existing 48 MB export upgrades in place — no re-mine needed.
+
+### Folding in the symbol tier
+
+The symbol reference sets are **not** in the LDB KB (they're mined from source
+*headers*, no compilation — see the static-lib experiment). `symbol_tier.py`
+folds them in from the committed `*_ref_symbols.json` DBs:
+
+```sh
+SL=../static-lib-identification
+# 1. build a symbol-tier fragment, reconciling ids against the base export
+python symbol_tier.py build $SL/nanopb_ref_symbols.json $SL/mbedtls_ref_symbols.json \
+    --base results/export.json.gz -o results/symbol_tier.json
+# 2. merge it into the artifact (upgrades schema 1 -> 2 in passing)
+python symbol_tier.py merge results/export.json.gz results/symbol_tier.json \
+    -o results/export_with_symbols.json.gz
+```
+
+**Reconciliation is by `(component, version)`** — a mined tag whose version
+already exists via the file/wfp tiers reuses that release-id (one canonical
+release across tiers, rec. 7); a version present only in the symbol DB mints a
+new record tagged `source_tier: "symbol"` (rec. 5 provenance, rec. 10 "built
+into the artifact"). Measured on this KB: mbedTLS's 8 overlapping versions
+(2.28.8/9/10, 3.5.0/2, 3.6.0/1/2) **reconciled** to existing ids; its 17 pre-2.28
+versions and **all 26 nanopb versions minted** — i.e. nanopb, absent from the KB
+entirely, enters the artifact purely through the symbol tier (coverage growth
+without duplicating identity). Cost: **+0.2 MB** on the 48 MB artifact.
+
+### Validation — from the merged artifact alone
+
+`symbol_tier.py match` runs the folded tier against real static libraries using
+**only** the artifact + the clean-room ar/ELF reader (no ref DBs, no engine).
+Ported the bespoke matcher's full logic (strict presence-consistent window →
+closest-set fallback when a single un-header-declared internal global breaks
+strict consistency → soft-absence tie-break). Against the TI SimpleLink SDK
+(binaries not redistributable; commands recorded, not corpus):
+
+| library | symbol-tier verdict | ground truth |
+|---|---|---|
+| `libext_nanopb.a` (labeled prebuilt) | nanopb, best `{0.3.9…0.3.9.3}`, `pkg:github/nanopb/nanopb` Zlib | 0.3.9.3 ✓ |
+| `sidewalk_fsk_ble.a` (nanopb hidden in proprietary blob) | nanopb, best `{0.3.9…0.3.9.3}` | 0.3.9.3 ✓ |
+| `libmbedcrypto.a` | mbedtls, closest `{3.5.0, 3.5.1, 3.5.2}`, `pkg:github/mbed-tls/mbedtls` Apache-2.0 | 3.5.0 ✓ (**excludes** the manifest's claimed 3.4.0) |
+| `wisun_br_mbed_ns_tls_lib_*.a` | mbedtls, `{2.22.0}` | 2.22.0 (EOL, misdeclared "5.15.7") ✓ |
+| `drivers_cc13x4.a` (TI-authored) | NO MATCH | negative control ✓ |
+
+Every hit resolves through the shared `releases` table to a canonical
+purl/version — **attribution by construction, in the symbol domain too**. The
+schema-2 shim keeps the source tiers intact (verified: file tier 10,341 entries,
+wfp tier 445,774 entries still resolve to canonical purls through the merged
+artifact). Both generated files are gitignored/regenerable (the merged artifact
+is 48 MB; the fragment's reconciled ids couple to a specific base export).
+
+### What this leaves for the generator
+
+The artifact is now the single substrate for all three covered evidence
+producers (exact, winnowing, symbol) with per-tier technique labels — the
+generator loads whichever tiers a profile names and resolves every match through
+one canonical `releases` table. The remaining tier work is the roadmap's
+low-priority TODOs (AST, constant-table, …), each of which slots in as another
+labeled `tiers.<name>` entry with its own producer.
+
+## Verdict so far
 
 `minr` does industrialize the curated approach: one command per release with
 declared metadata, correct attribution by construction, verbatim + modified-copy
