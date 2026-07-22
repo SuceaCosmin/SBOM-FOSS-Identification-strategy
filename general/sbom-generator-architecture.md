@@ -183,6 +183,39 @@ proven **compiled into the delivered binary** (member/symbol evidence from a `.a
 - **Source**: the "present as source ≠ built into firmware" implication in the
   static-lib doc.
 
+## 11. The vuln-lookup coordinate is a separate key from the SBOM identity — map, don't reuse
+
+The canonical upstream identity the resolver emits (rec. 7) is the right key for
+*attribution* and the **wrong key for vulnerability lookup**. Model the
+identity→vuln-source mapping as its own layer, per source, with **per-component
+coverage metadata**; never assume the SBOM purl is directly queryable.
+
+- **Why**: the OSV.dev fitness test found our declared `pkg:github/…` purls
+  return **0** for every embedded-C component (OSV indexes `pkg:pypi/…`,
+  `pkg:deb/…`, not `pkg:github/…`; a PyPI control worked, isolating the gap). The
+  only OSV query that returns anything for mbedTLS — bare `name` — is
+  **version-inert** (an impossible future version returns the same 83 CVEs), so a
+  naive `name+version → OSV` call reports the same CVEs for every version and
+  would flag a patched build as vulnerable. And coverage is component-specific:
+  FreeRTOS and CMSIS are absent from OSV entirely, so an empty result means "not
+  covered," not "no known vulns" — a distinction only per-component coverage
+  metadata preserves.
+- **Consequences for the architecture**: (a) the resolver's canonical identity
+  feeds a **mapping step** that produces each vuln source's own coordinate
+  (CPE for NVD, ecosystem purl / GIT commit for OSV) — this is where the
+  detected version must be translated into the source's version model; (b)
+  **NVD/CPE** (proper upstream version ranges) and **OSV's GIT-commit-range CVE
+  records** (resolvable because our reference DBs already mine per-release git
+  tags → tag→commit is free) are the upstream-fit paths; OSV package queries are
+  a coarse distro-flavored net at best; (c) a version-inert or uncovered result
+  must be **labeled as such** via the provenance layer (rec. 5), never emitted as
+  precise.
+- **Source**: [experiments/osv-fitness](experiments/osv-fitness/README.md).
+- **Note on scope**: this is detection/identification-core adjacent — the
+  *mapping* of identity to a vuln coordinate is in scope as an architectural
+  boundary; building the vuln-scanning integration itself belongs to the
+  generator/consumer, not this research.
+
 ## Keeping this doc honest
 
 These recommendations track findings, not preferences. If a future component or

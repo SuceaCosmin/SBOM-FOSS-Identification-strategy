@@ -250,16 +250,33 @@ findings suggest revisiting a decision.
   the Wi-SUN embedded 2.22.0 (EOL, misdeclared as "5.15.7").
   Deferred as polish: data-symbol mining, member-name normalization
   policy, stripped/LTO hard tier (parked until a real artifact).
-- **Deferred behind it (was next-up, designated 2026-07-18): the OSV.dev
-  vulnerability-scanning fitness test** — open item 2 in
-  [general/existing-fingerprint-datasets.md](general/existing-fingerprint-datasets.md),
-  reframed there now that the pipeline produces validated purl+version output
-  end-to-end: probe OSV.dev with the corpus ground truths (mbedTLS 2.28.x /
-  FreeRTOS 10.4.x have well-documented CVEs) and test purl recognition
-  (GitHub-flavored vs ecosystem coordinates), version-set behavior against OSV
-  ranges, and the CMSIS umbrella-granularity effect. This exercises the
-  research's actual end-goal bar (SBOMs that drive vuln scanning) and feeds the
-  metadata-mapping open item. Runner-up alternative if breadth is preferred:
+- **Researched (cross-cutting): the OSV.dev vulnerability-scanning fitness
+  test** — open item 2, **RUN 2026-07-22**, findings in
+  [general/experiments/osv-fitness](general/experiments/osv-fitness/README.md).
+  Result: **OSV.dev is not directly fit to consume our upstream purl+version
+  output for embedded C**, three independent ways: (a) the GitHub-flavored purls
+  we declare (`pkg:github/mbed-tls/mbedtls`, …) return **0** for all four
+  components — OSV indexes ecosystem purls (`pkg:pypi/…`, `pkg:deb/…`), not
+  `pkg:github/…` (a `pkg:pypi/django` control returned 21 CVEs, proving the
+  query technique) — so **identity and vuln-lookup coordinate are different
+  keys**; (b) the fallback bare-`name` query is **version-inert** (mbedTLS
+  @2.28.0, @3.6.2, and an *impossible* @99.0.0 all return the same 83 CVEs — it
+  degenerates to every distro advisory), so a naive `name+version → OSV`
+  integration reports the identical CVE list for every version and the whole
+  version-pinning effort buys nothing on that path; (c) **coverage is
+  component-specific** — FreeRTOS 0 under every coordinate (a known FreeRTOS CVE
+  isn't even in OSV), CMSIS 0, nanopb only accidental PyPI coverage — so empty
+  must mean "not covered," never "no known vulns." The one upstream-accurate
+  path OSV offers (raw CVE records with **GIT-commit ranges**) is usable *by us*
+  because the reference DBs already mine per-release git tags (tag→commit is
+  free). Net: **reinforces the metadata-mapping open item** — a mapping layer
+  from canonical identity to each vuln source's coordinate system is mandatory;
+  captured as recommendation 11 in
+  [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md).
+  Reusable probe harness: `osv_probe.py`. **Next-up now**: the NVD/CPE
+  fitness probe (does CPE version-range matching give the discrimination OSV's
+  package queries lack?) is the natural continuation and directly feeds the
+  mapping layer. Runner-up alternatives if breadth is preferred:
   lwIP as the fourth component (roadmap Tier 1 #1 — now cheap via the minr
   pipeline, stresses the port-layer-vs-core question), or FatFs as the
   adversarial no-git-upstream case.

@@ -296,20 +296,33 @@ open investigation, deliberately left for future sessions:
    vendored copy sits deeper); fork-relationship lookups via the GitHub API; a small
    curated repo→upstream alias table (orders of magnitude cheaper than curating
    fingerprint DBs).
-2. **Vulnerability-scanning fitness test — designated next task (2026-07-18)** —
-   feed purl+version output into OSV.dev and check that real, known CVEs come
-   back. Originally framed around OSSKB's raw output (quantifying what the
-   attribution gap costs at the vuln-scanning end); now that the self-mining
-   pipeline (open item 4) produces *validated* purl+version answers end-to-end,
-   the primary question inverts: **does our own pipeline's output drive OSV.dev
-   correctly?** Concretely: probe with the corpus ground truths (mbedTLS 2.28.x
-   and FreeRTOS 10.4.x have well-documented CVEs); test whether OSV recognizes
-   the GitHub-flavored purls we declare (`pkg:github/mbed-tls/mbedtls`) or needs
-   ecosystem/`pkg:generic` coordinates; how version *sets* like {3.6.1, 3.6.2}
-   behave against OSV version ranges; and whether the CMSIS umbrella-granularity
-   choice breaks lookup. Feeds directly into item 5 (metadata-mapping layers).
-   The original OSSKB-raw-output comparison remains worth running alongside, as
-   the quantified "cost of the attribution gap" number.
+2. ~~**Vulnerability-scanning fitness test — designated next task (2026-07-18)**~~
+   **RUN 2026-07-22** — see [experiments/osv-fitness](experiments/osv-fitness/README.md).
+   Result: **OSV.dev is not directly fit to consume our upstream purl+version
+   output for embedded C**, in three independent ways. (a) The GitHub-flavored
+   purls we declare (`pkg:github/mbed-tls/mbedtls`, …) return **0** for all four
+   components — OSV indexes ecosystem purls (`pkg:pypi/…`, `pkg:deb/…`) not
+   `pkg:github/…` (a PyPI control returned 21 CVEs, proving the technique). So
+   the canonical attribution identity (correct by design) is the wrong key for
+   vuln lookup — **identity and lookup-coordinate are different keys**. (b) The
+   fallback bare-`name` query is **version-inert**: mbedTLS @2.28.0, @3.6.2, and
+   an *impossible* @99.0.0 all return the same 83 CVEs (it degenerates to "every
+   mbedtls advisory across every distro") — a naive `name+version → OSV`
+   integration would report the identical CVE list for every version, flagging a
+   patched build as vulnerable. All the version-pinning effort buys nothing on
+   this path. (c) **Coverage is component-specific**: FreeRTOS returns 0 under
+   every coordinate (a known FreeRTOS CVE isn't even in OSV), CMSIS 0, nanopb
+   only accidental PyPI coverage — so an empty result must mean *"not covered,"*
+   never *"no known vulns."* The one upstream-accurate path OSV offers — raw CVE
+   records with **GIT-commit ranges** — is usable *by us* because our reference
+   DBs already mine per-release git tags (tag→commit map is free). Net: this
+   **strongly reinforces item 5** — a metadata-mapping layer from canonical
+   identity to each vuln source's coordinate system is mandatory, and NVD/CPE is
+   the likely upstream-fit source (queued as the follow-up probe). Captured as a
+   new recommendation in
+   [sbom-generator-architecture.md](sbom-generator-architecture.md). The original
+   OSSKB-raw-output comparison (quantify the attribution gap's CVE cost) is now
+   cheaply measurable with the `osv_probe.py` harness — also queued there.
 3. ~~**The downloadable CC0 dataset** (`osskb-core-open-dataset`) — fetch and inspect~~
    **RESOLVED 2026-07-13** — inspected empirically, see
    [experiments/osskb-open-dataset](experiments/osskb-open-dataset/README.md) and

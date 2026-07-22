@@ -1,0 +1,372 @@
+{
+  "generated": "2026-07-22",
+  "api": "https://api.osv.dev/v1/query",
+  "results": [
+    {
+      "label": "CONTROL pypi/django @3.0.0 (should be >0)",
+      "query": {
+        "package": {
+          "purl": "pkg:pypi/django"
+        },
+        "version": "3.0.0"
+      },
+      "result": {
+        "raw_vulns": 31,
+        "cve_count": 21,
+        "cves_sample": [
+          "CVE-2019-19844",
+          "CVE-2020-13254",
+          "CVE-2020-13596",
+          "CVE-2020-24583",
+          "CVE-2020-24584",
+          "CVE-2020-7471"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls: declared purl pkg:github/mbed-tls/mbedtls @2.28.0",
+      "query": {
+        "package": {
+          "purl": "pkg:github/mbed-tls/mbedtls"
+        },
+        "version": "2.28.0"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "mbedtls: bare name @2.28.0",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "2.28.0"
+      },
+      "result": {
+        "raw_vulns": 179,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls: name+Debian @2.28.0-1",
+      "query": {
+        "package": {
+          "name": "mbedtls",
+          "ecosystem": "Debian"
+        },
+        "version": "2.28.0-1"
+      },
+      "result": {
+        "raw_vulns": 49,
+        "cve_count": 49,
+        "cves_sample": [
+          "CVE-2018-1000520",
+          "CVE-2022-35409",
+          "CVE-2022-46392",
+          "CVE-2022-46393",
+          "CVE-2023-43615",
+          "CVE-2024-23170"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls: purl pkg:deb/debian/mbedtls @2.28.0",
+      "query": {
+        "package": {
+          "purl": "pkg:deb/debian/mbedtls"
+        },
+        "version": "2.28.0"
+      },
+      "result": {
+        "raw_vulns": 52,
+        "cve_count": 52,
+        "cves_sample": [
+          "CVE-2018-1000520",
+          "CVE-2020-36477",
+          "CVE-2021-43666",
+          "CVE-2021-44732",
+          "CVE-2022-35409",
+          "CVE-2022-46392"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls bare @2.28.0 (real)",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "2.28.0"
+      },
+      "result": {
+        "raw_vulns": 179,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls bare @3.6.2 (real)",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "3.6.2"
+      },
+      "result": {
+        "raw_vulns": 158,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls bare @99.0.0 (impossible)",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "99.0.0"
+      },
+      "result": {
+        "raw_vulns": 125,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls Debian @2.28.0-1 (real)",
+      "query": {
+        "package": {
+          "name": "mbedtls",
+          "ecosystem": "Debian"
+        },
+        "version": "2.28.0-1"
+      },
+      "result": {
+        "raw_vulns": 49,
+        "cve_count": 49,
+        "cves_sample": [
+          "CVE-2018-1000520",
+          "CVE-2022-35409",
+          "CVE-2022-46392",
+          "CVE-2022-46393",
+          "CVE-2023-43615",
+          "CVE-2024-23170"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls Debian @99.0.0 (impossible)",
+      "query": {
+        "package": {
+          "name": "mbedtls",
+          "ecosystem": "Debian"
+        },
+        "version": "99.0.0"
+      },
+      "result": {
+        "raw_vulns": 43,
+        "cve_count": 43,
+        "cves_sample": [
+          "CVE-2018-1000520",
+          "CVE-2022-35409",
+          "CVE-2023-43615",
+          "CVE-2024-23170",
+          "CVE-2024-23775",
+          "CVE-2024-28755"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls bare @3.5.0 (TI libmbedcrypto; manifest lied 3.4.0)",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "3.5.0"
+      },
+      "result": {
+        "raw_vulns": 164,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "mbedtls bare @2.22.0 (Wi-SUN EOL; misdeclared 5.15.7)",
+      "query": {
+        "package": {
+          "name": "mbedtls"
+        },
+        "version": "2.22.0"
+      },
+      "result": {
+        "raw_vulns": 179,
+        "cve_count": 83,
+        "cves_sample": [
+          "CVE-2013-0169",
+          "CVE-2018-0497",
+          "CVE-2018-0498",
+          "CVE-2018-1000520",
+          "CVE-2018-19608",
+          "CVE-2018-9988"
+        ]
+      }
+    },
+    {
+      "label": "freertos: declared purl pkg:github/freertos/freertos-kernel @10.4.3",
+      "query": {
+        "package": {
+          "purl": "pkg:github/freertos/freertos-kernel"
+        },
+        "version": "10.4.3"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "freertos: bare name @10.4.3",
+      "query": {
+        "package": {
+          "name": "freertos"
+        },
+        "version": "10.4.3"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "freertos: name freertos-kernel @10.4.3",
+      "query": {
+        "package": {
+          "name": "freertos-kernel"
+        },
+        "version": "10.4.3"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "freertos: name amazon-freertos @10.4.3",
+      "query": {
+        "package": {
+          "name": "amazon-freertos"
+        },
+        "version": "10.4.3"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "cmsis: declared purl pkg:github/arm-software/cmsis_5 @5.9.0",
+      "query": {
+        "package": {
+          "purl": "pkg:github/arm-software/cmsis_5"
+        },
+        "version": "5.9.0"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "cmsis: bare name @5.9.0",
+      "query": {
+        "package": {
+          "name": "cmsis"
+        },
+        "version": "5.9.0"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "nanopb: declared purl pkg:github/nanopb/nanopb @0.3.9.3",
+      "query": {
+        "package": {
+          "purl": "pkg:github/nanopb/nanopb"
+        },
+        "version": "0.3.9.3"
+      },
+      "result": {
+        "raw_vulns": 0,
+        "cve_count": 0,
+        "cves_sample": []
+      }
+    },
+    {
+      "label": "nanopb: bare name @0.3.9.3",
+      "query": {
+        "package": {
+          "name": "nanopb"
+        },
+        "version": "0.3.9.3"
+      },
+      "result": {
+        "raw_vulns": 14,
+        "cve_count": 5,
+        "cves_sample": [
+          "CVE-2020-26243",
+          "CVE-2020-5235",
+          "CVE-2021-21401",
+          "CVE-2022-20203",
+          "CVE-2024-53984"
+        ]
+      }
+    }
+  ]
+}
