@@ -278,10 +278,7 @@ findings suggest revisiting a decision.
   captured as recommendation 11 in
   [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md).
   Reusable probe harnesses: `osv_probe.py`, `nvd_probe.py`, `ghsa_probe.py`.
-  **Next-up now**: the mapping-layer follow-ups (FreeRTOS kernel-semver →
-  AWS-distribution CPE version scheme; tag→commit resolver over OSV GIT ranges),
-  and the untested advisory sources in the roadmap (vendor/upstream advisories,
-  CVE.org/cvelistV5, EUVD, CISA KEV). Runner-up alternatives if breadth is preferred:
+  Runner-up alternatives if breadth is preferred:
   lwIP as the fourth component (roadmap Tier 1 #1 — now cheap via the minr
   pipeline, stresses the port-layer-vs-core question), or FatFs as the
   adversarial no-git-upstream case.
@@ -296,6 +293,29 @@ findings suggest revisiting a decision.
   Picking a wholly new component to research remains the alternative. See
   "Low-priority deferred follow-ups" below for CMSIS/mbedTLS loose ends that are
   explicitly parked, not forgotten.
+- **Backlog / next-up (designated 2026-07-22): the vuln-source mapping layer** —
+  the concrete follow-up the advisory-fitness tests exposed, and the last piece
+  between the pipeline's validated purl+version output and actual vuln scanning.
+  The tests proved the SBOM identity is *not* the vuln-lookup key: the mapping
+  is what's missing. Scoped sub-tasks (all research/prototype, not generator
+  build): (1) a **canonical identity → CPE 2.3** map (`pkg:github/mbed-tls/
+  mbedtls` → `cpe:2.3:a:arm:mbed_tls`), the confirmed primary path — validate the
+  detected version against NVD CPE ranges end-to-end for the corpus ground
+  truths; (2) **FreeRTOS version-scheme reconciliation** — the NVD CVEs are keyed
+  to AWS-distribution / FreeRTOS+TCP versioning, so the detected kernel semver
+  (10.4.3) matches none; work out the kernel-semver → CPE-version mapping (the
+  FreeRTOS instance of the component-granularity question); (3) a **tag→commit
+  resolver over OSV's GIT-range CVE records** — resolve a detected version to its
+  release commit (the reference DBs already mine per-release tags) and test
+  membership in each CVE's introduced..fixed GIT range, unlocking OSV's only
+  upstream-accurate feed; (4) **per-component coverage metadata** so an empty
+  result reads as "not covered," never "no known vulns." Grounded in
+  [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)
+  and architecture recommendation 11
+  ([general/sbom-generator-architecture.md](general/sbom-generator-architecture.md));
+  the untested advisory sources (vendor/upstream advisories, CVE.org/cvelistV5,
+  EUVD, CISA KEV) are catalogued with priorities in
+  [general/advisory-source-roadmap.md](general/advisory-source-roadmap.md).
 - **Open topic (queued 2026-07-16, not started)**: **identifying OSS components
   delivered as prebuilt static libraries (`*.a`/`*.lib`) plus public headers** —
   a common vendor-SDK distribution shape (e.g. closed-source middleware wrapping
