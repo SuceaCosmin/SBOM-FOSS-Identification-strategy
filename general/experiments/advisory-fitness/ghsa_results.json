@@ -1,0 +1,78 @@
+{
+  "generated": "2026-07-22",
+  "api": "https://api.github.com/advisories",
+  "results": [
+    {
+      "label": "known mbedtls CVE by id",
+      "query": "cve_id=CVE-2024-45157",
+      "result": {
+        "count": 1,
+        "ecosystems": {},
+        "sample": [
+          [
+            "GHSA-cvp8-hm87-hr8x",
+            "CVE-2024-45157"
+          ]
+        ]
+      }
+    },
+    {
+      "label": "affects=mbedtls (package query)",
+      "query": "affects=mbedtls&per_page=20",
+      "result": {
+        "count": 0,
+        "ecosystems": {},
+        "sample": []
+      }
+    },
+    {
+      "label": "affects=freertos (package query)",
+      "query": "affects=freertos&per_page=20",
+      "result": {
+        "count": 0,
+        "ecosystems": {},
+        "sample": []
+      }
+    },
+    {
+      "label": "100 most-recent (what ecosystems exist)",
+      "query": "per_page=100&sort=published",
+      "result": {
+        "count": 100,
+        "ecosystems": {
+          "npm": 45,
+          "pip": 8,
+          "rubygems": 3,
+          "go": 60,
+          "maven": 15
+        },
+        "sample": [
+          [
+            "GHSA-9r8p-h6cc-6qhm",
+            "CVE-2026-65599"
+          ],
+          [
+            "GHSA-9wcp-9r3j-383q",
+            "CVE-2026-65592"
+          ],
+          [
+            "GHSA-p3rg-hrf9-w9gj",
+            "CVE-2026-65597"
+          ],
+          [
+            "GHSA-g3r5-9h93-4j2c",
+            "CVE-2026-65598"
+          ],
+          [
+            "GHSA-x5vx-c2c8-m3w9",
+            "CVE-2026-65015"
+          ],
+          [
+            "GHSA-mhvh-gwhr-76pw",
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

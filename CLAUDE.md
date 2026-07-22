@@ -250,33 +250,38 @@ findings suggest revisiting a decision.
   the Wi-SUN embedded 2.22.0 (EOL, misdeclared as "5.15.7").
   Deferred as polish: data-symbol mining, member-name normalization
   policy, stripped/LTO hard tier (parked until a real artifact).
-- **Researched (cross-cutting): the OSV.dev vulnerability-scanning fitness
-  test** — open item 2, **RUN 2026-07-22**, findings in
-  [general/experiments/osv-fitness](general/experiments/osv-fitness/README.md).
-  Result: **OSV.dev is not directly fit to consume our upstream purl+version
-  output for embedded C**, three independent ways: (a) the GitHub-flavored purls
-  we declare (`pkg:github/mbed-tls/mbedtls`, …) return **0** for all four
-  components — OSV indexes ecosystem purls (`pkg:pypi/…`, `pkg:deb/…`), not
-  `pkg:github/…` (a `pkg:pypi/django` control returned 21 CVEs, proving the
-  query technique) — so **identity and vuln-lookup coordinate are different
-  keys**; (b) the fallback bare-`name` query is **version-inert** (mbedTLS
-  @2.28.0, @3.6.2, and an *impossible* @99.0.0 all return the same 83 CVEs — it
-  degenerates to every distro advisory), so a naive `name+version → OSV`
-  integration reports the identical CVE list for every version and the whole
-  version-pinning effort buys nothing on that path; (c) **coverage is
-  component-specific** — FreeRTOS 0 under every coordinate (a known FreeRTOS CVE
-  isn't even in OSV), CMSIS 0, nanopb only accidental PyPI coverage — so empty
-  must mean "not covered," never "no known vulns." The one upstream-accurate
-  path OSV offers (raw CVE records with **GIT-commit ranges**) is usable *by us*
+- **Researched (cross-cutting): advisory-source fitness tests** (OSV.dev,
+  NVD/CPE, GHSA) — open item 2, **RUN 2026-07-22**, findings in
+  [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md);
+  the full menu of sources still to test is catalogued in the new
+  [general/advisory-source-roadmap.md](general/advisory-source-roadmap.md).
+  **Headline: NVD/CPE is the fit source; OSV and GHSA are not.**
+  **NVD/CPE** gives real version-range discrimination — mbedTLS
+  (`cpe:2.3:a:arm:mbed_tls`) @2.28.0 → 23 CVEs, @3.6.2 → 11, older @2.22.0 → 37,
+  and an *impossible* @99.0.0 → **0** — so the generator's primary vuln-lookup
+  mapping is **canonical identity → CPE 2.3**; its misses are all mapping-layer
+  (FreeRTOS CVEs exist but are AWS-distribution-versioned so our kernel semver
+  10.4.3 matches none; CMSIS has a CPE only for `cmsis-rtos`). **OSV.dev is not
+  directly fit for embedded C**, three ways: (a) the GitHub-flavored purls we
+  declare return **0** (OSV indexes `pkg:pypi/`/`pkg:deb/`, not `pkg:github/`; a
+  `pkg:pypi/django` control returned 21, proving the technique) — **identity and
+  vuln-lookup coordinate are different keys**; (b) bare-`name` matching is
+  **version-inert** (mbedTLS @2.28.0/@3.6.2/impossible-@99.0.0 all → the same 83
+  CVEs), so a naive `name+version → OSV` reports identical CVEs for every
+  version; (c) FreeRTOS/CMSIS absent entirely. OSV's only upstream-accurate
+  offering — raw CVE records with **GIT-commit ranges** — is usable *by us*
   because the reference DBs already mine per-release git tags (tag→commit is
-  free). Net: **reinforces the metadata-mapping open item** — a mapping layer
-  from canonical identity to each vuln source's coordinate system is mandatory;
+  free). **GHSA is least fit**: no C/C++ ecosystem exists, `affects=mbedtls`/
+  `affects=freertos` → 0, embedded-C CVEs appear only as unreviewed mirrors with
+  empty ecosystem. Net: a mapping layer from canonical identity to each source's
+  coordinate is mandatory (empty ≠ "no vulns" — must mean "not covered"),
   captured as recommendation 11 in
   [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md).
-  Reusable probe harness: `osv_probe.py`. **Next-up now**: the NVD/CPE
-  fitness probe (does CPE version-range matching give the discrimination OSV's
-  package queries lack?) is the natural continuation and directly feeds the
-  mapping layer. Runner-up alternatives if breadth is preferred:
+  Reusable probe harnesses: `osv_probe.py`, `nvd_probe.py`, `ghsa_probe.py`.
+  **Next-up now**: the mapping-layer follow-ups (FreeRTOS kernel-semver →
+  AWS-distribution CPE version scheme; tag→commit resolver over OSV GIT ranges),
+  and the untested advisory sources in the roadmap (vendor/upstream advisories,
+  CVE.org/cvelistV5, EUVD, CISA KEV). Runner-up alternatives if breadth is preferred:
   lwIP as the fourth component (roadmap Tier 1 #1 — now cheap via the minr
   pipeline, stresses the port-layer-vs-core question), or FatFs as the
   adversarial no-git-upstream case.

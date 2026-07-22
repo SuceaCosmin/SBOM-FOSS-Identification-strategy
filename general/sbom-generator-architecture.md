@@ -190,15 +190,17 @@ The canonical upstream identity the resolver emits (rec. 7) is the right key for
 identity→vuln-source mapping as its own layer, per source, with **per-component
 coverage metadata**; never assume the SBOM purl is directly queryable.
 
-- **Why**: the OSV.dev fitness test found our declared `pkg:github/…` purls
-  return **0** for every embedded-C component (OSV indexes `pkg:pypi/…`,
-  `pkg:deb/…`, not `pkg:github/…`; a PyPI control worked, isolating the gap). The
-  only OSV query that returns anything for mbedTLS — bare `name` — is
-  **version-inert** (an impossible future version returns the same 83 CVEs), so a
-  naive `name+version → OSV` call reports the same CVEs for every version and
-  would flag a patched build as vulnerable. And coverage is component-specific:
-  FreeRTOS and CMSIS are absent from OSV entirely, so an empty result means "not
-  covered," not "no known vulns" — a distinction only per-component coverage
+- **Why**: the advisory-source fitness tests (OSV.dev, NVD/CPE, GHSA) found the
+  source is **not** interchangeable for embedded C. Our declared `pkg:github/…`
+  purls return **0** from OSV (which indexes `pkg:pypi/…`, `pkg:deb/…`, not
+  `pkg:github/…`; a PyPI control worked, isolating the gap), and OSV's only
+  bare-name match is **version-inert** (impossible version → same 83 CVEs); GHSA
+  has no C/C++ ecosystem at all. **NVD/CPE is the fit source** — CPE 2.3 ranges
+  give real version discrimination (impossible version → 0) — so the primary
+  mapping target is **canonical identity → CPE 2.3**. Coverage is
+  component-specific (FreeRTOS/CMSIS absent from OSV; FreeRTOS present in NVD but
+  AWS-distribution-versioned; CMSIS only `cmsis-rtos`), so an empty result means
+  "not covered," not "no known vulns" — a distinction only per-component coverage
   metadata preserves.
 - **Consequences for the architecture**: (a) the resolver's canonical identity
   feeds a **mapping step** that produces each vuln source's own coordinate
@@ -210,7 +212,8 @@ coverage metadata**; never assume the SBOM purl is directly queryable.
   a coarse distro-flavored net at best; (c) a version-inert or uncovered result
   must be **labeled as such** via the provenance layer (rec. 5), never emitted as
   precise.
-- **Source**: [experiments/osv-fitness](experiments/osv-fitness/README.md).
+- **Source**: [experiments/advisory-fitness](experiments/advisory-fitness/README.md);
+  the source menu is [advisory-source-roadmap.md](advisory-source-roadmap.md).
 - **Note on scope**: this is detection/identification-core adjacent — the
   *mapping* of identity to a vuln coordinate is in scope as an architectural
   boundary; building the vuln-scanning integration itself belongs to the

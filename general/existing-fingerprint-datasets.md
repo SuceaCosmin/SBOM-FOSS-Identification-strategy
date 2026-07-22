@@ -297,9 +297,17 @@ open investigation, deliberately left for future sessions:
    curated repo→upstream alias table (orders of magnitude cheaper than curating
    fingerprint DBs).
 2. ~~**Vulnerability-scanning fitness test — designated next task (2026-07-18)**~~
-   **RUN 2026-07-22** — see [experiments/osv-fitness](experiments/osv-fitness/README.md).
-   Result: **OSV.dev is not directly fit to consume our upstream purl+version
-   output for embedded C**, in three independent ways. (a) The GitHub-flavored
+   **RUN 2026-07-22** — see [experiments/advisory-fitness](experiments/advisory-fitness/README.md)
+   (now covers OSV.dev, NVD/CPE, and GHSA; full source menu in
+   [advisory-source-roadmap.md](advisory-source-roadmap.md)).
+   **Headline: NVD/CPE is the fit source** — CPE 2.3 match ranges give real
+   version discrimination (mbedTLS @2.28.0 → 23 CVEs, @3.6.2 → 11, impossible
+   @99.0.0 → **0**), so the generator's primary vuln-lookup mapping is
+   **canonical identity → CPE 2.3**. By contrast **OSV.dev is not directly fit to
+   consume our upstream purl+version output for embedded C**, in three
+   independent ways, and **GHSA is least fit** (no C/C++ ecosystem — package
+   queries return 0; embedded-C CVEs appear only as unreviewed mirrors). The OSV
+   findings: (a) The GitHub-flavored
    purls we declare (`pkg:github/mbed-tls/mbedtls`, …) return **0** for all four
    components — OSV indexes ecosystem purls (`pkg:pypi/…`, `pkg:deb/…`) not
    `pkg:github/…` (a PyPI control returned 21 CVEs, proving the technique). So
@@ -317,8 +325,8 @@ open investigation, deliberately left for future sessions:
    records with **GIT-commit ranges** — is usable *by us* because our reference
    DBs already mine per-release git tags (tag→commit map is free). Net: this
    **strongly reinforces item 5** — a metadata-mapping layer from canonical
-   identity to each vuln source's coordinate system is mandatory, and NVD/CPE is
-   the likely upstream-fit source (queued as the follow-up probe). Captured as a
+   identity to each vuln source's coordinate system is mandatory, with NVD/CPE
+   **confirmed** (same session) as the upstream-fit primary. Captured as a
    new recommendation in
    [sbom-generator-architecture.md](sbom-generator-architecture.md). The original
    OSSKB-raw-output comparison (quantify the attribution gap's CVE cost) is now

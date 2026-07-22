@@ -23,8 +23,15 @@ Topic-specific general docs in this folder:
   of architectural recommendations for the (separate) SBOM generator, grounded in
   this repo's findings: curated-KB backbone, two-tier distribution,
   evidence-producer/resolver split, selectable profiles, per-finding provenance, the
-  metadata-vs-disassembly legal boundary, canonical attribution, version windows.
-  Detection-core modelling only — output serialization stays out of scope.
+  metadata-vs-disassembly legal boundary, canonical attribution, version windows,
+  identity→vuln-source coordinate mapping. Detection-core modelling only — output
+  serialization stays out of scope.
+- [advisory-source-roadmap.md](advisory-source-roadmap.md) — catalogue of the standard
+  vulnerability advisory sources a scanner queries (NVD/CPE, OSV.dev, GHSA, distro
+  trackers, vendor advisories, CVE.org, EUVD, CISA KEV), marking which are
+  fitness-tested against this repo's purl+version output and which remain. Bottom
+  line: **NVD/CPE is the fit source** for embedded C; OSV/GHSA are not. Backed by
+  [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
 
 ## Component granularity
 
