@@ -44,6 +44,28 @@ from pathlib import Path
 
 from cmsis_fingerprint import fingerprint_source
 
+
+def pretty_json(obj, indent: int = 2, level: int = 0) -> str:
+    """Pretty-print JSON with the structure indented (one field per line) but *leaf
+    arrays* (the winnow-hash integer lists, tag-name string lists) kept inline on one
+    line each. Plain `json.dumps(indent=2)` would put every winnowing hash on its own
+    line — hundreds of thousands of lines, less readable, not more. Keeps the browsable
+    structure while leaving opaque hash arrays as one line each."""
+    pad, pad_in = " " * (indent * level), " " * (indent * (level + 1))
+    if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+        body = ",\n".join(f"{pad_in}{json.dumps(k)}: {pretty_json(v, indent, level + 1)}"
+                          for k, v in obj.items())
+        return "{\n" + body + "\n" + pad + "}"
+    if isinstance(obj, list):
+        if all(not isinstance(x, (dict, list)) for x in obj):   # leaf array → inline
+            return json.dumps(obj)
+        body = ",\n".join(f"{pad_in}{pretty_json(x, indent, level + 1)}" for x in obj)
+        return "[\n" + body + "\n" + pad + "]"
+    return json.dumps(obj)
+
+
 REPOS = [
     {"repo": "ARM-software/CMSIS_5", "tag_re": re.compile(r"^(\d+)\.(\d+)\.(\d+)$")},
     {"repo": "ARM-software/CMSIS_6", "tag_re": re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")},
@@ -153,7 +175,7 @@ def main() -> None:
     db = {"repos": [r["repo"] for r in REPOS], "files": FILES, "content": content,
           "tags": tag_index}
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(db, separators=(",", ":")), encoding="utf-8")
+    OUT_PATH.write_text(pretty_json(db) + "\n", encoding="utf-8")
     unique_count = sum(len(bucket) for bucket in content.values())
     print(f"Wrote {OUT_PATH} ({len(tag_index)} tags, {unique_count} unique file-contents)",
           file=sys.stderr)

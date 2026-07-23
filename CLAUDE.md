@@ -255,7 +255,8 @@ findings suggest revisiting a decision.
   [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md);
   the full menu of sources still to test is catalogued in the new
   [general/advisory-source-roadmap.md](general/advisory-source-roadmap.md).
-  **Headline: NVD/CPE is the fit source; OSV and GHSA are not.**
+  **Headline: NVD/CPE is the primary fit source; GHSA is fit only via its
+  per-repository advisory feed (per-component); OSV is not.**
   **NVD/CPE** gives real version-range discrimination — mbedTLS
   (`cpe:2.3:a:arm:mbed_tls`) @2.28.0 → 23 CVEs, @3.6.2 → 11, older @2.22.0 → 37,
   and an *impossible* @99.0.0 → **0** — so the generator's primary vuln-lookup
@@ -271,11 +272,19 @@ findings suggest revisiting a decision.
   version; (c) FreeRTOS/CMSIS absent entirely. OSV's only upstream-accurate
   offering — raw CVE records with **GIT-commit ranges** — is usable *by us*
   because the reference DBs already mine per-release git tags (tag→commit is
-  free). **GHSA is least fit**: no C/C++ ecosystem exists, `affects=mbedtls`/
-  `affects=freertos` → 0, embedded-C CVEs appear only as unreviewed mirrors with
-  empty ecosystem. Net: a mapping layer from canonical identity to each source's
-  coordinate is mandatory (empty ≠ "no vulns" — must mean "not covered"),
-  captured as recommendation 11 in
+  free). **GHSA has two access paths with opposite verdicts** (corrected 2026-07-23;
+  the original run tested only the first): its *global* `/advisories` feed is
+  unfit — no C/C++ ecosystem, `affects=mbedtls`/`affects=freertos` → 0, embedded-C
+  CVEs only as unreviewed mirrors with empty ecosystem — **but** the
+  *per-repository* `/repos/{owner}/{repo}/security-advisories` feed carries real,
+  version-ranged advisories for maintainers who self-publish: FreeRTOS-Kernel's
+  CVE-2024-28115 → range `<=10.6.1` in **kernel semver** (better than NVD's
+  AWS-distribution versioning for FreeRTOS, and only reachable via the repo endpoint —
+  the global feed returns 0 for it even by `cve_id`), while `Mbed-TLS/mbedtls` → 0 (it
+  self-publishes elsewhere). So GHSA is a **per-component opt-in source** keyed off the
+  canonical identity's `{owner}/{repo}`, not a flat miss. Net: a mapping layer from
+  canonical identity to each source's coordinate is mandatory (empty ≠ "no vulns" —
+  must mean "not covered"), captured as recommendation 11 in
   [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md).
   Reusable probe harnesses: `osv_probe.py`, `nvd_probe.py`, `ghsa_probe.py`.
   Runner-up alternatives if breadth is preferred:
@@ -293,7 +302,43 @@ findings suggest revisiting a decision.
   Picking a wholly new component to research remains the alternative. See
   "Low-priority deferred follow-ups" below for CMSIS/mbedTLS loose ends that are
   explicitly parked, not forgotten.
-- **Backlog / next-up (designated 2026-07-22): the vuln-source mapping layer** —
+- **FreeRTOS re-review done (2026-07-23), with a prioritized next-step list.** Prompted
+  by two correct user observations, the FreeRTOS work was revisited: (a) the
+  version-fingerprint reference DB was widened **3 → all 7 core kernel `.c` files**
+  (added `timers`/`event_groups`/`stream_buffer`/`croutine`) with an **anchor-quorum**
+  matcher design (tasks/queue/list confirm presence; other present core files tighten
+  the version intersection), rebuilt and re-validated with no corpus regression; (b) the
+  **GHSA advisory-fitness finding was corrected** — GHSA's *global* feed is unfit as
+  before, but its **per-repository** feed (`/repos/{owner}/{repo}/security-advisories`)
+  carries real version-ranged advisories for self-publishing maintainers:
+  FreeRTOS-Kernel's CVE-2024-28115 → `<=10.6.1` **in kernel semver** (better than NVD's
+  AWS-distribution versioning for FreeRTOS; mbedTLS self-publishes elsewhere → 0). All
+  three reference DBs (FreeRTOS/mbedTLS/CMSIS) were also converted from one-line blobs to
+  **pretty-printed JSON** (leaf-array-inline `pretty_json()` in each `build_reference_db.py`),
+  and a repo-wide **"fingerprints are POC-scoped, not consolidated"** caveat was added to
+  [general/README.md](general/README.md#maturity-caveat-the-fingerprints-here-are-poc-scoped-not-consolidated).
+  **Prioritized next steps (documented 2026-07-23, to resume from):**
+  1. **Close the vuln loop for FreeRTOS (recommended first, cheap spike):** take a
+     detected kernel semver → query the GHSA per-repo feed → test version-range
+     membership → report the applicable CVE (CVE-2024-28115). This is the one slice of
+     the paused vuln-mapping layer that's **proven-fit and needs no CPE/version-scheme
+     reconciliation** — it sidesteps exactly the FreeRTOS-versioning problem. First
+     real end-to-end SBOM→vuln result in the repo. New probe belongs alongside
+     [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md).
+  2. **Consolidate FreeRTOS's port/`mpu_wrappers` layer (heavier):** where
+     CVE-2024-28115 actually lives, so it's what lets a detection point at that CVE's
+     file. Needs a reference set indexed by `(tag, arch, compiler)` and new corpus —
+     the natural pairing with step 1, and would make FreeRTOS the first fully-
+     consolidated (POC→production) component. Also owed: the 21 `include/` headers and
+     empirically-tuned winnowing thresholds.
+  3. **Lower priority:** a new component (lwIP or FatFs) via the `research-component`
+     skill for breadth; or apply the POC-consolidation lens to mbedTLS/CMSIS (same
+     minimal-scope shape, no fresh finding pushing them).
+- **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
+  vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
+  favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,
+  already-fit slice of this — the rest (CPE mapping, OSV GIT-range resolver) stays
+  paused. It remains
   the concrete follow-up the advisory-fitness tests exposed, and the last piece
   between the pipeline's validated purl+version output and actual vuln scanning.
   The tests proved the SBOM identity is *not* the vuln-lookup key: the mapping

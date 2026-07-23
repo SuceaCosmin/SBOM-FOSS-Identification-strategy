@@ -194,14 +194,20 @@ coverage metadata**; never assume the SBOM purl is directly queryable.
   source is **not** interchangeable for embedded C. Our declared `pkg:github/…`
   purls return **0** from OSV (which indexes `pkg:pypi/…`, `pkg:deb/…`, not
   `pkg:github/…`; a PyPI control worked, isolating the gap), and OSV's only
-  bare-name match is **version-inert** (impossible version → same 83 CVEs); GHSA
-  has no C/C++ ecosystem at all. **NVD/CPE is the fit source** — CPE 2.3 ranges
-  give real version discrimination (impossible version → 0) — so the primary
-  mapping target is **canonical identity → CPE 2.3**. Coverage is
+  bare-name match is **version-inert** (impossible version → same 83 CVEs); GHSA's
+  *global* feed has no C/C++ ecosystem at all. **NVD/CPE is the fit source** — CPE
+  2.3 ranges give real version discrimination (impossible version → 0) — so the
+  primary mapping target is **canonical identity → CPE 2.3**. A second, *per-component*
+  fit path exists: **GHSA's per-repository advisory feed**
+  (`/repos/{owner}/{repo}/security-advisories`), which for maintainers who
+  self-publish carries real version ranges keyed to the *upstream* scheme — for
+  FreeRTOS-Kernel, `<=10.6.1` in **kernel semver**, i.e. *better* than NVD's
+  AWS-distribution versioning for that component (mbedTLS self-publishes elsewhere, so
+  its repo feed is empty — the path is opt-in per component). Coverage is thus
   component-specific (FreeRTOS/CMSIS absent from OSV; FreeRTOS present in NVD but
-  AWS-distribution-versioned; CMSIS only `cmsis-rtos`), so an empty result means
-  "not covered," not "no known vulns" — a distinction only per-component coverage
-  metadata preserves.
+  AWS-distribution-versioned; CMSIS only `cmsis-rtos`; FreeRTOS-Kernel best served by
+  its GHSA repo feed), so an empty result means "not covered," not "no known vulns" —
+  a distinction only per-component coverage metadata preserves.
 - **Consequences for the architecture**: (a) the resolver's canonical identity
   feeds a **mapping step** that produces each vuln source's own coordinate
   (CPE for NVD, ecosystem purl / GIT commit for OSV) — this is where the
