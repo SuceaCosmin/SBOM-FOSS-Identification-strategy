@@ -1,8 +1,9 @@
 {
-  "generated": "2026-07-22",
+  "generated": "2026-07-23",
   "api": "https://api.github.com/advisories",
   "results": [
     {
+      "path": "global",
       "label": "known mbedtls CVE by id",
       "query": "cve_id=CVE-2024-45157",
       "result": {
@@ -17,6 +18,7 @@
       }
     },
     {
+      "path": "global",
       "label": "affects=mbedtls (package query)",
       "query": "affects=mbedtls&per_page=20",
       "result": {
@@ -26,6 +28,7 @@
       }
     },
     {
+      "path": "global",
       "label": "affects=freertos (package query)",
       "query": "affects=freertos&per_page=20",
       "result": {
@@ -35,43 +38,117 @@
       }
     },
     {
+      "path": "global",
       "label": "100 most-recent (what ecosystems exist)",
       "query": "per_page=100&sort=published",
       "result": {
         "count": 100,
         "ecosystems": {
-          "npm": 45,
-          "pip": 8,
-          "rubygems": 3,
-          "go": 60,
-          "maven": 15
+          "npm": 134,
+          "pip": 14,
+          "maven": 53,
+          "composer": 6
         },
         "sample": [
           [
-            "GHSA-9r8p-h6cc-6qhm",
-            "CVE-2026-65599"
+            "GHSA-652q-gvq3-74qv",
+            null
           ],
           [
-            "GHSA-9wcp-9r3j-383q",
-            "CVE-2026-65592"
+            "GHSA-jqwr-vx3p-r266",
+            null
           ],
           [
-            "GHSA-p3rg-hrf9-w9gj",
-            "CVE-2026-65597"
+            "GHSA-9cmh-xcqm-5hqr",
+            null
           ],
           [
-            "GHSA-g3r5-9h93-4j2c",
-            "CVE-2026-65598"
+            "GHSA-pppj-hq3g-57pj",
+            null
           ],
           [
-            "GHSA-x5vx-c2c8-m3w9",
-            "CVE-2026-65015"
+            "GHSA-gx64-gj6p-pc4c",
+            null
           ],
           [
-            "GHSA-mhvh-gwhr-76pw",
+            "GHSA-89vp-jrxv-24w8",
             null
           ]
         ]
+      }
+    },
+    {
+      "path": "repo",
+      "repo": "FreeRTOS/FreeRTOS-Kernel",
+      "result": {
+        "count": 1,
+        "advisories": [
+          {
+            "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+            "cve_id": "CVE-2024-28115",
+            "severity": "high",
+            "ranges": [
+              {
+                "ecosystem": "freertos-kernel",
+                "name": "FreeRTOS-Kernel",
+                "vulnerable_version_range": "<=10.6.1",
+                "patched_versions": ">=10.6.2"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "path": "repo",
+      "repo": "FreeRTOS/FreeRTOS",
+      "result": {
+        "count": 1,
+        "advisories": [
+          {
+            "ghsa_id": "GHSA-5677-2m7x-vjp8",
+            "cve_id": null,
+            "severity": "low",
+            "ranges": [
+              {
+                "ecosystem": "",
+                "name": "FreeRTOSv202212.01.zip, FreeRTOSv202112.00.zip",
+                "vulnerable_version_range": "202212.01, 202112.00",
+                "patched_versions": "See Advisory"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "path": "repo",
+      "repo": "FreeRTOS/coreMQTT",
+      "result": {
+        "count": 1,
+        "advisories": [
+          {
+            "ghsa_id": "GHSA-6qh9-r6jp-2wxc",
+            "cve_id": "CVE-2026-8686",
+            "severity": "high",
+            "ranges": [
+              {
+                "ecosystem": "",
+                "name": "coreMQTT",
+                "vulnerable_version_range": "v5.0.0",
+                "patched_versions": "v5.0.1"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "path": "repo",
+      "repo": "Mbed-TLS/mbedtls",
+      "result": {
+        "count": 0,
+        "advisories": []
       }
     }
   ]

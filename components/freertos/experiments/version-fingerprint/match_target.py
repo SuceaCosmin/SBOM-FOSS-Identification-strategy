@@ -1,18 +1,23 @@
 """Match a candidate source tree against the local FreeRTOS-Kernel reference
 fingerprint database (see build_reference_db.py).
 
-Files named tasks.c / queue.c / list.c are grouped by the directory they were found
-in (a real vendored copy keeps them together), since presence of the kernel can't be
-confirmed from a single file alone. For each such group:
+Core kernel `.c` files (tasks/queue/list/timers/event_groups/stream_buffer/croutine)
+are grouped by the directory they were found in (a real vendored copy keeps them
+together), since presence of the kernel can't be confirmed from a single file alone.
+For each such group:
   1. Every present file is matched independently: exact normalized-content hash first,
      falling back to winnowing-fingerprint Jaccard similarity against every known
      release tag.
-  2. If tasks.c/queue.c/list.c aren't all present together, the group is reported as
-     an INCOMPLETE / unconfirmed signal rather than a confirmed kernel match.
-  3. If all three are present, their resolved versions are cross-checked for
-     agreement. Files that exact-match releases that don't share a common tag are
-     flagged as a MIXED VERSION integration — e.g. a partial upgrade where only some
-     kernel files were replaced, leaving others on an older release.
+  2. The kernel is confirmed present only if the *anchor* files (db["anchors"] —
+     tasks.c/queue.c/list.c, which essentially always ship) are all present; otherwise
+     the group is reported as an INCOMPLETE / unconfirmed signal. The remaining core
+     files are optional (croutine is legacy, others are feature-gated) and are not
+     required — but any that ARE present are folded into the cross-file consistency
+     check, tightening the version resolution.
+  3. Once presence is confirmed, the resolved versions of every present file are
+     cross-checked for agreement. Files that exact-match releases that don't share a
+     common tag are flagged as a MIXED VERSION integration — e.g. a partial upgrade
+     where only some kernel files were replaced, leaving others on an older release.
 
 Usage: python match_target.py <file-or-directory>
 """
@@ -83,24 +88,27 @@ def print_file_result(result: dict) -> None:
         print(f"    No reference data for {result['filename']} — can't compare.")
 
 
-def analyze_group(directory: Path, files_present: dict, required: list, db: dict) -> None:
+def analyze_group(directory: Path, files_present: dict, anchors: list, db: dict) -> None:
     print(f"\n{'=' * 70}\nCandidate FreeRTOS-Kernel location: {directory}\n{'=' * 70}")
 
-    missing = [f for f in required if f not in files_present]
+    missing_anchors = [f for f in anchors if f not in files_present]
     results = {}
     for filename, path in sorted(files_present.items()):
         results[filename] = evaluate_file(path, db)
         print_file_result(results[filename])
 
-    if missing:
-        print(f"\n  INCOMPLETE — missing {missing}. Presence of FreeRTOS-Kernel can't be "
-              f"confirmed from this directory alone (need {required} together); the "
-              f"matches above are a weak, unconfirmed signal only.")
+    if missing_anchors:
+        print(f"\n  INCOMPLETE — missing anchor file(s) {missing_anchors}. Presence of "
+              f"FreeRTOS-Kernel can't be confirmed from this directory alone (need "
+              f"{anchors} together); the matches above are a weak, unconfirmed signal only.")
         return
 
+    # Consistency runs over every present core file, not just the anchors: any of the
+    # optional files (timers/event_groups/stream_buffer/croutine) that happen to be
+    # present tighten the version intersection.
     exact_sets = {f: set(r["exact_matches"]) for f, r in results.items()}
     files_with_exact = {f for f, tags in exact_sets.items() if tags}
-    files_without_exact = set(required) - files_with_exact
+    files_without_exact = set(results) - files_with_exact
 
     if not files_without_exact:
         # Every file exact-matches at least one release.
@@ -166,13 +174,14 @@ def main() -> None:
         sys.exit(1)
 
     db = load_db()
+    anchors = db.get("anchors", db["files"])
     candidates = find_candidates(target, db["files"])
     if not candidates:
         print(f"No files named {db['files']} found under {target}")
         return
 
     for directory, files_present in sorted(group_by_directory(candidates).items()):
-        analyze_group(directory, files_present, db["files"], db)
+        analyze_group(directory, files_present, anchors, db)
 
 
 if __name__ == "__main__":

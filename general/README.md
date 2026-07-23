@@ -33,6 +33,27 @@ Topic-specific general docs in this folder:
   line: **NVD/CPE is the fit source** for embedded C; OSV/GHSA are not. Backed by
   [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
 
+## Maturity caveat: the fingerprints here are POC-scoped, not consolidated
+
+**The fingerprint reference sets described throughout this repo are deliberately
+minimal — sized to *prove a technique is feasible*, not to *cover a component
+completely*.** They must be consolidated before any of this feeds an actual
+development effort. Concretely, across the experiments the reference DBs cover only a
+characteristic subset of each component's files (e.g. FreeRTOS-Kernel's core `.c`
+files, not the `portable/<compiler>/<arch>/port.c` + `mpu_wrappers` layer where several
+real CVEs actually live; mbedTLS/CMSIS scoped to a subset of releases and files), the
+winnowing gram/window parameters were taken from literature convention rather than tuned
+for C, and the "is this the component at all" similarity thresholds are calibrated
+against only a handful of negative controls.
+
+None of this invalidates the findings — the point of a POC is to establish that the
+*approach* works, which it does — but a production reference corpus needs, per
+component: the full file set that matters for identification *and* vulnerability
+mapping (including port/arch layers), broader release coverage, and empirically-tuned
+thresholds. Treat every "reference DB" / "fingerprint set" in this repo as a seed to be
+grown, not a finished artifact. This is a scope decision, recorded so a future session
+doesn't mistake POC coverage for completeness.
+
 ## Component granularity
 
 A "component" for SBOM purposes should map to an **independently-versioned upstream

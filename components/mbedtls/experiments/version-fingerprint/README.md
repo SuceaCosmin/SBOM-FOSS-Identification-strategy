@@ -62,8 +62,10 @@ per-component convention, not shared code):
    plus one addition made *because* of what this experiment's negative control exposed -
    see below.
 
-Reference DB: `reference/mbedtls_fingerprints.json` (~2.3 MB - 159 tags, 266 unique
-file-contents across the five tracked files, 116 unique commits fetched).
+Reference DB: `reference/mbedtls_fingerprints.json` (~2.6 MB - 159 tags, 266 unique
+file-contents across the five tracked files, 116 unique commits fetched). Pretty-printed
+(structure indented, winnow integer arrays kept inline per line) for human browsing —
+see `pretty_json()` in `build_reference_db.py`.
 
 ## A real bug this experiment's negative control caught
 

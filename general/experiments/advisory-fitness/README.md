@@ -22,13 +22,22 @@ osv_results.json`, `python nvd_probe.py --json nvd_results.json`,
 committed snapshots — CVE *counts* drift as sources ingest advisories; the
 *shape* of the findings is the durable result.
 
-## Comparative verdict — NVD/CPE is the fit source; OSV and GHSA are not
+## Comparative verdict — NVD/CPE is the primary fit source; GHSA is fit only via its per-repo feed; OSV is not
 
 | source | mbedTLS coverage | version discrimination | FreeRTOS | CMSIS | our-coordinate that works |
 |---|---|---|---|---|---|
 | **NVD/CPE** | ✓ `arm:mbed_tls` | ✓ **real** (@99.0.0 → 0) | CVEs exist, AWS-versioned | `cmsis-rtos` only | **canonical identity → CPE 2.3** |
 | **OSV.dev** | distro advisories only | ✗ **inert** (@99.0.0 → 83) | **absent** | **absent** | none upstream (distro purl / GIT-commit) |
-| **GHSA** | unreviewed CVE mirror, no ecosystem | ✗ none | **absent** | **absent** | none (no C/C++ ecosystem) |
+| **GHSA (global feed)** | unreviewed CVE mirror, no ecosystem | ✗ none | ✗ absent via `affects=` | absent | none (no C/C++ ecosystem) |
+| **GHSA (per-repo feed)** | ✗ upstream doesn't self-publish | ✓ **real** for self-publishers | ✓ **kernel-semver range** (CVE-2024-28115 `<=10.6.1`) | absent | **`{owner}/{repo}` → repo advisory feed** |
+
+> **Correction (2026-07-23):** the original run (2026-07-22) tested only GHSA's
+> *global* `/advisories` feed (`affects=`, `cve_id=`) and concluded GHSA was flatly
+> "least fit." That missed a second access path — the per-repository
+> `/repos/{owner}/{repo}/security-advisories` feed — where maintainers who self-publish
+> carry **real, version-ranged** advisories keyed to the *upstream* version scheme. For
+> FreeRTOS-Kernel this is materially better than NVD (see the GHSA section below). The
+> global-feed findings stand; the "GHSA is useless for embedded C" conclusion does not.
 
 The headline: **NVD/CPE gives the version-accurate matching the whole pipeline
 was built to feed** — an impossible version returns 0 where OSV returns the
@@ -180,23 +189,61 @@ missing CPE names) — solvable in the mapping layer — whereas OSV's are
 **structural** (no upstream feed, inert matching). That asymmetry is why NVD is
 the primary target.
 
-## GHSA — least fit: no C/C++ ecosystem at all
+## GHSA — two access paths with opposite verdicts
 
-GHSA is ecosystem-scoped and its ecosystems are npm / pip / go / maven /
-rubygems / nuget / … (confirmed: the 100 most-recent advisories are
-`{go: 60, npm: 45, maven: 15, pip: 8, rubygems: 3}`) — **there is no C/C++
-ecosystem**. Consequences:
+GHSA has **two** query surfaces, and they behave completely differently for
+embedded C. The first version of this experiment tested only the first and wrongly
+concluded GHSA was useless.
+
+### Path A — global `/advisories` feed: unfit (no C/C++ ecosystem)
+
+The global feed is ecosystem-scoped and its ecosystems are npm / pip / go / maven /
+rubygems / nuget / composer / … (confirmed: the 100 most-recent advisories are all
+`{npm, pip, maven, composer}`, no C/C++) — **there is no C/C++ ecosystem**.
+Consequences:
 
 - `affects=mbedtls` → **0**, `affects=freertos` → **0**. No package-queryable
   coverage for any embedded-C component.
 - A known mbedTLS CVE (`CVE-2024-45157`) *is* present as `GHSA-cvp8-hm87-hr8x`,
   but as an **unreviewed** advisory with an **empty ecosystem/package** — a bare
   CVE mirror with no version range. You can only retrieve it if you *already*
-  have the CVE ID, which means it adds nothing over querying NVD directly.
+  have the CVE ID, which adds nothing over querying NVD directly. (Note: some
+  repo-published advisories don't surface here at all — CVE-2024-28115 below returns
+  **0** from the global feed even by `cve_id=`.)
 
-GHSA is therefore not a useful source for this problem domain except as a
-redundant CVE mirror. Worth recording precisely because it's a *standard*
-scanner source whose C/C++ blindness is easy to assume away.
+### Path B — per-repository `/repos/{owner}/{repo}/security-advisories`: fit for self-publishers
+
+Advisories a repo's *own maintainers* publish are reachable through the repository
+endpoint, and these carry real version ranges — even under a **non-standard ecosystem
+name** the global feed would never index:
+
+| repo | advisories | version range (ecosystem / range) |
+|---|--:|---|
+| **FreeRTOS/FreeRTOS-Kernel** | 1 | `freertos-kernel` / **`<=10.6.1`**, patched `>=10.6.2` (CVE-2024-28115, HIGH) |
+| FreeRTOS/FreeRTOS | 1 | `pip`-labelled / `202212.01, 202112.00` (AWS-distribution versioning) |
+| FreeRTOS/coreMQTT | 1 | `v5.0.0` (CVE-2026-8686) |
+| Mbed-TLS/mbedtls | **0** | — (mbedTLS self-publishes on its own advisory site + NVD, not GitHub) |
+
+Two things make the FreeRTOS-Kernel row important, not a footnote:
+
+1. **The range is keyed to kernel semver** (`<=10.6.1`) — *exactly the version scheme
+   this repo's fingerprint detector outputs*. This is strictly better than NVD/CPE for
+   FreeRTOS, where the CVEs use AWS-distribution versioning that our kernel semver
+   `10.4.3` matches none of (the version-scheme mismatch logged for NVD). For a
+   component whose maintainer self-publishes, the GHSA repo feed sidesteps the
+   FreeRTOS version-scheme mapping problem entirely.
+2. **It's only reachable via the repo endpoint.** GHSA-xcv7-v92w-gq6r returns **0**
+   from the global `/advisories` feed even by `cve_id=CVE-2024-28115` — so a scanner
+   querying only the standard global feed (as most do, and as our first run did) never
+   sees it.
+
+The catch is that Path B is **component-specific and non-uniform**: it works only for
+components whose upstream is a GitHub repo *and* whose maintainers publish repository
+advisories. FreeRTOS does; mbedTLS returns 0 (wrong source for it — use NVD).
+So the GHSA repo feed is a **per-component opt-in source**, discovered from the
+canonical identity's `{owner}/{repo}`, not a general fallback. This reinforces the
+per-component coverage-metadata requirement: which source covers a component is itself
+a mapped, per-component fact.
 
 ## Implications for the generator (feeds the metadata-mapping layer)
 
@@ -205,11 +252,16 @@ scanner source whose C/C++ blindness is easy to assume away.
    each vuln source's coordinate system is mandatory — captured as a new
    recommendation in
    [../../sbom-generator-architecture.md](../../sbom-generator-architecture.md).
-2. **Target NVD/CPE first; OSV.dev alone is insufficient for embedded C.**
+2. **Target NVD/CPE first; add the GHSA per-repo feed as a per-component source;
+   OSV.dev alone is insufficient for embedded C.**
    Confirmed empirically: **NVD/CPE gives version-accurate matching** (impossible
-   version → 0), so the primary vuln-lookup coordinate is **CPE 2.3**. OSV's
-   GIT-range CVE records are a viable upstream-accurate secondary (via our
-   tag→commit map); OSV package queries and GHSA are coarse or empty.
+   version → 0), so the primary vuln-lookup coordinate is **CPE 2.3**. The **GHSA
+   per-repository feed** is a real, version-ranged secondary for components whose
+   maintainers self-publish (FreeRTOS-Kernel — and there its kernel-semver range is
+   *better* than NVD's AWS-distribution versioning), discovered from the canonical
+   identity's `{owner}/{repo}`. OSV's GIT-range CVE records are a further
+   upstream-accurate secondary (via our tag→commit map); OSV package queries and the
+   GHSA *global* feed are coarse or empty.
 3. **Never emit version-inert results as if precise.** If only bare-name OSV is
    available for a component, the output is a version-independent CVE pile and
    must be labeled as such (or suppressed) — consistent with the per-finding /
@@ -226,7 +278,14 @@ scanner source whose C/C++ blindness is easy to assume away.
 - **FreeRTOS version-scheme mapping**: work out how the kernel semver we detect
   (10.4.3) maps onto the AWS-FreeRTOS / FreeRTOS+TCP CPE versioning that the NVD
   CVEs actually use — the concrete instance of the component-granularity question
-  for FreeRTOS.
+  for FreeRTOS. *Note (2026-07-23): the GHSA per-repo feed sidesteps this for the
+  kernel specifically — its CVE-2024-28115 range is already in kernel semver
+  (`<=10.6.1`) — so kernel-semver → GHSA-repo may be the shorter path than
+  kernel-semver → AWS-distribution CPE. Weigh both.*
+- **Per-component vuln-source map incl. the GHSA repo feed**: record, per component,
+  its `{owner}/{repo}` and whether that repo self-publishes advisories (FreeRTOS-Kernel
+  yes, mbedTLS no), so the mapping layer knows to query the repo feed for the
+  self-publishers and skip it for the rest. Part of the per-component coverage metadata.
 - **Tag→commit resolver over OSV GIT ranges**: prototype resolving a detected
   version to its release commit and testing membership in OSV CVE GIT ranges,
   using the tags the reference DBs already mine.

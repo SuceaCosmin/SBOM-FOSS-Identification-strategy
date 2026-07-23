@@ -75,8 +75,10 @@ per this repo's per-component convention, not shared code):
    `CMSIS/Core/Include/` directory in a real checkout - unlike Mbed TLS's two-subdirectory
    layout.
 
-Reference DB: `reference/cmsis_fingerprints.json` (~480 KB - 17 tags, 44 unique
-file-contents across the four tracked files).
+Reference DB: `reference/cmsis_fingerprints.json` (~530 KB - 17 tags, 44 unique
+file-contents across the four tracked files). Pretty-printed (structure indented, winnow
+integer arrays kept inline per line) for human browsing — see `pretty_json()` in
+`build_reference_db.py`.
 
 ## A second real vendor diff, and a version-macro subtlety it surfaced
 

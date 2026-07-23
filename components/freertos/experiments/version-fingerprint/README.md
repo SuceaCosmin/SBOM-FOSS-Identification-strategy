@@ -1,16 +1,30 @@
 # Experiment: version-fingerprinting FreeRTOS-Kernel from source only
 
-**Question**: given only `tasks.c`/`queue.c`/`list.c` in a source tree (no build
-metadata, no package manager), can we (a) confirm it's FreeRTOS-Kernel, (b) identify
-which release it came from, and (c) tell whether it's been locally modified — using
-only content-level analysis, per the pipeline sketched in
+> **Scope note (POC, not consolidated):** this experiment establishes that the
+> *technique* works; its reference set is intentionally not exhaustive. See the
+> repo-wide [maturity caveat](../../../../general/README.md#maturity-caveat-the-fingerprints-here-are-poc-scoped-not-consolidated).
+> The DB was widened from 3 to all **7 core kernel `.c` files** (2026-07-23), but still
+> covers only source-level core files — **not** the `portable/<compiler>/<arch>/port.c`
+> + `mpu_wrappers` layer where architecture/MPU CVEs (e.g. CVE-2024-28115) actually
+> live. Consolidating to production coverage (port layer, tuned thresholds) is future
+> work.
+
+**Question**: given the core kernel `.c` files in a source tree (no build metadata, no
+package manager), can we (a) confirm it's FreeRTOS-Kernel, (b) identify which release it
+came from, and (c) tell whether it's been locally modified — using only content-level
+analysis, per the pipeline sketched in
 [components/freertos/README.md §6](../../README.md#6-detection-implications)?
 
 ## Approach
 
 1. `build_reference_db.py` — lists every tag on `FreeRTOS/FreeRTOS-Kernel` via
-   `git ls-remote` (no clone needed), then fetches `tasks.c`/`queue.c`/`list.c` per tag
-   over HTTPS from `raw.githubusercontent.com`. Handles the repo's layout change over
+   `git ls-remote` (no clone needed), then fetches the **7 core kernel `.c` files**
+   (`tasks`/`queue`/`list`/`timers`/`event_groups`/`stream_buffer`/`croutine`) per tag
+   over HTTPS from `raw.githubusercontent.com`. Of these, `tasks`/`queue`/`list` are the
+   **anchors** (they essentially always ship); the rest are optional/feature-gated
+   (`croutine` is legacy and frequently omitted), so a target missing them is not
+   penalized. Fetches tolerate transient network errors with retry+backoff, and any
+   file absent for a given tag is simply skipped. Handles the repo's layout change over
    time: tags from roughly V10.3.0-kernel-only onward have the files at the repo root;
    older tags predate the kernel-only extraction and still carry the old
    `FreeRTOS/Source/...` distribution layout — the fetcher tries both paths. Very old
@@ -29,28 +43,41 @@ only content-level analysis, per the pipeline sketched in
    every known tag first; if none, fall back to Jaccard similarity between winnowing
    fingerprints and report the closest tags. Candidate files are **grouped by the
    directory they were found in**, since presence of the kernel can't be confirmed from
-   a single file alone — a real vendored copy keeps `tasks.c`/`queue.c`/`list.c`
-   together. Per group:
-   - If not all three are present, the group is reported **INCOMPLETE** — an
+   a single file alone — a real vendored copy keeps the core files together. Presence is
+   gated on the **anchor** files (`tasks`/`queue`/`list`); every *other* core file that
+   happens to be present is folded into the cross-file consistency check, tightening the
+   version resolution. Per group:
+   - If any anchor file is missing, the group is reported **INCOMPLETE** — an
      unconfirmed signal, not a positive detection.
-   - If all three exact-match releases that share a common tag → **CONFIRMED**.
-   - If all three exact-match releases but don't share a common tag → **MIXED VERSION
-     WARNING** (e.g. a partial upgrade that replaced only some kernel files).
+   - If all present core files exact-match releases that share a common tag →
+     **CONFIRMED** (more present files ⇒ a narrower, more confident version).
+   - If all present core files exact-match releases but don't share a common tag →
+     **MIXED VERSION WARNING** (e.g. a partial upgrade that replaced only some kernel
+     files).
    - If some files exact-match and others don't → **PARTIALLY MODIFIED**, and it checks
      whether the modified files' closest fuzzy-match release overlaps with the
      unmodified files' exact-match release(s), to report a plausible common base.
    - If none exact-match, compares each file's closest fuzzy-match release for
      agreement (**LIKELY CONSISTENT** vs. **INCONSISTENT**).
 
-Reference DB: `reference/kernel_fingerprints.json` (~1.2 MB, committed — 58 tags,
-V8.0.0 through V11.3.0 plus a handful of older ones, three files each, 89 unique
-file-contents).
+Reference DB: `reference/kernel_fingerprints.json` (~1.7 MB, committed — 58 tags,
+V8.0.0 through V11.3.0 plus a handful of older ones, **7 core files each** (anchors
+present in all 58 tags; `event_groups.c`/`stream_buffer.c` only in the tags that
+predate/postdate their introduction — 48/30 tag-slots), **168 unique file-contents**).
+It's **pretty-printed** (structure indented one-field-per-line, with the opaque winnow
+integer arrays kept inline on a single line each) so it can be browsed by a human — see
+`pretty_json()` in `build_reference_db.py`.
 
 ## Reference DB size
 
-An initial version of this DB was 4.7 MB — a real concern once you're bundling one of
-these per supported component for offline use. Two changes, applied together, cut it to
-1.2 MB (−75%) with **no change in match results** (re-verified against all four corpus
+Widening from 3 to 7 core files roughly doubled the unique-content count (89 → 168);
+pretty-printing added ~0.5 MB of structure whitespace (winnow arrays stay inline, so the
+cost is newlines/indentation around the object structure, not per-integer). The
+compaction techniques below still apply and still leave the file at ~1.7 MB.
+
+An initial 3-file version of this DB was 4.7 MB — a real concern once you're bundling one
+of these per supported component for offline use. Two changes, applied together, cut it
+substantially with **no change in match results** (re-verified against all corpus
 scenarios below):
 
 1. **Deduplicate by content, not by tag.** 49% of (tag, file) entries turned out to be
@@ -65,23 +92,34 @@ scenarios below):
    collision would nudge a similarity score by a fraction of a percent, never flip a
    verdict.
 
-A further ~90% total reduction (to ~470 KB) is possible by switching from JSON decimal
-integers to packed binary — not done here, to keep the reference DB plain-JSON and
-inspectable for a research prototype, but worth doing if this format is ever adapted for
-an actual bundled tool. See
+A further large reduction is possible by switching from JSON decimal integers to packed
+binary — not done here, deliberately: the reference DB is kept **plain, pretty-printed
+JSON** so it stays inspectable/browsable for a research prototype (per the repo-wide
+preference that committed JSON be human-readable). Packed binary is worth doing only if
+this format is ever adapted for an actual bundled tool, where transport size beats
+inspectability. See
 [general/README.md — reference DB scalability](../../../../general/README.md#reference-db-size-scales-with-component-shape-not-a-fixed-constant)
 for how this generalizes (or doesn't) beyond FreeRTOS-Kernel.
 
 ## Result
 
-Tested against the full three-file sets in [../../corpus/](../../corpus/):
+Re-validated against the corpus with the widened 7-file DB (2026-07-23) — **all verdicts
+unchanged**, confirming no regression from the 3→7 file widening or the anchor-quorum
+refactor. The corpus dirs contain only the 3 anchor files, so these exercise the
+anchor-presence path; a real full-tree case is shown below the table.
 
 | Target | Result |
 |---|---|
-| `nxp-mcux-vendored/` (NXP's `FreeRTOS-Kernel` mirror, `release/26.03.00` branch) | All three files exact-match → **CONFIRMED, V11.2.0.** (`list.c` alone ties across V11.1.0–V11.3.0 since it's unchanged over that range; intersecting with `tasks.c`/`queue.c` narrows it to the true version.) Confirms NXP vendors the kernel byte-for-byte (modulo comments/whitespace) unmodified. |
+| `nxp-mcux-vendored/` (NXP's `FreeRTOS-Kernel` mirror, `release/26.03.00` branch) | All anchor files exact-match → **CONFIRMED, V11.2.0.** (`list.c` alone ties across V11.1.0–V11.3.0 since it's unchanged over that range; intersecting with `tasks.c`/`queue.c` narrows it to the true version.) Confirms NXP vendors the kernel byte-for-byte (modulo comments/whitespace) unmodified. |
 | `esp-idf-fork/` (Espressif's SMP fork, `master` branch) | **PARTIALLY MODIFIED.** `list.c` exact-matches (untouched — ties across V10.5.0–V10.6.2); `tasks.c` and `queue.c` have no exact match. Closest fuzzy matches: `tasks.c` → V10.5.1 (0.565), `queue.c` → V10.6.0 (0.762). Both fall inside `list.c`'s exact-match range, so the tool reports a consistent plausible base of **{V10.5.1, V10.6.0}** — independently confirming what [components/freertos/README.md §3](../../README.md#3-what-layers-typically-stack-on-top-of-the-kernel) already noted from Espressif's own docs (forked from v10.5.1), while also surfacing the real detail that `list.c` wasn't modified at all. |
 | `mixed-version-synthetic/` (synthetic: `tasks.c`+`list.c` from V10.4.3, `queue.c` from V11.0.0) | All three files exact-match, but to **disjoint** release sets → **MIXED VERSION WARNING**, correctly identifying the deliberately-mismatched files without a common tag. |
 | Unrelated file (`cJSON.c`, saved as `tasks.c`, no matching `queue.c`/`list.c`) | Reported **INCOMPLETE** (correctly refuses to confirm kernel presence from one file) and, even so, scores **0.000 similarity** against every known tag — clean negative control. |
+
+**Full 7-file tree (real V11.2.0, all 7 core files present):** every file exact-matches
+and the version intersection collapses to exactly **V11.2.0** — where `list.c`/`timers.c`
+alone each tie across several releases, the additional files narrow it. This is the
+concrete payoff of widening the file set: more present core files ⇒ a tighter, more
+confident version, and more independent files to catch a partial/mixed integration.
 
 **Conclusion**: the pipeline works as designed on real data, including a real case of
 partial modification (ESP-IDF leaving `list.c` untouched) and a case matching a pattern
@@ -106,11 +144,16 @@ for `git ls-remote` only).
 
 ## Known limitations / next steps
 
-- Only covers the three "core kernel" files, not `portable/<compiler>/<arch>/port.c`,
-  which is where a lot of MPU/architecture-specific vulnerabilities (e.g.
-  CVE-2024-28115) actually live. Extending the reference DB to port files is a natural
-  next step, but port files are compiler/arch-specific, so the reference set would need
-  to be indexed by (tag, arch, compiler) rather than just tag.
+- Covers the 7 core kernel `.c` files but **not** `portable/<compiler>/<arch>/port.c`
+  or `mpu_wrappers`, which is where a lot of MPU/architecture-specific vulnerabilities
+  (e.g. CVE-2024-28115 — the *one* published FreeRTOS-Kernel GHSA advisory, an ARMv7-M
+  MPU privilege-escalation bug) actually live. So today the DB can confirm the kernel
+  and its version but **cannot locate the file the kernel's own CVE resides in**.
+  Extending to port files is the natural next step, but they're compiler/arch-specific,
+  so that reference set must be indexed by (tag, arch, compiler) rather than just tag.
+  Explicitly deferred (2026-07-23) per scope decision.
+- Nor does it cover the `include/` headers (21 of them) — header-level fingerprints
+  would add corroboration and catch header-only integrations, another consolidation item.
 - Similarity threshold for "is this FreeRTOS at all vs. something else entirely" hasn't
   been calibrated beyond the single negative control tested here — would benefit from
   testing against more unrelated C code (other RTOSes, generic embedded code) to find a
