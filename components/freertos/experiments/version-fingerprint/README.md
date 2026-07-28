@@ -165,7 +165,14 @@ release; consumers must not conflate the two.
 
 ## Known limitations / next steps
 
-- Covers the 7 core kernel `.c` files but **not** `portable/<compiler>/<arch>/port.c`
+- ~~Covers the 7 core kernel `.c` files but **not** the port layer~~ — **addressed
+  2026-07-28 by the separate [port-layer experiment](../port-layer/README.md)**, which
+  keeps its own (port, tag)-indexed reference DB rather than widening this one. The two
+  are independent evidence producers over the same tree: this one answers *which
+  release*, that one answers *which port, and is the MPU in play*. The paragraph below
+  records the original gap and still describes this DB's scope.
+
+  Covers the 7 core kernel `.c` files but **not** `portable/<compiler>/<arch>/port.c`
   or `mpu_wrappers`, which is where a lot of MPU/architecture-specific vulnerabilities
   (e.g. CVE-2024-28115 — the *one* published FreeRTOS-Kernel GHSA advisory, an ARMv7-M
   MPU privilege-escalation bug) actually live. So today the DB can confirm the kernel

@@ -254,6 +254,17 @@ and let a finding be `AFFECTED (conditional)` rather than silently over-claiming
   a human can adjudicate; (b) treat "which sub-layer/port/config is present" as
   first-class detection output, not a detail — it is what makes a vuln verdict precise;
   (c) never let an unevaluated condition silently read as "condition met".
+- **Validated 2026-07-28** by the FreeRTOS
+  [port-layer experiment](../components/freertos/experiments/port-layer/README.md), which
+  supplies the missing condition input for CVE-2024-28115 and changes real verdicts (a
+  real ESP-IDF fork: AFFECTED → NOT_AFFECTED; an ARMv8-M tree flips either way on
+  `configENABLE_MPU` alone). Three rules keep it from becoming triage: the refinement
+  **only narrows** (evidence may withdraw or suspend a finding, never create one); **absent
+  evidence suspends rather than clears** (no port detected ⇒ POSSIBLY_AFFECTED); and the
+  condition itself is **curated advisory metadata carrying its source quote**, not inferred
+  from code. Cost, measured: covering the port layer took ~4× the reference-DB size of the
+  core kernel files (6.6 MB vs 1.7 MB) — granularity is not free, and is worth budgeting
+  per component against which advisories actually key on it.
 - **Source**: the end-to-end spike in
   [experiments/advisory-fitness](experiments/advisory-fitness/README.md)
   ("Closing the loop", Finding 2).

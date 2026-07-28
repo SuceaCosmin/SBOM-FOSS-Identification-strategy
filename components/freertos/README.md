@@ -178,6 +178,15 @@ under "FreeRTOS", and a kernel-only CVE won't either.
   separate SBOM-worthy components stacked together (kernel + vendor adaptation layer +
   CMSIS wrapper). Detection logic should not assume "found FreeRTOS signature" ==
   "one component" — it needs to separate the kernel from what's wrapped around it.
+- **The port is part of the identity, not a detail** (added 2026-07-28): the kernel's own
+  published CVE (CVE-2024-28115) applies only to ARMv7-M MPU ports and ARMv8-M ports with
+  `configENABLE_MPU 1`, so "FreeRTOS-Kernel V10.5.1" is too coarse an answer to decide it.
+  A second, independent detector identifies the port from content —
+  `portable/<compiler>/<arch>/` names are unreliable (ESP-IDF's ports live at
+  `portable/xtensa/`, a path that exists nowhere upstream) — and reads `configENABLE_MPU`
+  from the tree as build evidence. See
+  [experiments/port-layer](experiments/port-layer/README.md); it flips a real ESP-IDF
+  fork from AFFECTED to NOT_AFFECTED on correct grounds.
 
 ## Open questions / next steps
 

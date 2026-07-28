@@ -314,6 +314,27 @@ CVE lives. Detecting *which port* is present is what would turn an over-broad AF
 into a precise one. (Generalized: an advisory's applicability condition is a third input
 next to identity and version, and it is not machine-readable in any source tested.)
 
+> **Resolved 2026-07-28** by the
+> [port-layer experiment](../../../components/freertos/experiments/port-layer/README.md).
+> `end_to_end_freertos.py` now reports **two** verdicts — version-only, and refined by
+> port + build-config evidence — and the refinement changes real answers:
+>
+> | corpus tree | version only | refined | why |
+> |---|---|---|---|
+> | `esp-idf-fork` (real vendor fork) | AFFECTED | **NOT_AFFECTED** | Xtensa port; not an ARM MPU port |
+> | `armv8m-config-synthetic` | AFFECTED | **NOT_AFFECTED** | ARMv8-M port with `configENABLE_MPU 0` |
+> | ↑ same tree, macro flipped to `1` | AFFECTED | AFFECTED *(confirmed)* | condition positively met |
+> | `mixed-version-synthetic` | AFFECTED | **POSSIBLY_AFFECTED** | no port files — undecidable |
+> | `nxp-mcux-vendored` | NOT_AFFECTED | unchanged | already outside the range |
+>
+> Three rules make this safe rather than a licence to guess: the refinement **only ever
+> narrows** (composition evidence can withdraw or suspend a finding, never create one);
+> **absent evidence suspends, it doesn't clear** (no port files ⇒ POSSIBLY_AFFECTED, the
+> same discipline as "not covered" ≠ "no vulns"); and the applicability condition itself
+> is **curated advisory metadata**, transcribed from the prose with its quote attached,
+> not inferred. This is identification work — which port, which build switch — and
+> deliberately stops short of reachability analysis (see the scope boundary below).
+
 ### Finding 3 — GHSA's `vulnerable_version_range` grammar is not reliably honored
 
 Of the three FreeRTOS-org advisories, only **one** states a range in the documented

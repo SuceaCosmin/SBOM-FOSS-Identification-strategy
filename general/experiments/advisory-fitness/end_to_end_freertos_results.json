@@ -4,6 +4,86 @@
   "advisory_cache_generated": "2026-07-28",
   "trees": [
     {
+      "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\armv8m-config-synthetic",
+      "status": "CONFIRMED",
+      "versions": [
+        "V10.5.1"
+      ],
+      "version_set_semantics": "candidates",
+      "lookups": [
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.5.1",
+          "version_parsed": {
+            "raw": "V10.5.1",
+            "scheme": "semver",
+            "parts": [
+              10,
+              5,
+              1
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "port_evidence": {
+        "ports": [
+          {
+            "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\armv8m-config-synthetic\\portable\\GCC\\ARM_CM33\\non_secure",
+            "status": "IDENTIFIED",
+            "port": {
+              "compiler": "GCC",
+              "arch": "ARM_CM33",
+              "family": "ARMv8-M",
+              "security": "non_secure",
+              "mpu": "optional",
+              "tier": "full"
+            },
+            "versions": [
+              "V10.5.1"
+            ],
+            "mpu_status": {
+              "mpu": "DISABLED",
+              "why": "ARMv8-M port with configENABLE_MPU 0"
+            },
+            "config_evidence": [
+              {
+                "path": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\armv8m-config-synthetic\\FreeRTOSConfig.h",
+                "settings": {
+                  "configENABLE_MPU": "0",
+                  "configENABLE_TRUSTZONE": "0"
+                }
+              }
+            ]
+          }
+        ],
+        "mpu": "DISABLED",
+        "why": "every port found is MPU-capable but built with the MPU off"
+      },
+      "tree_verdict": "AFFECTED",
+      "refined_verdict": "NOT_AFFECTED",
+      "refinement": "CVE-2024-28115 applies only to \"ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled\"; this tree's port evidence says MPU DISABLED (every port found is MPU-capable but built with the MPU off)"
+    },
+    {
       "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\esp-idf-fork",
       "status": "PARTIALLY_MODIFIED",
       "versions": [
@@ -79,7 +159,39 @@
           ]
         }
       ],
-      "tree_verdict": "AFFECTED"
+      "port_evidence": {
+        "ports": [
+          {
+            "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\esp-idf-fork\\portable\\xtensa",
+            "status": "UNKNOWN_PORT",
+            "port": null,
+            "versions": [],
+            "mpu_status": {
+              "mpu": "NOT_SUPPORTED",
+              "why": "unidentified port, but no MPU-capable port scores above 0.30 (best 0.000) and no MPU wrapper files are present \u2014 this is different code, not a modified MPU port",
+              "confidence": "negative-evidence"
+            },
+            "config_evidence": []
+          },
+          {
+            "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\esp-idf-fork\\portable\\xtensa\\include\\freertos",
+            "status": "UNKNOWN_PORT",
+            "port": null,
+            "versions": [],
+            "mpu_status": {
+              "mpu": "NOT_SUPPORTED",
+              "why": "unidentified port, but no MPU-capable port scores above 0.30 (best 0.000) and no MPU wrapper files are present \u2014 this is different code, not a modified MPU port",
+              "confidence": "negative-evidence"
+            },
+            "config_evidence": []
+          }
+        ],
+        "mpu": "NOT_SUPPORTED",
+        "why": "unidentified port, but no MPU-capable port scores above 0.30 (best 0.000) and no MPU wrapper files are present \u2014 this is different code, not a modified MPU port"
+      },
+      "tree_verdict": "AFFECTED",
+      "refined_verdict": "NOT_AFFECTED",
+      "refinement": "CVE-2024-28115 applies only to \"ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled\"; this tree's port evidence says MPU NOT_SUPPORTED (unidentified port, but no MPU-capable port scores above 0.30 (best 0.000) and no MPU wrapper files are present \u2014 this is different code, not a modified MPU port)"
     },
     {
       "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\mixed-version-synthetic",
@@ -545,7 +657,14 @@
           ]
         }
       ],
-      "tree_verdict": "AFFECTED"
+      "port_evidence": {
+        "ports": [],
+        "mpu": "UNKNOWN",
+        "why": "no port-layer files found in this tree \u2014 the port cannot be determined, so MPU-scoped conditions stay undecided"
+      },
+      "tree_verdict": "AFFECTED",
+      "refined_verdict": "POSSIBLY_AFFECTED",
+      "refinement": "CVE-2024-28115 applies only to \"ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled\", and the port evidence is inconclusive (no port-layer files found in this tree \u2014 the port cannot be determined, so MPU-scoped conditions stay undecided) \u2014 undecidable from this tree"
     },
     {
       "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\nxp-mcux-vendored",
@@ -589,7 +708,35 @@
           ]
         }
       ],
-      "tree_verdict": "NOT_AFFECTED"
+      "port_evidence": {
+        "ports": [
+          {
+            "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\nxp-mcux-vendored\\portable\\GCC\\ARM_CM4_MPU",
+            "status": "IDENTIFIED",
+            "port": {
+              "compiler": "GCC",
+              "arch": "ARM_CM4_MPU",
+              "family": "ARMv7-M",
+              "security": null,
+              "mpu": "always",
+              "tier": "full"
+            },
+            "versions": [
+              "V11.2.0"
+            ],
+            "mpu_status": {
+              "mpu": "ENABLED",
+              "why": "ARM_CM4_MPU is a dedicated MPU port"
+            },
+            "config_evidence": []
+          }
+        ],
+        "mpu": "ENABLED",
+        "why": "ARM_CM4_MPU is a dedicated MPU port"
+      },
+      "tree_verdict": "NOT_AFFECTED",
+      "refined_verdict": "NOT_AFFECTED",
+      "refinement": "not applicable"
     }
   ]
 }

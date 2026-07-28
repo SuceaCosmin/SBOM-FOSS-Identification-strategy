@@ -317,10 +317,11 @@ findings suggest revisiting a decision.
   **pretty-printed JSON** (leaf-array-inline `pretty_json()` in each `build_reference_db.py`),
   and a repo-wide **"fingerprints are POC-scoped, not consolidated"** caveat was added to
   [general/README.md](general/README.md#maturity-caveat-the-fingerprints-here-are-poc-scoped-not-consolidated).
-  **Prioritized next steps (documented 2026-07-23):** step 1 is **DONE 2026-07-28** (see
-  the next bullet); steps 2–3 remain, with step 2 now the next-up item.
+  **Prioritized next steps (documented 2026-07-23):** steps 1 and 2 are **DONE
+  2026-07-28** (see the two bullets below); only step 3 remains.
   1. ~~**Close the vuln loop for FreeRTOS**~~ — **DONE 2026-07-28**, see below.
-  2. **Consolidate FreeRTOS's port/`mpu_wrappers` layer (heavier):** where
+  2. ~~**Consolidate FreeRTOS's port/`mpu_wrappers` layer**~~ — **DONE 2026-07-28**, see
+     below. Original framing:
      CVE-2024-28115 actually lives, so it's what lets a detection point at that CVE's
      file. Needs a reference set indexed by `(tag, arch, compiler)` and new corpus —
      the natural pairing with step 1, and would make FreeRTOS the first fully-
@@ -371,6 +372,34 @@ findings suggest revisiting a decision.
   new `templates/end_to_end.py.template`; `templates/match_target.py.template` gained the
   note to split the matcher into a print-free `resolve_*`/`scan_tree` API first.
   `ghsa_vuln_lookup.py` is component-generic — a new component is one `COMPONENT_MAP` entry.
+- **FreeRTOS port layer DONE (2026-07-28)** — step 2 of the re-review list, and the
+  answer to the loop-closing spike's over-claim problem. New experiment
+  [components/freertos/experiments/port-layer](components/freertos/experiments/port-layer/README.md):
+  a second, independent detector answering *which port* (the core-file DB answers *which
+  release*), with its own **(port, tag)-indexed** reference DB — 62 tags × 176 port
+  directories, 6.6 MB, two tiers (44 MPU-relevant ports fingerprinted fully; 132 others on
+  `port.c`/`portmacro.h` only, enough to identify them and rule the CVE out). **MPU is a
+  three-valued classification**: `always` (5 dedicated `*_MPU` ports), `optional` (39
+  ARMv8-M ports where `configENABLE_MPU` decides at build time — so the tree's
+  `FreeRTOSConfig.h` is read as evidence, reported with its path), `none` (132).
+  **Identification is by content, never path** — ESP-IDF's ports live at
+  `portable/xtensa/`, a path that exists nowhere upstream. `end_to_end_freertos.py` now
+  prints **both** verdicts, version-only and port-refined, and the refinement changes real
+  answers: **esp-idf-fork AFFECTED → NOT_AFFECTED** (Xtensa port, not an ARM MPU port — a
+  false positive removed on evidence, on a real vendor fork), a new
+  `armv8m-config-synthetic` corpus entry (coherent V10.5.1 tree) **AFFECTED →
+  NOT_AFFECTED** on `configENABLE_MPU 0` and back to AFFECTED when flipped to 1, and
+  `mixed-version-synthetic` **AFFECTED → POSSIBLY_AFFECTED** (no port files ⇒ undecidable).
+  NXP's `ARM_CM4_MPU` port independently resolves to V11.2.0, cross-checking the core-file
+  result. Three safety rules (now in architecture rec. 12): the refinement **only narrows**;
+  **absent evidence suspends, never clears**; the applicability condition is **curated
+  advisory metadata with its source quote**, not inferred. Also: unidentified ports get a
+  **negative-evidence** rule (no MPU-capable port above the 0.30 floor *and* no MPU wrapper
+  files ⇒ NOT_SUPPORTED), calibrated against this repo's own data — the modified ESP-IDF
+  `tasks.c` still scored 0.56 against upstream, so ~0.0 means different code, not modified
+  code. Measured cost of the granularity: **~4× the core-file DB** (6.6 MB vs 1.7 MB).
+  Pitfall recorded: a **blobless clone is the wrong tool** for bulk mining (lazy per-blob
+  fetches hang `cat-file --batch`); full clone is ~150 MB / ~25 s.
 - **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
   vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
   favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,
