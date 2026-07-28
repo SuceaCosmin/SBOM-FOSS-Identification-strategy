@@ -21,6 +21,17 @@ For the target as a whole:
      exact-match, and fuzzy best-matches disagree) / LIKELY CONSISTENT (none exact-match,
      fuzzy best-matches agree).
 
+PHASE-3 NOTE (added 2026-07-28): before running the advisory loop-closing check, split
+`analyze_target()` into a print-free `resolve_target()` that *returns*
+`{"status", "versions", "detail", "files"}` plus a thin printer, and add a
+`scan_tree(path)` wrapper returning one such dict per candidate location. The verdicts
+below are the `status` values; `versions` is the resolved release set (empty when
+unresolved). `templates/end_to_end.py.template` consumes exactly that shape. Reference
+implementation of the split:
+components/freertos/experiments/version-fingerprint/match_target.py
+(`resolve_group()` / `analyze_group()` / `scan_tree()`) - the CLI output is unchanged by
+the split, so do it as a pure refactor and re-verify against the corpus.
+
 Usage: python match_target.py <directory>
 """
 

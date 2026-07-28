@@ -363,6 +363,14 @@ findings suggest revisiting a decision.
   NOT_COVERED *with the right alternative* (NVD/CPE), unresolved version → NOT_QUERYABLE
   ("a detection gap, not a clean bill of health"). `COMPONENT_MAP` there is the miniature
   of the paused mapping layer's sub-tasks 1 and 4 for this one source.
+  **Made repeatable (2026-07-28)**: advisory-source mapping is now **phase 3 of the
+  `research-component` skill** — every component researched from here on gets one, not
+  just FreeRTOS. The skill carries the steps (identity → per-source coordinate,
+  impossible-version control, version-scheme comparison, coverage-with-reasons, one
+  loop-closing run over the corpus, write up interface findings not CVE counts), plus a
+  new `templates/end_to_end.py.template`; `templates/match_target.py.template` gained the
+  note to split the matcher into a print-free `resolve_*`/`scan_tree` API first.
+  `ghsa_vuln_lookup.py` is component-generic — a new component is one `COMPONENT_MAP` entry.
 - **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
   vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
   favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,
@@ -544,6 +552,30 @@ producers, resolver, attribution, provenance, tier selection) is now in scope
 ([general/sbom-generator-architecture.md](general/sbom-generator-architecture.md)) —
 but the *serialization format* is still not. Architecture of how identity is decided:
 in scope. How it's written to CycloneDX/SPDX bytes: out of scope.
+
+## Vulnerability handling — where this repo's (and the generator's) job ends
+
+**Settled 2026-07-28.** The generator's job is to identify components and emit the
+**right identifiers** — canonical purl, version window, and each advisory source's own
+lookup coordinate (CPE 2.3, `{owner}/{repo}`, release commit) with per-component coverage
+metadata — so that *dedicated* vulnerability tools can do their job unaided. It is **not**
+the generator's job to decide whether a reported CVE actually impacts a project: no
+exploitability scoring, no reachability analysis, no CVE dispositions. That is
+vulnerability **triage**, a project-evaluation activity whose standard output is a **VEX**
+statement authored by the SBOM's consumer.
+
+Two consequences for research here:
+
+- **Vuln work in this repo is a fitness check, not a feature.** Experiments answer "do our
+  identifiers drive the standard tools correctly?" and stop at verdict + coverage — see
+  [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)
+  and phase 3 of the `research-component` skill. Don't build triage/reachability tooling.
+- **But identity must be granular enough to be useful.** "Emit identity and stop" holds
+  only at the granularity advisories actually key on: CVE-2024-28115 applies to FreeRTOS's
+  ARMv7-M/ARMv8-M *MPU port*, not to "FreeRTOS-Kernel" wholesale. When an applicability
+  condition shows up, the correct response is **sharpen detection** (identify the port,
+  sub-component, or build-inclusion fact), never build an impact analyzer. Full rationale:
+  [general/sbom-generator-architecture.md](general/sbom-generator-architecture.md) rec. 13.
 
 ## Repository layout
 

@@ -1,6 +1,6 @@
 ---
 name: research-component
-description: Research a new FOSS C component for this repo (distro landscape + a version-fingerprint detection experiment), following the same two-phase process already used for FreeRTOS and mbedTLS. Use when starting research on a new component, or resuming/deepening research on one already in progress.
+description: Research a new FOSS C component for this repo (distro landscape, a version-fingerprint detection experiment, then advisory-source mapping), following the same three-phase process already used for FreeRTOS and mbedTLS. Use when starting research on a new component, or resuming/deepening research on one already in progress.
 ---
 
 # Researching a component (this repo's standard workflow)
@@ -138,6 +138,70 @@ a "Result"/conclusion paragraph, and "Known limitations / next steps."
 
 Finish by updating the component's README "Open questions" section and `CLAUDE.md`'s
 status section to point at the completed experiment.
+
+## Phase 3 — Advisory-source mapping (do this for every component)
+
+Added 2026-07-28, after the FreeRTOS loop-closing spike. Goal: for the component just
+researched, record **how its canonical identity maps onto each vuln source's coordinate
+system, and which sources actually cover it** — then, if a fit source exists, run the
+loop-closing check once against the corpus to prove the detector's output really drives
+it. Cheap (an hour, a few unauthenticated API calls), and it is the only phase that
+validates the repo's actual purpose: SBOMs that drive vulnerability scanning.
+
+**Scope guard — read this before starting.** This phase stops at *"which CVEs does this
+identity+version map to, and is that mapping trustworthy"*. It does **not** assess whether
+a CVE actually impacts a project (is the vulnerable file compiled in? the config enabled?
+the path reachable?). That is vulnerability *triage*, a project-evaluation activity that
+belongs to the consumer of the SBOM and its VEX process — not here, and not in the
+generator. See `general/sbom-generator-architecture.md` rec. 13. When you find an
+applicability condition (they're common), the correct move is to **record it and ask
+whether detection granularity should be finer** (a sub-component, port, or build config
+worth identifying in its own right) — never to build a reachability analyzer.
+
+Worked example to mirror: `general/experiments/advisory-fitness/README.md`
+("Closing the loop" section), scripts `ghsa_vuln_lookup.py` + `end_to_end_freertos.py`.
+
+1. **Map the identity to each source's coordinate.** From phase 1 you already have the
+   canonical purl and the upstream `{owner}/{repo}`.
+   - **NVD/CPE** (the primary fit source): search for the CPE name — it rarely matches the
+     purl (`pkg:github/mbed-tls/mbedtls` → `cpe:2.3:a:arm:mbed_tls`). Adapt `nvd_probe.py`.
+   - **GHSA per-repository feed**: add an entry to `COMPONENT_MAP` in `ghsa_vuln_lookup.py`
+     and run `--refresh`. Works only for maintainers who self-publish; 0 advisories is a
+     legitimate, recordable answer.
+   - **OSV**: expect a miss for embedded C; probe only to record it (`osv_probe.py`).
+2. **Test version discrimination, always with an impossible-version control** (e.g.
+   `@99.0.0`). If an impossible version returns the same CVEs as a real one, matching is
+   **version-inert** and the source must not be treated as precise. This is what exposed
+   OSV's bare-name matching.
+3. **Check the version *scheme* matches.** Compare the scheme your detector outputs
+   (upstream tags) against the scheme the advisories use. A mismatch (FreeRTOS: kernel
+   semver vs. AWS-distribution versioning) means the source needs a reconciliation layer
+   before it's usable — record it as a gap rather than reporting confident nonsense.
+4. **Record coverage per component, including the negatives.** Every "no result" needs a
+   reason attached — "not covered by this source, use X instead" — never an empty list
+   that reads as "no known vulns". Add a row to the advisory-fitness coverage table.
+5. **If a fit source with a matching version scheme exists, close the loop once**: copy
+   `templates/end_to_end.py.template`, point it at the component's matcher and its
+   `COMPONENT_MAP` key, and run it over the corpus. Success = every corpus ground truth
+   produces the expected verdict, including the *negative* (a post-fix version reporting
+   NOT_AFFECTED is as important as an affected one).
+6. **Write up the interface findings, not the CVE counts.** CVE counts drift; the durable
+   results are things like version-set semantics, non-conforming range grammars, tag-shape
+   handling, and applicability conditions. Feed anything generalizable into
+   `general/sbom-generator-architecture.md` and
+   `general/experiments/advisory-fitness/README.md`.
+
+Things the FreeRTOS pass hit that will likely recur — check for each of them:
+
+- **A version *set*, not a point**: label whether the set means *candidates* (one of these
+  releases) or *coexisting* (a mixed tree where all are present). The verdict differs.
+- **Applicability stated in prose only** ("only ARMv7-M MPU ports") — surface it with the
+  finding; see the scope guard above.
+- **Range grammars that don't follow the spec** — bare versions, comma-separated
+  enumerations that are unsatisfiable if ANDed as documented. Classify, don't assume.
+- **Tag shapes that don't compare linearly** — packaging suffixes, LTS/maintenance
+  branches (a mainline range cannot express backports), date-scheme tags (not comparable
+  at all → UNDETERMINED), prereleases.
 
 ## Known pitfalls (learned the hard way, don't rediscover these)
 

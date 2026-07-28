@@ -108,7 +108,29 @@ as `o`.
 **Practical rule**: emit both identifiers when available; treat PURL as the reliable
 default and CPE as best-effort supplementary coverage for legacy NVD-based scanners.
 
-First observed in: [components/freertos](../components/freertos/README.md#5-naming-a-detected-freertos-component-in-an-sbom).
+**Correction (2026-07-28), from the advisory-source fitness tests** — the sentence above
+is right for *attribution* and misleading for *vulnerability lookup*, and the two are
+different jobs:
+
+- The PURL we emit (`pkg:github/…`) is **not queryable** in OSV, which indexes
+  ecosystem purls (`pkg:pypi/…`, `pkg:deb/…`); it returns 0. And OSV's bare-name fallback
+  is **version-inert** — an impossible version returns the same CVE pile.
+- **CPE/NVD is the source that actually discriminates by version** for these components,
+  so for vuln lookup it is *primary*, not supplementary. The GHSA **per-repository** feed
+  is a real second path for components whose maintainers self-publish (its ranges are in
+  the upstream scheme, which can beat NVD — FreeRTOS-Kernel is the case).
+- So: **emit PURL as the canonical identity, and treat every vuln source's coordinate as
+  a separate, mapped key** — with per-component coverage metadata, so an empty result
+  reads as "not covered by this source", never "no known vulnerabilities".
+
+Where this stops: emitting the right identifiers (at a granularity the advisories key on)
+is the job; deciding whether a matched CVE actually impacts a project is **triage**, which
+belongs to the SBOM's consumer and its VEX process — see
+[sbom-generator-architecture.md](sbom-generator-architecture.md) rec. 11–13 and
+[experiments/advisory-fitness](experiments/advisory-fitness/README.md).
+
+First observed in: [components/freertos](../components/freertos/README.md#5-naming-a-detected-freertos-component-in-an-sbom);
+corrected by [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
 
 ## Detection technique patterns
 

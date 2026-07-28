@@ -1,0 +1,129 @@
+"""TEMPLATE — phase-3 loop-closing check for <COMPONENT>.
+
+Copy to general/experiments/advisory-fitness/end_to_end_<component>.py and edit the
+CONFIG block below. Worked reference implementation: end_to_end_freertos.py.
+
+What this proves: the detector's output (canonical identity + version window), fed into
+a real advisory source, produces the right CVE verdicts for every corpus ground truth —
+including the negatives. It is a *fitness check*, not a vuln scanner: it stops at
+"which CVEs map to this identity+version". Whether a CVE actually impacts a project
+(vulnerable file compiled in? config enabled? path reachable?) is triage, and belongs to
+the SBOM's consumer / VEX process — see general/sbom-generator-architecture.md rec. 13.
+
+Prerequisites:
+  - the component has a matcher exposing a print-free scan API (see
+    templates/match_target.py.template — `scan_tree()` returning
+    {"status", "versions", ...} per candidate directory);
+  - the component has a COMPONENT_MAP entry in ghsa_vuln_lookup.py (or, for a
+    CPE-based source, an equivalent lookup — swap the import below);
+  - the component has a corpus with known ground truth.
+
+Usage: python end_to_end_<component>.py [tree ...] [--json OUT.json]
+"""
+import json
+import sys
+from pathlib import Path
+
+# ----------------------------------------------------------------- CONFIG ----
+COMPONENT = "pkg:github/<owner>/<name>"      # key into ghsa_vuln_lookup.COMPONENT_MAP
+COMPONENT_DIR = "<name>"                     # components/<name>/
+MATCHER_SUBDIR = "experiments/version-fingerprint"
+# Detector statuses meaning "several releases are simultaneously present in the tree"
+# rather than "we narrowed it to this many candidate releases". Getting this wrong
+# turns an ambiguity into a false yes/no — see the version-set-semantics finding.
+COEXISTING = {"MIXED"}
+# -----------------------------------------------------------------------------
+
+REPO = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO / "components" / COMPONENT_DIR / MATCHER_SUBDIR))
+
+from match_target import scan_tree  # noqa: E402  (rename if the matcher module differs)
+
+from ghsa_vuln_lookup import load_cache, lookup, print_lookup  # noqa: E402
+
+CORPUS = REPO / "components" / COMPONENT_DIR / "corpus"
+
+
+def assess(tree: Path, cache: dict) -> list:
+    out = []
+    for group in scan_tree(tree):
+        semantics = "coexisting" if group["status"] in COEXISTING else "candidates"
+        entry = {"directory": str(group["directory"]), "status": group["status"],
+                 "versions": group["versions"], "version_set_semantics": semantics,
+                 "lookups": []}
+        if not group["versions"]:
+            entry["tree_verdict"] = "NOT_QUERYABLE"
+            entry["reason"] = ("detection did not resolve a version — nothing to look up "
+                               "(a detection gap, not a clean bill of health)")
+            out.append(entry)
+            continue
+
+        verdicts = []
+        for version in group["versions"]:
+            res = lookup(COMPONENT, version, cache)
+            entry["lookups"].append(res)
+            if res["coverage"] != "COVERED":
+                verdicts.append("UNDETERMINED")
+                continue
+            vs = {f["verdict"] for f in res["findings"]}
+            verdicts.append("AFFECTED" if "AFFECTED" in vs
+                            else "UNDETERMINED" if "UNDETERMINED" in vs else "NOT_AFFECTED")
+
+        if "AFFECTED" in verdicts:
+            # coexisting: the vulnerable file really is in the tree -> definite.
+            # candidates: only some candidates affected -> narrow the *detection*.
+            if semantics == "coexisting" or all(v == "AFFECTED" for v in verdicts):
+                entry["tree_verdict"] = "AFFECTED"
+            else:
+                entry["tree_verdict"] = "POSSIBLY_AFFECTED"
+                entry["reason"] = ("only some candidate releases are affected — narrow "
+                                   "the detection to decide")
+        elif "UNDETERMINED" in verdicts:
+            entry["tree_verdict"] = "UNDETERMINED"
+        else:
+            entry["tree_verdict"] = "NOT_AFFECTED"
+        out.append(entry)
+    return out
+
+
+def print_entry(entry: dict) -> None:
+    print(f"\n{'=' * 74}\n{entry['directory']}\n{'=' * 74}")
+    print(f"  detection: {entry['status']} -> {entry['versions'] or '(no version resolved)'}"
+          f"  [{entry['version_set_semantics']}]")
+    for res in entry["lookups"]:
+        print()
+        print_lookup(res, indent="    ")
+    print(f"\n  TREE VERDICT: {entry['tree_verdict']}")
+    if entry.get("reason"):
+        print(f"    {entry['reason']}")
+
+
+def main() -> None:
+    args = sys.argv[1:]
+    out_json = None
+    if "--json" in args:
+        i = args.index("--json")
+        out_json, args = Path(args[i + 1]), args[:i] + args[i + 2:]
+
+    trees = [Path(a) for a in args] or sorted(p for p in CORPUS.iterdir() if p.is_dir())
+    cache = load_cache()
+    entries = []
+    for tree in trees:
+        found = assess(tree, cache)
+        if not found:
+            print(f"\n{tree}: no {COMPONENT_DIR} files found")
+            continue
+        for entry in found:
+            print_entry(entry)
+            entries.append(entry)
+
+    if out_json:
+        out_json.write_text(json.dumps(
+            {"component": COMPONENT, "advisory_source": "GHSA per-repository feed",
+             "advisory_cache_generated": cache["generated"], "trees": entries},
+            indent=2) + "\n", encoding="utf-8")
+        print(f"\nresults -> {out_json}")
+
+
+if __name__ == "__main__":
+    main()

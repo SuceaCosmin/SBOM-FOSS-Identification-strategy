@@ -258,6 +258,55 @@ and let a finding be `AFFECTED (conditional)` rather than silently over-claiming
   [experiments/advisory-fitness](experiments/advisory-fitness/README.md)
   ("Closing the loop", Finding 2).
 
+## 13. Where the generator's job ends: identity and composition, not triage
+
+**Decision (2026-07-28).** The generator's deliverable is a component inventory precise
+enough that a *dedicated* vulnerability tool can do its job unaided. It emits: canonical
+identity, version window (with its semantics), the **lookup coordinates** each advisory
+source needs (CPE 2.3, ecosystem purl, `{owner}/{repo}`, release commit), per-component
+coverage metadata, evidence/provenance, and composition facts. It does **not** decide
+whether a reported CVE actually impacts the project — no exploitability scoring, no
+reachability analysis, no CVE dispositions. If the identifiers are right, its job is done.
+
+- **Why the split is the right one**:
+  - **Different data, different lifecycles.** Advisory data changes daily; an SBOM is a
+    point-in-time artifact of a build. Folding triage into generation makes the artifact
+    stale on arrival and its output non-reproducible — the same tree would "change" as
+    feeds update, when nothing about the software changed.
+  - **Triage needs project knowledge the generator doesn't have**: build configuration,
+    threat model, compensating controls, whether the affected path is reachable in *this*
+    firmware. That is a project-evaluation activity.
+  - **The ecosystem already separates them**, and the separation has a standard artifact:
+    SBOM (CycloneDX/SPDX) → scanner (Grype/Trivy/Dependency-Track) → **VEX**
+    (CycloneDX VEX / OpenVEX / CSAF) carrying statuses like
+    `vulnerable_code_not_present` and `vulnerable_code_not_in_execute_path`. Triage output
+    belongs in VEX, authored by the SBOM's consumer.
+  - **What only the generator can supply is upstream identity for copy-pasted code.** No
+    downstream scanner can reconstruct that a vendored, modified `tasks.c` is
+    FreeRTOS-Kernel 10.5.1 — there is no package manager to ask. That is this project's
+    scarce capability, and it's where the effort belongs.
+- **The one refinement that keeps this from being a cop-out**: "identity is enough" is
+  true only at the **granularity the advisories discriminate at**. CVE-2024-28115 applies
+  to FreeRTOS's ARMv7-M/ARMv8-M *MPU port*, not to "FreeRTOS-Kernel" as a whole (rec. 12).
+  If the SBOM names only the coarse component, every downstream consumer must
+  independently investigate a question the generator could have answered cheaply while it
+  had the source tree in hand. So the boundary is **not** "emit the coarsest identity and
+  stop" — it's *emit identity, composition and build-inclusion facts at the granularity
+  the advisory ecosystem actually keys on, then stop*. Precision in the inventory is
+  in-scope work; judgement about impact is not.
+- **Consequences for the architecture**: (a) ship the vuln-source coordinates and coverage
+  metadata *as part of the output*, not as an afterthought (rec. 11); (b) surface an
+  advisory's applicability condition verbatim if the tool reports matches at all — never
+  evaluate it (rec. 12); (c) prefer emitting **facts that feed a VEX decision** (this
+  port is present; this component is not linked into the artifact — rec. 10) over
+  emitting the decision; (d) any CVE-listing convenience feature must be a clearly
+  separated layer over the same data, never load-bearing in the core.
+- **Consequence for this repo**: end-to-end vuln work here stays a **fitness check** —
+  "do our identifiers drive the standard tools correctly?" — and stops at verdict +
+  coverage. See the scope guard in the `research-component` skill's phase 3.
+- **Source**: scope decision recorded 2026-07-28, prompted by the end-to-end spike in
+  [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
+
 ## Keeping this doc honest
 
 These recommendations track findings, not preferences. If a future component or

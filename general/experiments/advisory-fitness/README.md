@@ -353,6 +353,56 @@ clean bill of health"*. This implements sub-task 4 of the paused mapping-layer b
 for one source, and `COMPONENT_MAP` is the miniature of sub-task 1: identity →
 source coordinate, with per-component coverage metadata attached.
 
+### Doing this for the next component (the repeatable part)
+
+This is now **phase 3 of the `research-component` skill** — every component researched
+from here on gets an advisory-source mapping, not just FreeRTOS. The skill holds the
+authoritative steps (`.claude/skills/research-component/SKILL.md`, "Phase 3"); the
+short version:
+
+1. **Map identity → each source's coordinate.** NVD/CPE first (the CPE name rarely
+   resembles the purl: `pkg:github/mbed-tls/mbedtls` → `cpe:2.3:a:arm:mbed_tls`); then the
+   GHSA repo feed by adding a `COMPONENT_MAP` entry here and running `--refresh`; probe
+   OSV only to record the expected miss.
+2. **Always include an impossible-version control** (`@99.0.0`). Same CVEs back ⇒ the
+   source is version-inert and must not be reported as precise.
+3. **Compare version *schemes*, not just versions.** Detector scheme vs. advisory scheme;
+   a mismatch is a recorded gap, not something to paper over.
+4. **Record coverage with reasons**, including the negatives — "not covered, use X" is
+   the required form; a bare empty list is a bug.
+5. **Close the loop once** if a scheme-compatible source exists: copy
+   `.claude/skills/research-component/templates/end_to_end.py.template`, point it at the
+   component's matcher (needs the print-free `scan_tree()` split) and its `COMPONENT_MAP`
+   key, run it over the corpus. The **negative** ground truth (post-fix version →
+   NOT_AFFECTED) matters as much as the affected one.
+6. **Write up the interface findings, not CVE counts** — counts drift; version-set
+   semantics, range-grammar deviations, tag-shape handling and applicability conditions
+   are the durable results.
+
+`ghsa_vuln_lookup.py` is already component-generic — adding a component is one
+`COMPONENT_MAP` entry. Only the end-to-end glue is per-component, because each component
+has its own matcher.
+
+### Scope boundary — this is a fitness check, not vulnerability triage
+
+Deliberate, and worth stating because Finding 2 sits right on the line. This experiment
+answers *"does our identity+version map to the right CVEs, and can that mapping be
+trusted?"*. It does **not** answer *"does this CVE actually impact this project?"* —
+whether the vulnerable file is compiled in, the config enabled, the code path reachable.
+That is **vulnerability triage**, a project-evaluation activity, and its output is a
+**VEX** statement (e.g. `vulnerable_code_not_present`,
+`vulnerable_code_not_in_execute_path`), produced by the SBOM's *consumer*, not by the
+generator or by this research.
+
+The reason Finding 2 is recorded here anyway is that it isn't triage — it's a
+**granularity** signal. "Only ARMv7-M MPU ports are affected" tells us the component we
+identify (`FreeRTOS-Kernel`) is coarser than the thing the advisory talks about (a
+specific port layer). Making detection finer is squarely our job; deciding whether the
+project's build reaches that code is not. Rule of thumb for future components: **an
+applicability condition is a prompt to sharpen identification, never a licence to build
+a reachability analyzer.** See
+[../../sbom-generator-architecture.md](../../sbom-generator-architecture.md) rec. 13.
+
 ## Implications for the generator (feeds the metadata-mapping layer)
 
 1. **SBOM identity ≠ vuln-lookup key.** The canonical upstream purl is right for
