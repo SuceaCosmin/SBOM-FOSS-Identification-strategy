@@ -412,6 +412,20 @@ artifact** (exact-MD5 tier + snippet-vote tier over locally generated
   are snippet-noisy (ST's `version.h` at 38 snippets dragged to 3.5.0) — the
   normalized-hash tier would exact-match those SPDX-only edits and pull ST's
   intersection to exactly {3.6.6}.
+- **Defect found 2026-07-29 — the tree verdict has no minimum-evidence rule.**
+  `validate_export.py` intersects the release sets of the files that *matched* and treats
+  a `NO MATCH` file as no evidence rather than counter-evidence. Run against a 309-file
+  **lwIP 2.2.1** tree (which contains no Mbed TLS at all), exactly one file matched —
+  `src/netif/ppp/polarssl/des.c`, at 65% of snippets, because lwIP vendors a reduced 2009
+  PolarSSL — and the validator reported **`CONSISTENT … 2.28.8, 2.28.9, 2.28.10`,
+  `pkg:github/mbed-tls/mbedtls`, `Apache-2.0`**: wrong component, wrong era, wrong license,
+  at the highest-confidence verdict. The KB itself behaved correctly
+  (attribution-by-construction faithfully reported the release its evidence pointed at) —
+  the fault is in the verdict logic, which was only ever exercised on trees where most
+  files match. Needs a match-ratio floor, negative evidence counted, and a separation
+  between *snippet* findings and *component* findings. Full analysis and the
+  constant-table mechanism behind the single match:
+  [../nested-component-attribution](../nested-component-attribution/README.md).
 
 **Size extrapolation**: 48 MB/gz for 3 components → order **0.5 GB for the full
 30–50-repo roadmap** as naive JSON; a binary encoding of the wfp index (the

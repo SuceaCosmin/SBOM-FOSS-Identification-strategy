@@ -28,12 +28,15 @@ bundled — often patched — inside the vendor SDKs (STM32Cube, MCUXpresso, ESP
 S32 SDK, Aurix SDK) that automotive Tier-1s build on, i.e. the exact "vendor integration
 layer" pattern already documented for mbedTLS and CMSIS.
 
-1. **lwIP** — *the* embedded TCP/IP stack; automotive Ethernet (100BASE-T1) ECUs, DoIP
-   endpoints, SOME/IP-on-lwIP setups, and every ST/NXP/Espressif SDK ships a patched
-   copy with vendor netif/port layers. Detection interest: the port layer
-   (`arch/`, `lwipopts.h`) is always project-authored while the core is upstream —
-   a cleaner version of the mbedTLS "vendor integration layer" question; long release
-   history (1.3.x → 2.2.x) with slow-moving files, good fingerprint stress test.
+1. ~~**lwIP**~~ — **RESEARCHED 2026-07-29**, all three phases:
+   [components/lwip](../components/lwip/README.md). The port-layer question resolved
+   differently than predicted: the port layer *is* always project-authored, but it needed
+   no dedicated detector (no advisory is scoped to an lwIP port) — only suffix-keyed file
+   location, so vendor port files can't contaminate core version evidence. What the pass
+   actually turned up: upstream vendors PolarSSL 0.10.1 and pppd 2.4.5 *inside itself*; a
+   **phantom release tag** whose content no artifact ever shipped; and advisories filed
+   against the **carrier** (`espressif:esp-idf`, `microchip:advanced_software_framework`)
+   rather than against upstream lwIP.
 2. **zlib** — compression inside OTA updaters, bootloaders, logging, and *statically
    embedded inside other libraries*; one of the most-vendored C codebases in existence
    and a recurring CVE source (CVE-2018-25032, CVE-2022-37434) which makes it a perfect

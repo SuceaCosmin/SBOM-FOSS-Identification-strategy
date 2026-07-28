@@ -8,3 +8,7 @@ general/experiments/minr-self-mining/results/export.json.gz
 # merged artifact is 48 MB, the fragment's reconciled ids couple to a specific export)
 general/experiments/minr-self-mining/results/export_with_symbols.json.gz
 general/experiments/minr-self-mining/results/symbol_tier.json
+
+# Nested-component experiment: fetched Mbed TLS comparison files (regenerable via
+# measure_nesting.py)
+general/experiments/nested-component-attribution/.cache/

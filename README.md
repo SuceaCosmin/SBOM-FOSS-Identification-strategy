@@ -7,7 +7,7 @@ this repo is **research only**; it does not build the generator or design SBOM o
 formats.
 
 See [CLAUDE.md](CLAUDE.md) for the full scope, priorities, decisions, and working
-conventions. The status below is a snapshot as of 2026-07-22.
+conventions. The status below is a snapshot as of 2026-07-29.
 
 ## Current status
 
@@ -20,6 +20,10 @@ experiment):
 - [CMSIS](components/cmsis/README.md) — the most fragmented component (three simultaneous
   version numbers); architecture-tied-standard gating; vendor "CMSIS/Device" trees are
   vendor-authored despite the path.
+- [lwIP](components/lwip/README.md) — four real vendor forks, four different shapes (ST
+  verbatim, Espressif/NXP heavily patched, Xilinx version-in-path); lwIP is itself a
+  vendoring carrier (reduced PolarSSL 0.10.1 + pppd 2.4.5 inside it); a **phantom release
+  tag**; advisories filed against the carrier distribution rather than upstream.
 - nanopb entered via the static-library work (below), not as a standalone study.
 
 **Detection techniques** — full catalogue and priorities in
@@ -79,7 +83,28 @@ profiles, per-finding provenance, the metadata-vs-disassembly legal boundary, ca
 attribution, version windows, identity→vuln-source coordinate mapping, and where the
 generator's job ends (identifiers and composition facts — triage/VEX is the consumer's).
 
-**Current focus / next-up**: breadth — a new component (lwIP or FatFs) via the
+**Second loop closed, through NVD/CPE** (2026-07-29, lwIP phase 3) — `nvd_vuln_lookup.py`
++ `end_to_end_lwip.py`, all 8 corpus trees correct (1.4.1 → AFFECTED by CVE-2014-4883;
+modern trees NOT_AFFECTED; negative control NOT_QUERYABLE). Findings: **identity→CPE is
+one-to-many** — advisories for vendored code are often filed against the *carrier*
+(`espressif:esp-idf`, `microchip:advanced_software_framework`) rather than upstream; a CPE
+bound to the literal version `-` matches nothing and must report UNDETERMINED, not
+"not affected"; and **git tags are not release artifacts** (lwIP's `STABLE-2_0_2_RELEASE`
+is a phantom that no shipped zip matches).
+
+**Nested components — the attribution rule tested, and it failed**
+([general/experiments/nested-component-attribution](general/experiments/nested-component-attribution/README.md),
+2026-07-29) — lwIP vendors a reduced PolarSSL 0.10.1 and pppd 2.4.5 inside itself, so the
+long-asserted "stacked components" rule finally had a real case. The curated KB scanned a
+309-file lwIP tree containing **zero** Mbed TLS and reported `CONSISTENT: mbed-tls
+2.28.8–2.28.10, Apache-2.0` — wrong component, era and license, at top confidence. Causes:
+the tree verdict has **no minimum-evidence rule** (one match promoted to a whole-tree
+claim; 308 non-matches discarded), and that one match is **constant tables, not code**
+(0.794 similarity on hex constants, 0.071 on code — DES S-boxes are fixed by FIPS 46).
+A mandatory caveat now rides with the roadmap's planned constant-table tier.
+
+**Current focus / next-up**: breadth — the next component (**FatFs**, the adversarial
+no-git-upstream case) via the
 `research-component` skill, which now includes advisory-source mapping as phase 3. Still
 paused: the rest of the **vuln-source mapping layer** (identity→CPE, FreeRTOS
 version-scheme reconciliation, a tag→commit resolver over OSV GIT ranges) — see the

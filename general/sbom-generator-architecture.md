@@ -139,6 +139,21 @@ return.
   is ever consulted, its output must be *mapped through* the KB, not passed through.
 - **Source**: the OSSKB empirical tests in
   [existing-fingerprint-datasets.md](existing-fingerprint-datasets.md).
+- **Extended 2026-07-29: canonical is necessary, not sufficient — the resolver also needs
+  an evidence threshold.** A curated KB run against an lwIP tree emitted a *perfectly
+  canonical* identity (`pkg:github/mbed-tls/mbedtls`, 2.28.8–2.28.10, Apache-2.0) that was
+  entirely wrong, because the resolver promoted a single file's snippet match in a
+  309-file tree to a whole-tree component claim, intersecting only the *matched* files and
+  discarding 308 non-matches as "no evidence". Attribution-by-construction did its job;
+  the resolver believed evidence it should have rejected. Required: (a) a **match ratio**
+  with a floor below which the answer is "no component detected", not a version;
+  (b) **negative evidence counts** — files that fail to match are counter-evidence for a
+  whole-tree claim; (c) a **snippet finding and a component finding are different
+  outputs** and must not share a verdict vocabulary; (d) an expressible
+  "known-OSS content, origin outside coverage" result, since the true origin here
+  (PolarSSL 0.10.1, 2009) predates the upstream git history and cannot be in a tag-mined
+  KB at all. See also rec. 14 on mining artifacts rather than tags.
+- **Source**: [experiments/nested-component-attribution](experiments/nested-component-attribution/README.md).
 
 ## 8. Version output is a window, not a point — carry it through
 
@@ -235,6 +250,24 @@ coverage metadata**; never assume the SBOM purl is directly queryable.
   *mapping* of identity to a vuln coordinate is in scope as an architectural
   boundary; building the vuln-scanning integration itself belongs to the
   generator/consumer, not this research.
+- **Refined 2026-07-29 (lwIP): the mapping is one-to-many, not one-to-one.** Advisories
+  for a vendored component are frequently filed against the **carrier distribution**
+  rather than the upstream project: of six NVD CVEs describing lwIP flaws, three are bound
+  to `lwip_project:lwip`, one to `microchip:advanced_software_framework`, one to
+  `espressif:esp-idf`, and one to no CPE at all. A correct upstream identity misses the
+  carrier-indexed ones entirely. So the resolver must attach, per finding, **the upstream
+  coordinate plus the coordinate of whichever vendor distribution the evidence says this
+  copy is** — which makes carrier/fork identification a vuln-relevant detection output,
+  not cosmetic provenance. (Cheap discriminators exist: one Espressif-only file,
+  `ip4_napt.c`, present in no upstream release, identifies the carrier.) Note the honest
+  limit: ESP-IDF's CVE-2026-45160 is in a file that lives in *esp-idf itself*, outside
+  even Espressif's lwIP fork — no component-tree fingerprint reaches it; only recognizing
+  the carrier does.
+- **Also**: a source's own placeholders must be classified, not evaluated. NVD binds
+  CVE-2020-22283 to the literal CPE version `-` ("no version information"), which no
+  version can match — a naive range test therefore returns "not affected" for *every*
+  version. Same class as GHSA's non-conforming range grammars (rec. 11 above): emit
+  UNDETERMINED with the reason, never a boolean the source did not support.
 
 ## 12. Identity + version does not decide applicability — carry the advisory's condition
 
@@ -317,6 +350,31 @@ reachability analysis, no CVE dispositions. If the identifiers are right, its jo
   coverage. See the scope guard in the `research-component` skill's phase 3.
 - **Source**: scope decision recorded 2026-07-28, prompted by the end-to-end spike in
   [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
+
+## 14. Mine release artifacts, not just git tags — and validate one against the other
+
+The reference KB's release entries should be traceable to **what upstream actually
+published**. Where a project releases by archive rather than by tag, mine the archive, or
+at minimum verify the tag against it before treating the tag as a release.
+
+- **Why**: lwIP tags `STABLE-2_0_2_RELEASE` and `STABLE-2_0_2_RELEASE_VER` are different
+  commits differing in one line — the first still declares `LWIP_VERSION_REVISION 1`, i.e.
+  **the commit tagged 2.0.2 says it is 2.0.1**. Downloading the official `lwip-2.0.2.zip`
+  settles it: the shipped artifact matches `..._VER`. A tag-mined KB (ours, or any `minr`
+  self-mined one) therefore carries a **phantom release** no artifact ever matched, keyed
+  under the right-looking name. Upstream tag sets are curated by humans and contain
+  mistakes, re-tags, packaging suffixes and maintenance branches.
+- **Consequences**: (a) record the artifact a release entry was derived from (archive URL
+  and digest, or tag + commit), as provenance rec. 5 already requires for findings;
+  (b) when both exist and disagree, the **published artifact wins**; (c) do not prune the
+  odd tag out of the KB — keep it and let cross-file intersection disambiguate, which it
+  does for free: lwIP's release-zip corpus tree resolves to `..._VER` alone because six
+  tracked files match both tags and the seventh matches only one.
+- **Bearing on other components**: FatFs (roadmap) has *no* git upstream at all — zip
+  archives only — so this stops being an edge case there and becomes the whole mining
+  strategy.
+- **Source**: [components/lwip/experiments/version-fingerprint](../components/lwip/experiments/version-fingerprint/README.md)
+  "Finding 1".
 
 ## Keeping this doc honest
 

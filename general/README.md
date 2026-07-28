@@ -229,6 +229,83 @@ checkout and must be told apart from the vendor's own instantiation next to them
 
 First observed in: [components/cmsis](../components/cmsis/README.md#the-device-specific-layer-is-not-cmsis-at-all-despite-living-in-a-folder-named-cmsis).
 
+**Upstream components themselves vendor other components — the stacking goes down, not
+just up.** lwIP ships a reduced copy of **PolarSSL 0.10.1-bsd** (`src/netif/ppp/polarssl/`:
+`md5.c`, `sha1.c`, `des.c`, `arc4.c`, `md4.c`, still carrying PolarSSL/XySSL copyright
+headers) and a heavily-reduced fork of **pppd 2.4.5** (`src/netif/ppp/`), both documented
+in-tree by upstream itself. So a project that vendors one component has transitively
+vendored three. Two failure modes to avoid, in opposite directions: reporting "Mbed TLS
+detected" because a content matcher fired on PolarSSL-derived files that are only there as
+part of lwIP (over-reporting a component that is not independently present), and
+suppressing the match entirely (under-reporting 2009-era crypto with its own CVE history).
+The correct output is a **contained-component relationship**, and it has a direct
+vulnerability consequence: the nested component's advisories are keyed to *its* identity
+and are unreachable from the outer component's — a pppd CVE with a version range that
+brackets the vendored 2.4.5 is invisible to any query made as "lwIP".
+
+First observed in: [components/lwip](../components/lwip/README.md#2-component-granularity).
+
+**Tested 2026-07-29, and the rule as stated was not enough.** Running this repo's own
+detection against that nested case produced a *confident wrong answer*: a 309-file lwIP
+2.2.1 tree containing zero Mbed TLS was reported by the curated KB as **"CONSISTENT:
+mbed-tls 2.28.8–2.28.10, Apache-2.0"** — wrong component, wrong version by 15 years, and
+wrong license (the files are BSD-3-Clause PolarSSL 0.10.1 lineage). Two causes, both
+general:
+
+- **No minimum-evidence rule.** The tree verdict intersected the release sets of the files
+  that *matched* and treated 308 `NO MATCH` files as no evidence rather than as
+  counter-evidence, so one file's match became a whole-tree component claim. A single-file
+  match in a large tree is a **snippet** finding, never a **component** finding — the
+  distinction needs a match-ratio floor, and negative evidence has to count.
+- **The one match was constant tables, not code.** lwIP's `des.c` scores 0.794 against
+  Mbed TLS on hex constants alone and 0.071 on the code with constants stripped: DES's
+  S-boxes are fixed by FIPS 46 and are identical in every implementation of the algorithm.
+  Shared standard tables identify *an algorithm*, never a project or a version.
+
+Also: correct attribution wasn't reachable anyway, since PolarSSL 0.10.1 (2009) predates
+the upstream git history entirely (earliest tag `mbedtls-1.3.10`) — a tag-mined KB is
+*structurally* unable to name it, so "known-OSS content, origin not in coverage" needs to
+be an expressible verdict.
+
+First observed in: [general/experiments/nested-component-attribution](experiments/nested-component-attribution/README.md).
+
+## Git tags are not release artifacts — validate one against the other before mining
+
+A reference DB mined from an upstream repo's tags silently assumes each tag *is* the
+release. That assumption is false often enough to matter, and the failure is quiet: the
+DB ends up with a correctly-named entry whose content nobody ever shipped.
+
+lwIP is the demonstration. Tags `STABLE-2_0_2_RELEASE` and `STABLE-2_0_2_RELEASE_VER` are
+two commits differing in exactly one line — the first still declares
+`LWIP_VERSION_REVISION 1`, i.e. **the commit tagged 2.0.2 says it is 2.0.1**. Upstream
+noticed and re-tagged. Downloading the official `lwip-2.0.2.zip` settles which one shipped
+(the `_VER` one, byte-identical across all tracked files). Related shapes already seen:
+FreeRTOS's tag zoo (packaging suffixes, `-LTS-Patch-N` maintenance branches, date-scheme
+tags), and Mbed TLS's 537 tags for 116 real release commits.
+
+Practical rules: (1) prefer the published artifact where a project releases by archive
+(lwIP releases zips on Savannah; FatFs has *no* git upstream at all); (2) when both exist
+and disagree, the artifact wins; (3) **don't prune the odd tag** — keep it and let
+cross-file intersection disambiguate, which it does for free, since a phantom differing in
+one file is eliminated the moment a second tracked file is compared.
+
+First observed in: [components/lwip](../components/lwip/experiments/version-fingerprint/README.md#finding-1-upstreams-tag-set-contains-a-phantom-release).
+
+## Locate tracked files by path suffix, not by basename
+
+Fingerprint matchers here scan a target tree for tracked filenames. Keying on the bare
+basename breaks as soon as a vendor's integration layer reuses an upstream basename, and
+it breaks *silently and in the wrong direction*: ST's shipped lwIP middleware contains its
+own port header `system/arch/init.h` next to upstream's `src/include/lwip/init.h`, and
+that ST file scores **0.000** similarity against every lwIP release. A basename-keyed scan
+that walked into `system/` first would report NOT_THIS_COMPONENT for a tree whose lwIP core
+is byte-identical to upstream 2.1.3 — a false negative on a real, shipping vendor tree.
+Matching on a path suffix (`lwip/init.h`, `core/init.c`) disambiguates that case and the
+upstream-internal `lwip/init.h` vs `core/init.c` collision at the same time. Cheap to do,
+and the cost of not doing it is invisible until it fires.
+
+First observed in: [components/lwip](../components/lwip/experiments/version-fingerprint/README.md#files-are-located-by-path-suffix-not-basename).
+
 ## Architecture-tied standards are gated by CPU core choice, not by vendor
 
 Some "components" (CMSIS is the clearest example so far) aren't independent software a

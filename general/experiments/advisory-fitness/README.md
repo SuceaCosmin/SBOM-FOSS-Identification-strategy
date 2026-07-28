@@ -424,6 +424,110 @@ applicability condition is a prompt to sharpen identification, never a licence t
 a reachability analyzer.** See
 [../../sbom-generator-architecture.md](../../sbom-generator-architecture.md) rec. 13.
 
+## lwIP (2026-07-29) — the second loop closed, through NVD/CPE this time
+
+Phase-3 pass for [lwIP](../../../components/lwip/README.md), run over the
+[phase-2 corpus](../../../components/lwip/corpus/README.md). Deliberately routed through
+a **different source** than the FreeRTOS run: `lwip-tcpip/lwip`'s GHSA per-repo feed
+returns **0** advisories (lwIP does not self-publish, like Mbed TLS), so the fit source
+here is NVD/CPE — exercising the path that was identified as primary but had never been
+run end to end.
+
+New reusable script: **`nvd_vuln_lookup.py`** — the CPE sibling of `ghsa_vuln_lookup.py`,
+same `load_cache`/`lookup`/`print_lookup` interface so `end_to_end_*.py` can swap sources.
+It caches CVE+constraint data in `nvd_cve_cache.json` (`--refresh` to re-fetch) and carries
+a `COMPONENT_MAP` from canonical identity to CPE product, including the *negative* entries
+(CMSIS: no CPE; FreeRTOS: marked `blocked` because NVD keys it to AWS-distribution versions
+the detector never produces).
+
+### Source coverage for lwIP
+
+| source | coordinate | result |
+|---|---|---|
+| **NVD/CPE** | `cpe:2.3:a:lwip_project:lwip` | ✓ **fit** — real range matching (@1.4.1 → CVE-2014-4883; @2.1.2 → CVE-2020-22284; @2.2.1 → none; **@99.0.0 impossible → none**) |
+| **GHSA per-repo** | `lwip-tcpip/lwip` | **0 advisories** — does not self-publish |
+| **OSV** | `pkg:github/lwip-tcpip/lwip` | **0**; bare name `lwip` → 10, all `DEBIAN-*`/`UBUNTU-*`/`OESA-*` distro records |
+
+### Result: all eight corpus ground truths resolve correctly
+
+`end_to_end_lwip.py`, snapshot in `end_to_end_lwip_results.json`:
+
+| corpus tree | detection | verdict |
+|---|---|---|
+| `upstream-1.4.1` | CONFIRMED 1.4.1 | **AFFECTED** — CVE-2014-4883 (range `<=1.4.1`) |
+| `mixed-version-synthetic` | MIXED_VERSION {2.0.2, 2.0.3, 2.1.1, 2.1.2} (**coexisting**) | **AFFECTED** — CVE-2020-22284 pins exactly 2.1.2, which really is present |
+| `savannah-zip-2.0.2` | CONFIRMED 2.0.2 | NOT_AFFECTED |
+| `st-stm32-mw-2.1.3` | CONFIRMED 2.1.3 | NOT_AFFECTED |
+| `esp-lwip-2.2.0-esp` | PARTIALLY_MODIFIED 2.2.0 | NOT_AFFECTED *(but see carrier finding below)* |
+| `nxp-mcux-2.16.100` | PARTIALLY_MODIFIED 2.2.1 | NOT_AFFECTED |
+| `xilinx-lwip220` | PARTIALLY_MODIFIED 2.2.0 | NOT_AFFECTED |
+| `negative-control-cjson` | NOT_THIS_COMPONENT | NOT_QUERYABLE — "no lwIP detected", not "no vulns" |
+
+The version-set semantics rule from the FreeRTOS run held without modification: the mixed
+tree's set is **coexisting**, so a CVE hitting one member means the vulnerable code really
+is present → AFFECTED.
+
+### Finding A — advisories for a vendored component are often filed against the **carrier**
+
+The headline result, and it is not about lwIP's tooling but about how CVEs are indexed.
+Six CVEs in NVD mention lwIP in their description; only **three** are bound to the
+`lwip_project:lwip` CPE. The other three:
+
+| CVE | CPE product it is filed under | what it actually is |
+|---|---|---|
+| CVE-2024-7490 | `microchip:advanced_software_framework` | buffer overflow in the **lwIP example DHCP server** bundled in Microchip ASF |
+| CVE-2026-45160 | `espressif:esp-idf` | OOB read in `parse_options()` in **ESP-IDF's own** `components/lwip/apps/dhcpserver/dhcpserver.c` |
+| CVE-2026-8836 | *(none — no CPE at all)* | stack overflow in **upstream** `src/apps/snmp/snmp_msg.c`, "lwIP up to 2.2.1" |
+
+So a *correct* upstream identity (`lwip_project:lwip` @2.2.0) is not sufficient: it
+returns nothing for the two carrier-indexed CVEs, and nothing for the un-CPE'd one. This
+is the inverse of the FreeRTOS scheme mismatch — there NVD used the distribution's
+*versions*, here it uses the distribution's *product name*.
+
+Consequence for the mapping layer: identity → CPE is **not 1:1**. When detection
+establishes that a tree is a known vendor distribution, the query set must include that
+vendor's CPE too. `nvd_vuln_lookup.py` carries this as a per-component
+`carrier_products` map and prints it with every lookup. Note the limit, stated honestly:
+CVE-2026-45160's file lives in **esp-idf**, not even in Espressif's `esp-lwip` fork — no
+amount of lwIP-tree fingerprinting reaches it, only recognizing the *carrier* does.
+
+Cheap carrier discriminators exist and are worth mining: `src/core/ipv4/ip4_napt.c`
+(1089 lines) is present in Espressif's fork and in **no upstream release tag**, so a
+single file's presence identifies the carrier.
+
+### Finding B — a CPE bound to the literal version `-` is unmatchable, and must not read as "not affected"
+
+CVE-2020-22283 (ICMPv6 buffer overflow, "lwIP version git head") is bound to CPE version
+`-`, NVD's "no version information" placeholder. No version can ever match it, so a naive
+range evaluation silently returns NOT_AFFECTED for *every* version — a false clean bill of
+health. `nvd_vuln_lookup.py` classifies it **UNDETERMINED** with the reason attached, and
+every corpus row above carries it. Same class of problem as GHSA's non-conforming range
+grammars: classify what the source actually said, never coerce it into a boolean.
+
+### Finding C — the CPE dictionary lags releases, but range bindings still work
+
+The CPE dictionary has entries only up to **2.1.2** — nothing for 2.1.3 / 2.2.0 / 2.2.1,
+i.e. every release since 2021. Version *queries* still work (range constraints are
+evaluated against any version string), so this is not fatal, but it means a CVE filed
+against a modern lwIP has no dictionary name to bind to, and CVE-2026-8836 — a real
+upstream flaw in "lwIP up to 2.2.1" — indeed has **no CPE at all**.
+
+Its advisory does name the fix commit (`0c957ec0…`, 2026-05-13), which `git tag --contains`
+resolves to **no release tag**: the fix is unreleased, so every released version is
+affected. That is a *usable* answer obtained from a commit coordinate where the CPE
+coordinate had nothing — a concrete argument for the paused tag→commit resolver sub-task.
+
+### Finding D — the nested component's CVEs are reachable only through the nested identity
+
+Phase 1 established that lwIP vendors a reduced copy of **pppd 2.4.5** and of **PolarSSL
+0.10.1-bsd**. OSV's bare-name `lwip` query returns `DEBIAN-CVE-2020-8597` — pppd's
+`eap.c` `rhostname` overflow, stated as affecting *ppp 2.4.2 through 2.4.8*, which
+brackets the 2.4.5 lwIP vendored. lwIP 2.2.1 still ships `src/netif/ppp/eap.c` with 33
+`rhostname` references. Whether lwIP's reduced copy is actually vulnerable is **triage,
+and explicitly not this repo's job** — but the *mapping* fact is: that CVE is reachable
+only if the nested pppd is emitted with its own identity. An SBOM listing lwIP alone
+cannot surface it from any source tested.
+
 ## Implications for the generator (feeds the metadata-mapping layer)
 
 1. **SBOM identity ≠ vuln-lookup key.** The canonical upstream purl is right for

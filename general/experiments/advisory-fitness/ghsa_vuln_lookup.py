@@ -60,6 +60,15 @@ COMPONENT_MAP = {
         "note": "Publishes advisories on its own security page, not via GHSA. Use "
                 "NVD/CPE (cpe:2.3:a:arm:mbed_tls), which does discriminate by version.",
     },
+    "pkg:github/lwip-tcpip/lwip": {
+        "aliases": ["lwip"],
+        "ghsa_repo": "lwip-tcpip/lwip",
+        "version_scheme": "semver",
+        "self_publishes": False,
+        "note": "Repo feed returns 0 advisories (the repo is itself only a mirror of "
+                "git.savannah.gnu.org). Use NVD/CPE (cpe:2.3:a:lwip_project:lwip) via "
+                "nvd_vuln_lookup.py, which does discriminate by version.",
+    },
     "pkg:github/arm-software/cmsis_5": {
         "aliases": ["cmsis"],
         "ghsa_repo": None,

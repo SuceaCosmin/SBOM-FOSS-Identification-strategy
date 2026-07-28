@@ -331,8 +331,11 @@ findings suggest revisiting a decision.
      *over-claims*, because that CVE applies only to ARMv7-M/ARMv8-M **MPU ports** — a
      condition stated in prose only, in every advisory source tested. Port-layer
      detection is what makes the verdict precise.
-  3. **Lower priority:** a new component (lwIP or FatFs) via the `research-component`
-     skill for breadth; or apply the POC-consolidation lens to mbedTLS/CMSIS (same
+  3. ~~**Lower priority:** a new component (lwIP or FatFs) via the `research-component`
+     skill for breadth~~ — **lwIP DONE 2026-07-29** (see the lwIP bullet below). Still
+     open: **FatFs** as the adversarial no-git-upstream case (now better motivated — the
+     lwIP pass showed git tags can disagree with released artifacts even when a git
+     upstream *does* exist); or apply the POC-consolidation lens to mbedTLS/CMSIS (same
      minimal-scope shape, no fresh finding pushing them).
 - **Vuln loop CLOSED for FreeRTOS (2026-07-28)** — step 1 of the re-review's next-step
   list, the repo's **first end-to-end SBOM→vuln result**: vendored source tree →
@@ -400,6 +403,79 @@ findings suggest revisiting a decision.
   code. Measured cost of the granularity: **~4× the core-file DB** (6.6 MB vs 1.7 MB).
   Pitfall recorded: a **blobless clone is the wrong tool** for bulk mining (lazy per-blob
   fetches hang `cat-file --batch`); full clone is ~150 MB / ~25 s.
+- **Researched: [lwIP](components/lwip/README.md) — all three skill phases, 2026-07-29.**
+  The fourth component, picked as roadmap Tier 1 #1 for the port-layer-vs-core question.
+  **Phase 1** verified four real vendor forks by diff against the matching upstream tag,
+  and found four *different* shapes: **ST** `stm32-mw-lwip` is byte-identical to upstream
+  2.1.3 (2.2.0 differs only by 4 doxygen comment lines) and adds its port layer under
+  `system/` — a path that exists nowhere upstream; **Espressif** patches 54 files
+  (+3446/−257, incl. a whole NAPT feature) and flips `LWIP_VERSION_RC` to
+  `LWIP_RC_DEVELOPMENT`; **NXP** patches 102 files and superimposes `MCUX_*` SDK tags on
+  the upstream tag set; **AMD/Xilinx** declares the version in the directory path
+  (`lwip220/src/lwip-2.2.0/`) while 7 of 20 core `.c` files differ from it. Also:
+  **lwIP is itself a vendoring carrier** — `src/netif/ppp/` is a reduced fork of pppd
+  2.4.5 and `src/netif/ppp/polarssl/` is a reduced copy of **PolarSSL 0.10.1-bsd** (the
+  direct ancestor of the Mbed TLS already researched), both documented in-tree by
+  upstream; canonical VCS is Savannah with GitHub as an official *mirror*, releases are
+  zips (no amalgamation); ST's tree carries **two contradictory license statements** (root
+  `LICENSE.md` BSD-3-Clause vs. `st_readme.txt`'s own header, an ST five-clause license
+  with a "STMicroelectronics devices only" field-of-use restriction), while ST-authored
+  port files carry *upstream's* SICS copyright and no ST copyright at all.
+  **Phase 2** ([experiments/version-fingerprint](components/lwip/experiments/version-fingerprint/README.md)):
+  7 tracked files chosen by *measured* per-file discrimination across releases (plus
+  `pbuf.c` for being untouched by all four forks — the prediction held; it pins the base
+  in two of three modified-fork cases), 17 release tags → 792 KiB DB, validated on 8
+  corpus trees with every ground truth correct (2 CONFIRMED verbatim, 3
+  PARTIALLY_MODIFIED real forks, 1 MIXED, 1 negative control at 0.000, 1 release-zip).
+  Two generalizable findings: **git tags are not release artifacts** — lwIP's
+  `STABLE-2_0_2_RELEASE` is a **phantom** whose `init.h` still declares 2.0.1, while the
+  shipped `lwip-2.0.2.zip` matches only `STABLE-2_0_2_RELEASE_VER`, and cross-file
+  intersection eliminates the phantom *for free*; and **locate tracked files by path
+  suffix, not basename** — ST ships `system/arch/init.h` next to `lwip/init.h`, scoring
+  0.000, so basename keying would report NOT_THIS_COMPONENT for a verbatim 2.1.3 tree.
+  **Phase 3** (in [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)):
+  the repo's **second end-to-end loop, closed through NVD/CPE** this time (FreeRTOS's went
+  through GHSA), requiring a new reusable **`nvd_vuln_lookup.py`** + `end_to_end_lwip.py`;
+  all 8 corpus trees produce the expected verdict (1.4.1 → AFFECTED by CVE-2014-4883 via
+  range `<=1.4.1`; the mixed tree → AFFECTED by CVE-2020-22284 under *coexisting*
+  semantics; modern trees NOT_AFFECTED; negative control NOT_QUERYABLE). Headline finding:
+  **advisories for a vendored component are often filed against the carrier** — of 6 NVD
+  CVEs describing lwIP flaws, 3 are bound to `lwip_project:lwip`, one to
+  `microchip:advanced_software_framework`, one to `espressif:esp-idf`, one to no CPE at
+  all — so **identity → CPE is one-to-many** (now architecture rec. 11's carrier clause);
+  plus a CPE bound to the literal version `-` that no version can match (→ UNDETERMINED,
+  never "not affected"), a CPE dictionary that stops at 2.1.2, and the nested pppd's CVE
+  reachable only via a nested identity. **Port-layer detector judged unnecessary for
+  lwIP** on this evidence: no advisory is scoped to a port or `lwipopts.h` macro — the
+  applicability axis is *which distribution*, so carrier/fork identification is the
+  granularity worth sharpening here.
+- **Researched (cross-cutting): nested-component attribution — DONE 2026-07-29**,
+  [general/experiments/nested-component-attribution](general/experiments/nested-component-attribution/README.md).
+  The lwIP pass produced the repo's first real nested case (lwIP vendors a reduced
+  **PolarSSL 0.10.1-bsd** and **pppd 2.4.5** inside itself), so the long-asserted
+  "vendored integrations are multiple stacked components" rule was finally *tested*
+  rather than assumed. **It failed, confidently**: the curated KB export scanned against a
+  309-file lwIP 2.2.1 tree containing zero Mbed TLS reported **`CONSISTENT` →
+  `pkg:github/mbed-tls/mbedtls` 2.28.8–2.28.10, Apache-2.0** — wrong component, wrong era
+  by 15 years, wrong license (the files are BSD-3-Clause PolarSSL lineage). Four findings:
+  (1) **no minimum-evidence rule** — the tree verdict intersects only the files that
+  *matched* and discards 308 `NO MATCH` files as no evidence, so one file's snippet match
+  becomes a whole-tree component claim (a snippet finding and a component finding must not
+  share a verdict vocabulary; negative evidence must count); (2) **the single match is
+  constant tables, not code** — lwIP's `des.c` scores **0.794** against Mbed TLS on hex
+  constants alone but **0.071** on the code with constants stripped, because DES's S-boxes
+  are fixed by FIPS 46 and identical in every implementation; recorded as a mandatory
+  caveat on the roadmap's planned constant/data-table tier (standard algorithm tables
+  identify an *algorithm*, never a project or version); (3) **correct attribution was
+  unreachable anyway** — PolarSSL 0.10.1 (2009) predates the upstream git history
+  (earliest tag `mbedtls-1.3.10`) and exists only as a tarball, so a tag-mined KB is
+  structurally unable to name it and needs an expressible "known-OSS content, origin
+  outside coverage" verdict; (4) the **bespoke** per-component matchers are blind to this
+  by construction (they track 5 version-discriminating files, no crypto primitives) — the
+  false positive is a property of the broad KB, not of fingerprinting. Fed into
+  architecture rec. 7 (evidence threshold clause),
+  [general/README.md](general/README.md#attribution-vendored-integrations-are-often-multiple-stacked-components),
+  the fingerprint roadmap's TODO-9, and a defect note in the minr-self-mining README.
 - **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
   vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
   favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,

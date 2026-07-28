@@ -106,6 +106,21 @@ we're targeting (mbedTLS et al.). Complements #4 rather than overlapping it.
 **Trigger**: the first stripped static library, or a crypto component where symbol
 windows are too coarse.
 
+**Mandatory caveat, measured 2026-07-29** (do not implement this tier without it): the
+tables that make this axis attractive are frequently **standardized, not distinctive**.
+DES's S-boxes are fixed by FIPS 46 and are byte-identical in every implementation; the
+same goes for CRC polynomial tables, AES/SHA round constants, and zlib's fixed Huffman
+tables. Decomposing a real false positive showed lwIP's vendored 2009 PolarSSL `des.c`
+scoring **0.794** against Mbed TLS 2.28.8 **on constants alone** while the surrounding
+code scored **0.071** — 53% of that file is hex constants, and they identify *the
+algorithm*, never the project or version. It was enough to make this repo's own curated
+KB report a 309-file lwIP tree as "mbed-tls 2.28.x, Apache-2.0". So the tier must be built
+on constants that are **distinctive to a project** (idiosyncratic lookup tables, magic
+numbers, generated parameter sets), with standard-algorithm tables explicitly excluded or
+routed to a separate "algorithm present" signal that is never promoted to a component
+claim. Full measurement:
+[experiments/nested-component-attribution](experiments/nested-component-attribution/README.md).
+
 ### TODO-10 (medium): function-level normalized hashing (CENTRIS model)
 
 Middle granularity between whole-file (#1) and token-winnowing (#2): hash each

@@ -1,0 +1,2278 @@
+{
+  "_fetched": "2026-07-28",
+  "products": {
+    "cpe:2.3:a:lwip_project:lwip": [
+      {
+        "cve_id": "CVE-2014-4883",
+        "published": "2014-11-28",
+        "summary": "resolv.c in the DNS resolver in uIP, and dns.c in the DNS resolver in lwIP 1.4.1 and earlier, does not use random values for ID fields and source ports of DNS query packets, which makes it easier for man-in-the-middle attackers to conduct cache-poisoning attacks via spoofed reply packets.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "1.4.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-22283",
+        "published": "2021-07-22",
+        "summary": "A buffer overflow vulnerability in the icmp6_send_response_with_addrs_and_netif() function of Free Software Foundation lwIP version git head allows attackers to access sensitive information via a crafted ICMPv6 packet.",
+        "constraints": [
+          {
+            "version": "-",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-22284",
+        "published": "2021-07-22",
+        "summary": "A buffer overflow vulnerability in the zepif_linkoutput() function of Free Software Foundation lwIP git head version and version 2.1.2 allows attackers to access sensitive information via a crafted 6LoWPAN packet.",
+        "constraints": [
+          {
+            "version": "2.1.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      }
+    ],
+    "cpe:2.3:a:espressif:esp-idf": [
+      {
+        "cve_id": "CVE-2018-18558",
+        "published": "2019-05-13",
+        "summary": "An issue was discovered in Espressif ESP-IDF 2.x and 3.x before 3.0.6 and 3.1.x before 3.1.1. Insufficient validation of input data in the 2nd stage bootloader allows a physically proximate attacker to bypass secure boot checks and execute arbitrary code, by crafting an application binary that overw",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.0.6",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.1",
+            "startExcluding": null,
+            "endIncluding": "3.1.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2019-12587",
+        "published": "2019-09-04",
+        "summary": "The EAP peer implementation in Espressif ESP-IDF 2.0.0 through 4.0.0 and ESP8266_NONOS_SDK 2.2.0 through 3.1.0 allows the installation of a zero Pairwise Master Key (PMK) after the completion of any EAP authentication method, which allows attackers in radio range to replay, decrypt, or spoof frames ",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": "4.0.0",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2019-12586",
+        "published": "2019-09-04",
+        "summary": "The EAP peer implementation in Espressif ESP-IDF 2.0.0 through 4.0.0 and ESP8266_NONOS_SDK 2.2.0 through 3.1.0 processes EAP Success messages before any EAP method completion or failure, which allows attackers in radio range to cause a denial of service (crash) via a crafted message.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": "4.0.0",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2019-15894",
+        "published": "2019-10-07",
+        "summary": "An issue was discovered in Espressif ESP-IDF 2.x, 3.0.x through 3.0.9, 3.1.x through 3.1.6, 3.2.x through 3.2.3, and 3.3.x through 3.3.1. An attacker who uses fault injection to physically disrupt the ESP32 CPU can bypass the Secure Boot digest verification at startup, and boot unverified code from ",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "3.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.0.9",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": "3.1",
+            "endIncluding": null,
+            "endExcluding": "3.1.6",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": "3.2",
+            "endIncluding": null,
+            "endExcluding": "3.2.3",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.3",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.3.1",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-12638",
+        "published": "2020-07-23",
+        "summary": "An encryption-bypass issue was discovered on Espressif ESP-IDF devices through 4.2, ESP8266_NONOS_SDK devices through 3.0.3, and ESP8266_RTOS_SDK devices through 3.3. Broadcasting forged beacon frames forces a device to change its authentication mode to OPEN, effectively disabling its 802.11 encrypt",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.2",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-13594",
+        "published": "2020-08-31",
+        "summary": "The Bluetooth Low Energy (BLE) controller implementation in Espressif ESP-IDF 4.2 and earlier (for ESP32 devices) does not properly restrict the channel map field of the connection request packet on reception, allowing attackers in radio range to cause a denial of service (crash) via a crafted packe",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.2",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-13595",
+        "published": "2020-08-31",
+        "summary": "The Bluetooth Low Energy (BLE) controller implementation in Espressif ESP-IDF 4.0 through 4.2 (for ESP32 devices) returns the wrong number of completed BLE packets and triggers a reachable assertion on the host stack when receiving a packet with an MIC failure. An attacker within radio range can sil",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "4.0.0",
+            "startExcluding": null,
+            "endIncluding": "4.2",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-16146",
+        "published": "2021-01-12",
+        "summary": "Espressif ESP-IDF 2.x, 3.0.x through 3.0.9, 3.1.x through 3.1.7, 3.2.x through 3.2.3, 3.3.x through 3.3.2, and 4.0.x through 4.0.1 has a Buffer Overflow in BluFi provisioning in btc_blufi_recv_handler function in blufi_prf.c. An attacker can send a crafted BluFi protocol Write Attribute command to c",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": "2.1.1",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.0",
+            "startExcluding": null,
+            "endIncluding": "3.0.9",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.1",
+            "startExcluding": null,
+            "endIncluding": "3.1.7",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.2",
+            "startExcluding": null,
+            "endIncluding": "3.2.3",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "3.3",
+            "startExcluding": null,
+            "endIncluding": "3.3.2",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "4.0.0",
+            "startExcluding": null,
+            "endIncluding": "4.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-28135",
+        "published": "2021-09-07",
+        "summary": "The Bluetooth Classic implementation in Espressif ESP-IDF 4.4 and earlier does not properly handle the reception of continuous unsolicited LMP responses, allowing attackers in radio range to trigger a denial of service (crash) in ESP32 by flooding the target device with LMP Feature Response data.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.4",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-28136",
+        "published": "2021-09-07",
+        "summary": "The Bluetooth Classic implementation in Espressif ESP-IDF 4.4 and earlier does not properly handle the reception of multiple LMP IO Capability Request packets during the pairing process, allowing attackers in radio range to trigger memory corruption (and consequently a crash) in ESP32 via a replayed",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.4",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-28139",
+        "published": "2021-09-07",
+        "summary": "The Bluetooth Classic implementation in Espressif ESP-IDF 4.4 and earlier does not properly restrict the Feature Page upon reception of an LMP Feature Response Extended packet, allowing attackers in radio range to trigger arbitrary code execution in ESP32 via a crafted Extended Features bitfield pay",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.4",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2022-24893",
+        "published": "2022-06-25",
+        "summary": "ESP-IDF is the official development framework for Espressif SoCs. In Espressif\u2019s Bluetooth Mesh SDK (`ESP-BLE-MESH`), a memory corruption vulnerability can be triggered during provisioning, because there is no check for the `SegN` field of the Transaction Start PDU. This can result in memory corrupt",
+        "constraints": [
+          {
+            "version": "4.1.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "4.2.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "4.3.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "4.4.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-28183",
+        "published": "2024-03-25",
+        "summary": "ESP-IDF is the development framework for Espressif SoCs supported on Windows, Linux and macOS. A Time-of-Check to Time-of-Use (TOCTOU) vulnerability was discovered in the implementation of the ESP-IDF bootloader which could allow an attacker with physical access to flash of the device to bypass anti",
+        "constraints": [
+          {
+            "version": "4.4.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.0.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.1.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-33454",
+        "published": "2024-05-14",
+        "summary": "Buffer Overflow vulnerability in esp-idf v.5.1 allows a remote attacker to execute arbitrary code via a crafted script to the Bluetooth stack component.",
+        "constraints": [
+          {
+            "version": "5.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-33453",
+        "published": "2024-10-17",
+        "summary": "Buffer Overflow vulnerability in esp-idf v.5.1 allows a remote attacker to obtain sensitive information via the externalId component.",
+        "constraints": [
+          {
+            "version": "5.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-51428",
+        "published": "2024-11-07",
+        "summary": "An issue in Espressif Esp idf v5.3.0 allows attackers to cause a Denial of Service (DoS) via a crafted data channel packet.",
+        "constraints": [
+          {
+            "version": "5.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-53406",
+        "published": "2025-03-13",
+        "summary": "Espressif Esp idf v5.3.0 is vulnerable to Insecure Permissions resulting in Authentication bypass. In the reconnection phase, the device reuses the session key from a previous connection session, creating an opportunity for attackers to execute security bypass attacks.",
+        "constraints": [
+          {
+            "version": "5.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-52471",
+        "published": "2025-06-24",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. An integer underflow vulnerability has been identified in the ESP-NOW protocol implementation within the ESP Wi-Fi component of versions 5.4.1, 5.3.3, 5.2.5, and 5.1.6 of the ESP-IDF framework. This issue stems from insufficien",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.5",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-55297",
+        "published": "2025-08-21",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. The BluFi example bundled in ESP-IDF was vulnerable to memory overflows in two areas: Wi-Fi credential handling and Diffie\u2013Hellman key exchange. This vulnerability is fixed in 5.4.1, 5.3.3, 5.1.6, and 5.0.9.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "5.0.9",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.1",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "5.1.6",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.2",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "5.3.3",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.4",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "5.4.1",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-66409",
+        "published": "2025-12-02",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In 5.5.1, 5.4.3, 5.3.4, 5.2.6, 5.1.6, and earlier, when AVRCP is enabled on ESP32, receiving a malformed VENDOR DEPENDENT command from a peer device can cause the Bluetooth stack to access memory before validating the command b",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "5.1.6",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.2",
+            "startExcluding": null,
+            "endIncluding": "5.2.6",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.3",
+            "startExcluding": null,
+            "endIncluding": "5.3.4",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.4",
+            "startExcluding": null,
+            "endIncluding": "5.4.3",
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "5.5",
+            "startExcluding": null,
+            "endIncluding": "5.5.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-68473",
+        "published": "2025-12-27",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.1, 5.4.3, 5.3.4, 5.2.6, 5.1.6, and earlier, in the ESP-IDF Bluetooth host stack (BlueDroid), the function bta_dm_sdp_result() used a fixed-size array uuid_list[32][MAX_UUID_SIZE] to store discovered service UUID",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-68474",
+        "published": "2025-12-27",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.1, 5.4.3, 5.3.4, 5.2.6, 5.1.6, and earlier, in the avrc_vendor_msg() function of the ESP-IDF BlueDroid AVRCP stack, the allocated buffer size was validated using AVRC_MIN_CMD_LEN (20 bytes). However, the actual ",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-25507",
+        "published": "2026-02-04",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.2, 5.4.3, 5.3.4, 5.2.6, and 5.1.6, a use-after-free vulnerability was reported in the BLE provisioning transport (protocomm_ble) layer. The issue can be triggered by a remote BLE client while the device is in pr",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-25508",
+        "published": "2026-02-04",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.2, 5.4.3, 5.3.4, 5.2.6, and 5.1.6, an out-of-bounds read vulnerability was reported in the BLE ATT Prepare Write handling of the BLE provisioning transport (protocomm_ble). The issue can be triggered by a remote",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-25532",
+        "published": "2026-02-04",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.2, 5.4.3, 5.3.4, 5.2.6, and 5.1.6, a vulnerability exists in the WPS (Wi-Fi Protected Setup) Enrollee implementation where malformed EAP-WSC packets with truncated payloads can cause integer underflow during fra",
+        "constraints": [
+          {
+            "version": "5.1.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-45160",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.2.7, 5.3.5, 5.4.4, 5.5.4, and 6.0.1, an out-of-bounds read flaw exists in the DHCP server option parser (parse_options() in components/lwip/apps/dhcpserver/dhcpserver.c) shipped with ESP-IDF's lwIP component. The ",
+        "constraints": [
+          {
+            "version": "5.2.7",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.5",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0.1",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-45328",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.4 and 6.0, the esp_tee component exposes secure-service wrappers in esp_secure_services.c and esp_secure_services_iram.c that bridge calls from the user application (i.e. the REE) to TEE-protected hardware perip",
+        "constraints": [
+          {
+            "version": "5.5.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-45329",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.5.4 and 6.0, several ESP-TEE secure-service wrappers in esp_secure_services.c and esp_secure_services_iram.c validated only some of the caller-supplied pointer arguments, leaving input pointer arguments unchecked.",
+        "constraints": [
+          {
+            "version": "5.5.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-45541",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.2.6, 5.3.5, 5.4.4, 5.5.4, and 6.0, a NULL-pointer dereference exists in the WebSocket subprotocol-negotiation path of the esp_http_server component. While parsing the client-supplied Sec-WebSocket-Protocol request",
+        "constraints": [
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.5",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-45542",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.2.6, 5.3.5, 5.4.4, 5.5.4, and 6.0, a heap buffer overflow exists in the Security Scheme 2 (SRP6a) session-setup path of the protocomm component. The first-phase handler (handle_session_command0() in components/pro",
+        "constraints": [
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.5",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-46532",
+        "published": "2026-06-10",
+        "summary": "ESF-IDF is the Espressif Internet of Things (IOT) Development Framework. In versions 5.2.6, 5.3.5, 5.4.4, 5.5.3, and 6.0, an out-of-bounds read exists in the BlueDroid AVRCP vendor-command parser (avrc_pars_vendor_cmd() in components/bt/host/bluedroid/stack/avrc/avrc_pars_tg.c). This issue has been ",
+        "constraints": [
+          {
+            "version": "5.2.6",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.3.5",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.4.4",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "5.5.3",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "6.0",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      }
+    ],
+    "cpe:2.3:a:microchip:advanced_software_framework": [
+      {
+        "cve_id": "CVE-2024-7490",
+        "published": "2024-08-08",
+        "summary": "Improper Input Validation vulnerability in Microchip Techology Advanced Software Framework example DHCP server can cause remote code execution through a buffer overflow.\n This vulnerability is associated with program files tinydhcpserver.C and program routines lwip_dhcp_find_option.\n\nThis issue affe",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "3.52.0.2574",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      }
+    ],
+    "cpe:2.3:a:arm:mbed_tls": [
+      {
+        "cve_id": "CVE-2017-14032",
+        "published": "2017-08-30",
+        "summary": "ARM mbed TLS before 1.3.21 and 2.x before 2.1.9, if optional authentication is configured, allows remote attackers to bypass peer authentication via an X.509 certificate chain with many intermediates. NOTE: although mbed TLS was formerly known as PolarSSL, the releases shipped with the PolarSSL name",
+        "constraints": [
+          {
+            "version": "1.3.19",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "1.3.21",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "2.1.7",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "2.1.9",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "2.4.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          },
+          {
+            "version": "2.6.2",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-0487",
+        "published": "2018-02-13",
+        "summary": "ARM mbed TLS before 1.3.22, before 2.1.10, and before 2.7.0 allows remote attackers to execute arbitrary code or cause a denial of service (buffer overflow) via a crafted certificate chain that is mishandled during RSASSA-PSS signature verification within a TLS or DTLS session.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "1.3.8",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "1.3.22",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.1.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.10",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.2.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-0488",
+        "published": "2018-02-13",
+        "summary": "ARM mbed TLS before 1.3.22, before 2.1.10, and before 2.7.0, when the truncated HMAC extension and CBC are used, allows remote attackers to execute arbitrary code or cause a denial of service (heap corruption) via a crafted application packet within a TLS or DTLS session.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "1.3.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "1.3.22",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.1.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.10",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.2.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2017-18187",
+        "published": "2018-02-14",
+        "summary": "In ARM mbed TLS before 2.7.0, there is a bounds-check bypass through an integer overflow in PSK identity parsing in the ssl_parse_client_psk_identity() function in library/ssl_srv.c.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-9988",
+        "published": "2018-04-10",
+        "summary": "ARM mbed TLS before 2.1.11, before 2.7.2, and before 2.8.0 has a buffer over-read in ssl_parse_server_key_exchange() that could cause a crash on invalid input.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.11",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.7.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.2",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-9989",
+        "published": "2018-04-10",
+        "summary": "ARM mbed TLS before 2.1.11, before 2.7.2, and before 2.8.0 has a buffer over-read in ssl_parse_server_psk_hint() that could cause a crash on invalid input.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.11",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.7.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.2",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-1000520",
+        "published": "2018-06-26",
+        "summary": "ARM mbedTLS version 2.7.0 and earlier contains a Ciphersuite Allows Incorrectly Signed Certificates vulnerability in mbedtls_ssl_get_verify_result() that can result in ECDSA-signed certificates are accepted, when only RSA-signed ones should be.. This attack appear to be exploitable via Peers negotia",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "2.7.0",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-0497",
+        "published": "2018-07-28",
+        "summary": "ARM mbed TLS before 2.12.0, before 2.7.5, and before 2.1.14 allows remote attackers to achieve partial plaintext recovery (for a CBC based ciphersuite) via a timing-based side-channel attack. This vulnerability exists because of an incorrect fix (with a wrong SHA-384 calculation) for CVE-2013-0169.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.14",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.2.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.5",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.12.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-0498",
+        "published": "2018-07-28",
+        "summary": "ARM mbed TLS before 2.12.0, before 2.7.5, and before 2.1.14 allows local users to achieve partial plaintext recovery (for a CBC based ciphersuite) via a cache-based side-channel attack.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.14",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.2.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.5",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.12.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-19608",
+        "published": "2018-12-05",
+        "summary": "Arm Mbed TLS before 2.14.1, before 2.7.8, and before 2.1.17 allows a local unprivileged attacker to recover the plaintext of RSA decryption, which is used in RSA-without-(EC)DH(E) cipher suites.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.1.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.1.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.7.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.8",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2019-16910",
+        "published": "2019-09-26",
+        "summary": "Arm Mbed TLS before 2.19.0 and Arm Mbed Crypto before 2.0.0, when deterministic ECDSA is enabled, use an RNG with insufficient entropy for blinding, which might allow an attacker to recover a private key via side-channel attacks if a victim signs the same message many times. (For Mbed TLS, the fix i",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.12",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.3",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2019-18222",
+        "published": "2020-01-23",
+        "summary": "The ECDSA signature implementation in ecdsa.c in Arm Mbed Crypto 2.1 and Mbed TLS through 2.19.1 does not reduce the blinded scalar before computing the inverse, which allows a local attacker to recover the private key via side-channel attacks.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.13",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.4",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.20.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-10941",
+        "published": "2020-03-24",
+        "summary": "Arm Mbed TLS before 2.16.5 allows attackers to obtain sensitive information (an RSA private key) by measuring cache usage during an import.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.5",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-10932",
+        "published": "2020-04-15",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.16.6 and 2.7.x before 2.7.15. An attacker that can get precise enough side-channel measurements can recover the long-term ECDSA private key by (1) reconstructing the projective coordinate of the result of scalar multiplication by exploiting side chann",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.7.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.15",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-16150",
+        "published": "2020-09-02",
+        "summary": "A Lucky 13 timing side channel in mbedtls_ssl_decrypt_buf in library/ssl_msg.c in Trusted Firmware Mbed TLS through 2.23.0 allows an attacker to recover secret key information. This affects CBC mode because of a computed time difference based on a padding length.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.8",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-24119",
+        "published": "2021-07-14",
+        "summary": "In Trusted Firmware Mbed TLS 2.24.0, a side-channel vulnerability in base64 PEM file decoding allows system-level (administrator) attackers to obtain information about secret RSA keys via a controlled-channel and side-channel attack on software running in isolated environments that can be single ste",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.26.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36421",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.23.0. Because of a side channel in modular exponentiation, an RSA private key used in a secure enclave could be disclosed.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.7",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.23.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36422",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.23.0. A side channel allows recovery of an ECC private key, related to mbedtls_ecp_check_pub_priv, mbedtls_pk_parse_key, mbedtls_pk_parse_keyfile, mbedtls_ecp_mul, and mbedtls_ecp_mul_restartable.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.7",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.23.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36423",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.23.0. A remote attacker can recover plaintext because a certain Lucky 13 countermeasure doesn't properly consider the case of a hardware accelerator.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.7",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.23.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36424",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.24.0. An attacker can recover a private key (for RSA or static Diffie-Hellman) via a side-channel attack against generation of base blinding/unblinding values.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.8",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36425",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.24.0. It incorrectly uses a revocationDate check when deciding whether to honor certificate revocation via a CRL. In some situations, an attacker can exploit this by changing the local clock.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.8",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36426",
+        "published": "2021-07-19",
+        "summary": "An issue was discovered in Arm Mbed TLS before 2.24.0. mbedtls_x509_crl_parse_der has a buffer over-read (of one byte).",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.8",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36475",
+        "published": "2021-08-23",
+        "summary": "An issue was discovered in Mbed TLS before 2.25.0 (and before 2.16.9 LTS and before 2.7.18 LTS). The calculations performed by mbedtls_mpi_exp_mod are not limited; thus, supplying overly large parameters could lead to denial of service when generating Diffie-Hellman key pairs.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.18",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.9",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.25.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36476",
+        "published": "2021-08-23",
+        "summary": "An issue was discovered in Mbed TLS before 2.24.0 (and before 2.16.8 LTS and before 2.7.17 LTS). There is missing zeroization of plaintext buffers in mbedtls_ssl_read to erase unused application data from memory.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.17",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.8",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36477",
+        "published": "2021-08-23",
+        "summary": "An issue was discovered in Mbed TLS before 2.24.0. The verification of X.509 certificates when matching the expected common name (the cn argument of mbedtls_x509_crt_verify) with the actual certificate name is mishandled: when the subjecAltName extension is present, the expected name is compared to ",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.24.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2020-36478",
+        "published": "2021-08-23",
+        "summary": "An issue was discovered in Mbed TLS before 2.25.0 (and before 2.16.9 LTS and before 2.7.18 LTS). A NULL algorithm parameters entry looks identical to an array of REAL (size zero) and thus the certificate is considered valid. However, if the parameters do not match in any way, then the certificate sh",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.7.18",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.8.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.9",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.25.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-44732",
+        "published": "2021-12-20",
+        "summary": "Mbed TLS before 3.0.1 has a double free in certain out-of-memory conditions, as demonstrated by an mbedtls_ssl_set_session() failure.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.12",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-45451",
+        "published": "2021-12-21",
+        "summary": "In Mbed TLS before 3.1.0, psa_aead_generate_nonce allows policy bypass or oracle-based decryption when the output buffer is at memory locations accessible to an untrusted application.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.1.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-43666",
+        "published": "2022-03-24",
+        "summary": "A Denial of Service vulnerability exists in mbed TLS 3.0.0 and earlier in the mbedtls_pkcs12_derivation function when an input password's length is 0.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "3.0.0",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2022-35409",
+        "published": "2022-07-15",
+        "summary": "An issue was discovered in Mbed TLS before 2.28.1 and 3.x before 3.2.0. In some configurations, an unauthenticated attacker can send an invalid ClientHello message to a DTLS server that causes a heap-based buffer over-read of up to 255 bytes. This can cause a server crash or possibly information dis",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.1",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2022-46392",
+        "published": "2022-12-15",
+        "summary": "An issue was discovered in Mbed TLS before 2.28.2 and 3.x before 3.3.0. An adversary with access to precise enough information about memory accesses (typically, an untrusted operating system attacking a secure enclave) can recover an RSA private key after observing the victim performing a single pri",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.2",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2022-46393",
+        "published": "2022-12-15",
+        "summary": "An issue was discovered in Mbed TLS before 2.28.2 and 3.x before 3.3.0. There is a potential heap-based buffer overflow and heap-based buffer over-read in DTLS if MBEDTLS_SSL_DTLS_CONNECTION_ID is enabled and MBEDTLS_SSL_CID_IN_LEN_MAX > 2 * MBEDTLS_SSL_CID_OUT_LEN_MAX.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.2",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2021-36647",
+        "published": "2023-01-17",
+        "summary": "Use of a Broken or Risky Cryptographic Algorithm in the function mbedtls_mpi_exp_mod() in lignum.c in Mbed TLS Mbed TLS all versions before 3.0.0, 2.27.0 or 2.16.11 allows attackers with access to precise enough timing and memory access information (typically an untrusted operating system attacking ",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.16.11",
+            "vulnerable": true
+          },
+          {
+            "version": "*",
+            "startIncluding": "2.17.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.27.0",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2023-43615",
+        "published": "2023-10-07",
+        "summary": "Mbed TLS 2.x before 2.28.5 and 3.x before 3.5.0 has a Buffer Overflow.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.5",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2023-52353",
+        "published": "2024-01-21",
+        "summary": "An issue was discovered in Mbed TLS through 3.5.1. In mbedtls_ssl_session_reset, the maximum negotiable TLS version is mishandled. For example, if the last connection negotiated TLS 1.2, then 1.2 becomes the new maximum.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.5.2",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-23170",
+        "published": "2024-01-31",
+        "summary": "An issue was discovered in Mbed TLS 2.x before 2.28.7 and 3.x before 3.5.2. There was a timing side channel in RSA private operations. This side channel could be sufficient for a local attacker to recover the plaintext. It requires the attacker to send a large number of messages for decryption, as d",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.7",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-23775",
+        "published": "2024-01-31",
+        "summary": "Integer Overflow vulnerability in Mbed TLS 2.x before 2.28.7 and 3.x before 3.5.2, allows attackers to cause a denial of service (DoS) via mbedtls_x509_set_extension().",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.0.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.7",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2024-28960",
+        "published": "2024-03-29",
+        "summary": "An issue was discovered in Mbed TLS 2.18.0 through 2.28.x before 2.28.8 and 3.x before 3.6.0, and Mbed Crypto. The PSA Crypto API mishandles shared memory.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.1.8",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.8",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-27809",
+        "published": "2025-03-25",
+        "summary": "Mbed TLS before 2.28.10 and 3.x before 3.6.3, on the client side, accepts servers that have trusted certificates for arbitrary hostnames unless the TLS client application calls mbedtls_ssl_set_hostname.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.10",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-27810",
+        "published": "2025-03-25",
+        "summary": "Mbed TLS before 2.28.10 and 3.x before 3.6.3, in some cases of failed memory allocation or hardware errors, uses uninitialized stack memory to compose the TLS Finished message, potentially leading to authentication bypasses such as replays.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "2.28.10",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-52496",
+        "published": "2025-07-04",
+        "summary": "Mbed TLS before 3.6.4 has a race condition in AESNI detection if certain compiler optimizations occur. An attacker may be able to extract an AES key from a multithreaded program, or perform a GCM forgery.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.4",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-52497",
+        "published": "2025-07-04",
+        "summary": "Mbed TLS before 3.6.4 has a PEM parsing one-byte heap-based buffer underflow, in mbedtls_pem_read_buffer and two mbedtls_pk_parse functions, via untrusted PEM input.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.4",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-48965",
+        "published": "2025-07-20",
+        "summary": "Mbed TLS before 3.6.4 has a NULL pointer dereference because mbedtls_asn1_store_named_data can trigger conflicting data with val.p of NULL but val.len greater than zero.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.4",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-47917",
+        "published": "2025-07-20",
+        "summary": "Mbed TLS before 3.6.4 allows a use-after-free in certain situations of applications that are developed in accordance with the documentation. The function mbedtls_x509_string_to_names() takes a head argument that is documented as an output argument. The documentation does not suggest that the functio",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.4",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-54764",
+        "published": "2025-10-20",
+        "summary": "Mbed TLS before 3.6.5 allows a local timing attack against certain RSA operations, and direct calls to mbedtls_mpi_mod_inv or mbedtls_mpi_gcd.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.5",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-59438",
+        "published": "2025-10-21",
+        "summary": "Mbed TLS through 3.6.4 has an Observable Timing Discrepancy.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.5",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-25835",
+        "published": "2026-04-01",
+        "summary": "Mbed TLS before 3.6.6 and TF-PSA-Crypto before 1.1.0 misuse seeds in a Pseudo-Random Number Generator (PRNG).",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.18.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.6",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-34871",
+        "published": "2026-04-01",
+        "summary": "An issue was discovered in Mbed TLS before 3.6.6 and 4.x before 4.1.0 and TF-PSA-Crypto before 1.1.0. There is a Predictable Seed in a Pseudo-Random Number Generator (PRNG).",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.6",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2025-66442",
+        "published": "2026-04-01",
+        "summary": "In Mbed TLS through 4.0.0, there is a compiler-induced timing side channel (in RSA and CBC/ECB decryption) that only occurs with LLVM's select-optimize feature. TF-PSA-Crypto through 1.0.0 is also affected.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "4.0.0",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-34872",
+        "published": "2026-04-01",
+        "summary": "An issue was discovered in Mbed TLS 3.5.x and 3.6.x through 3.6.5 and TF-PSA-Crypto 1.0. There is a lack of contributory behavior in FFDH due to improper input validation. Using finite-field Diffie-Hellman, the other party can force the shared secret into a small set of values (lack of contributory ",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.6",
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2026-34877",
+        "published": "2026-04-02",
+        "summary": "An issue was discovered in Mbed TLS versions from 2.19.0 up to 3.6.5, Mbed TLS 4.0.0. Insufficient protection of serialized SSL context or session structures allows an attacker who can modify the serialized structures to induce memory corruption, leading to arbitrary code execution. This is caused b",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": "2.19.0",
+            "startExcluding": null,
+            "endIncluding": null,
+            "endExcluding": "3.6.6",
+            "vulnerable": true
+          }
+        ]
+      }
+    ],
+    "cpe:2.3:a:amazon:freertos": [
+      {
+        "cve_id": "CVE-2018-16523",
+        "published": "2018-12-06",
+        "summary": "Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component allow division by zero in prvCheckOptions.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16524",
+        "published": "2018-12-06",
+        "summary": "Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component allow information disclosure during parsing of TCP options in prvCheckOptions.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16525",
+        "published": "2018-12-06",
+        "summary": "Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component allow remote attackers to execute arbitrary code or leak information because of a Buffer Overflow during parsing of DNS\\LLMNR packets in prvParseDNSR",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16526",
+        "published": "2018-12-06",
+        "summary": "Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component allow remote attackers to leak information or execute arbitrary code because of a Buffer Overflow during generation of a protocol checksum in usGener",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16527",
+        "published": "2018-12-06",
+        "summary": "Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component allow information disclosure during parsing of ICMP packets in prvProcessICMPPacket.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16598",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. In xProcessReceivedUDPPacket and prvParseDNSReply, any received DNS response is accepted, without confirming it matches a",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16599",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. Out of bounds memory access during parsing of NBNS packets in prvTreatNBNS can be used for information disclosure.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16600",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. Out of bounds memory access during parsing of ARP packets in eARPProcessPacket can be used for information disclosure.",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16601",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. A crafted IP header triggers a full memory space copy in prvProcessIPPacket, leading to denial of service and possibly re",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16602",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. Out of bounds memory access during parsing of DHCP responses in prvProcessDHCPReplies can be used for information disclos",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      },
+      {
+        "cve_id": "CVE-2018-16603",
+        "published": "2018-12-06",
+        "summary": "An issue was discovered in Amazon Web Services (AWS) FreeRTOS through 1.3.1, FreeRTOS up to V10.0.1 (with FreeRTOS+TCP), and WITTENSTEIN WHIS Connect middleware TCP/IP component. Out of bounds access to TCP source and destination port fields in xProcessReceivedTCPPacket can leak data back to an atta",
+        "constraints": [
+          {
+            "version": "*",
+            "startIncluding": null,
+            "startExcluding": null,
+            "endIncluding": "10.0.1",
+            "endExcluding": null,
+            "vulnerable": true
+          }
+        ]
+      }
+    ]
+  }
+}
