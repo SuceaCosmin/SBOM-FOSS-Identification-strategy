@@ -476,6 +476,36 @@ findings suggest revisiting a decision.
   architecture rec. 7 (evidence threshold clause),
   [general/README.md](general/README.md#attribution-vendored-integrations-are-often-multiple-stacked-components),
   the fingerprint roadmap's TODO-9, and a defect note in the minr-self-mining README.
+- **NEXT UP (designated 2026-07-29, not started): the resolver's evidence rule.** The
+  direct, bounded follow-up to the nested-component finding above — the KB's verdict logic
+  turns one file's snippet match in a 309-file tree into a confident whole-tree component
+  claim with a wrong purl, version *and* license. Fix the rule, then re-validate. Scope
+  (research/prototype in `validate_export.py` and the bespoke matchers, **not** building
+  the generator):
+  1. **Match ratio + floor** — matched files / plausible-candidate files in the tree;
+     below a floor the answer is `NO COMPONENT DETECTED`, never a version. Calibrate the
+     floor against the existing corpora, which supply both ends of the range (12 minr
+     ground-truth trees where most files match; the lwIP tree where 1 of 309 does).
+  2. **Negative evidence counts** — a `NO MATCH` file is counter-evidence for a whole-tree
+     claim, not absence of evidence. Note the FreeRTOS port-layer experiment already
+     established the calibration argument for this (a modified ESP-IDF `tasks.c` still
+     scored 0.56, so ~0.0 means *different code*, not modified code).
+  3. **Split the verdict vocabulary** — a *snippet* finding ("this file resembles X") and
+     a *component* finding ("this tree is X") must not share one verdict; confidence
+     should degrade with the ratio instead of being binary.
+  4. **Add an "origin outside coverage" verdict** — for known-OSS content whose true
+     origin cannot be in a tag-mined KB (PolarSSL 0.10.1 predates the upstream git
+     history; see rec. 14 on mining artifacts rather than tags).
+  5. **Re-run every existing corpus** (FreeRTOS/mbedTLS/CMSIS/lwIP + the 12 minr trees)
+     to confirm no regression, and add the lwIP tree as a permanent negative control for
+     the KB path.
+  Grounded in [general/experiments/nested-component-attribution](general/experiments/nested-component-attribution/README.md)
+  and architecture rec. 7's evidence-threshold clause.
+  **Do this before carrier/fork identification** (the other item the lwIP pass created —
+  recognizing *Espressif's* lwIP rather than generic lwIP 2.2.0, so the carrier's CPE can
+  be queried; cheap discriminators exist, e.g. `ip4_napt.c` appears in Espressif's fork
+  and in no upstream release). Carrier ID adds *more* single-signal evidence into the same
+  resolver, so the evidence rule should land first.
 - **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
   vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
   favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,

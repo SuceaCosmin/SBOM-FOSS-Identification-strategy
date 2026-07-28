@@ -103,7 +103,15 @@ claim; 308 non-matches discarded), and that one match is **constant tables, not 
 (0.794 similarity on hex constants, 0.071 on code — DES S-boxes are fixed by FIPS 46).
 A mandatory caveat now rides with the roadmap's planned constant-table tier.
 
-**Current focus / next-up**: breadth — the next component (**FatFs**, the adversarial
+**Next up (designated 2026-07-29)**: **the resolver's evidence rule** — match ratio +
+floor, negative evidence counted, snippet-vs-component verdicts split, and an
+"origin outside coverage" result, then re-validate every corpus. It is the direct fix for
+the nested-component failure above, and it should land *before* the other item that pass
+created (**carrier/fork identification** — recognizing *Espressif's* lwIP rather than
+generic lwIP 2.2.0, so the carrier's CPE can be queried), since carrier ID feeds more
+single-signal evidence into the same resolver. Details in [CLAUDE.md](CLAUDE.md).
+
+**Then**: breadth — the next component (**FatFs**, the adversarial
 no-git-upstream case) via the
 `research-component` skill, which now includes advisory-source mapping as phase 3. Still
 paused: the rest of the **vuln-source mapping layer** (identity→CPE, FreeRTOS
