@@ -153,8 +153,19 @@ cross-file/cross-tier consistency logic narrow it by intersection.
   mbedTLS DB with pre-2.28 tags collapsed a Wi-SUN match from a 3-release window to
   exactly `mbedtls-2.22.0`. Downstream vuln matching must accept ranges anyway (OSV
   ranges), so keep the window.
+- **Carry the window's *semantics*, not just its members** (added 2026-07-28): a set of
+  releases means one of two different things, and consumers can't tell them apart from
+  the set alone. **Candidates** = the tree is *one of* these (content-identical releases,
+  a partially-modified fork's base) — ambiguity to be narrowed. **Coexisting** = files
+  from several releases are *simultaneously present* (a mixed-version tree) — not
+  ambiguity at all. The end-to-end vuln spike proved this changes the answer: under
+  "candidates" a partly-affected set is `POSSIBLY_AFFECTED` (tighten detection), under
+  "coexisting" the same set is a definite `AFFECTED` (the vulnerable file really is
+  there). Label the window with which it is.
 - **Source**: symbol-window results and the DB-widening arbitration in the
-  static-lib doc; the cross-file consistency design across the component experiments.
+  static-lib doc; the cross-file consistency design across the component experiments;
+  the window-semantics finding in
+  [experiments/advisory-fitness](experiments/advisory-fitness/README.md).
 
 ## 9. Vendor manifests are corroboration, never ground truth
 
@@ -224,6 +235,28 @@ coverage metadata**; never assume the SBOM purl is directly queryable.
   *mapping* of identity to a vuln coordinate is in scope as an architectural
   boundary; building the vuln-scanning integration itself belongs to the
   generator/consumer, not this research.
+
+## 12. Identity + version does not decide applicability — carry the advisory's condition
+
+A matched advisory has a third input beyond identity and version: an **applicability
+condition** (which port, which build config, which feature flag). Model it explicitly
+and let a finding be `AFFECTED (conditional)` rather than silently over-claiming.
+
+- **Why**: the first end-to-end detection→CVE run pinned FreeRTOS-Kernel CVE-2024-28115
+  by version range correctly — but the CVE only applies to *"ARMv7-M MPU ports and
+  ARMv8-M ports with MPU support enabled"*. That condition exists **only in the
+  advisory's prose summary**; no source tested (NVD, OSV, GHSA) exposes it
+  machine-readably. A version-only verdict is therefore knowingly over-broad: the same
+  kernel built for a non-MPU port isn't vulnerable. The detection-side answer is
+  component-layer granularity (detecting *which port* is vendored), which is why
+  port/`mpu_wrappers` consolidation is the paired next step.
+- **Consequences**: (a) surface the advisory's scope text with every affected finding so
+  a human can adjudicate; (b) treat "which sub-layer/port/config is present" as
+  first-class detection output, not a detail — it is what makes a vuln verdict precise;
+  (c) never let an unevaluated condition silently read as "condition met".
+- **Source**: the end-to-end spike in
+  [experiments/advisory-fitness](experiments/advisory-fitness/README.md)
+  ("Closing the loop", Finding 2).
 
 ## Keeping this doc honest
 

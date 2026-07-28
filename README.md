@@ -49,7 +49,18 @@ carries the exact, winnowing, and symbol tiers over one canonical release table.
 [general/advisory-source-roadmap.md](general/advisory-source-roadmap.md)) — does the
 purl+version output actually drive vuln scanning? Tested against OSV.dev, NVD/CPE, GHSA.
 **NVD/CPE is the fit source** (real version-range matching); OSV is version-inert for
-embedded C and GHSA has no C/C++ ecosystem. The SBOM identity is *not* the vuln-lookup key.
+embedded C and GHSA's *global* feed has no C/C++ ecosystem — but its **per-repository**
+feed carries real kernel-semver ranges for maintainers who self-publish. The SBOM
+identity is *not* the vuln-lookup key.
+
+**Loop closed for FreeRTOS** (2026-07-28, same experiment folder) — the first
+**end-to-end SBOM→vuln result**: vendored tree → fingerprint detection → GHSA per-repo
+advisory range → CVE verdict. All three corpus ground truths resolve correctly
+(NXP V11.2.0 → not affected; esp-idf fork and the mixed tree → CVE-2024-28115). Findings:
+a version *set* means either "candidates" or "coexisting" and the verdict differs;
+version membership is necessary but **not sufficient** (this CVE applies only to MPU
+ports — a prose-only condition); GHSA's documented range grammar isn't reliably honored;
+"not covered" is a first-class result.
 
 **Architecture handoff** ([general/sbom-generator-architecture.md](general/sbom-generator-architecture.md)) —
 durable, evidence-grounded recommendations for the separate generator's detection core:
@@ -57,10 +68,14 @@ curated-KB backbone, two-tier distribution, evidence-producer/resolver split, se
 profiles, per-finding provenance, the metadata-vs-disassembly legal boundary, canonical
 attribution, version windows, and identity→vuln-source coordinate mapping.
 
-**Current focus / next-up**: the **vuln-source mapping layer** (identity→CPE, FreeRTOS
-version-scheme reconciliation, a tag→commit resolver over OSV GIT ranges, per-component
-coverage metadata) — see the backlog item in [CLAUDE.md](CLAUDE.md). Roadmaps for what
-comes after: [components](general/component-roadmap.md),
+**Current focus / next-up**: **consolidating FreeRTOS's port/`mpu_wrappers` layer**
+(indexed by `(tag, arch, compiler)`) — the step that would turn the now-working
+end-to-end CVE verdict from over-broad into precise, and would make FreeRTOS the first
+POC→production-consolidated component. Still paused behind it: the rest of the
+**vuln-source mapping layer** (identity→CPE, FreeRTOS version-scheme reconciliation, a
+tag→commit resolver over OSV GIT ranges) — see the backlog item in
+[CLAUDE.md](CLAUDE.md); its per-component coverage-metadata and GHSA-repo-map sub-tasks
+are now done. Roadmaps for what comes after: [components](general/component-roadmap.md),
 [techniques](general/fingerprint-detection-roadmap.md),
 [advisory sources](general/advisory-source-roadmap.md).
 

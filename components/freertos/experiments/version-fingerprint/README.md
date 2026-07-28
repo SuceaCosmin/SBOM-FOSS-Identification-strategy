@@ -142,6 +142,27 @@ python match_target.py <path>     # matches a single file or scans a directory f
 No third-party dependencies — pure standard library (`urllib`, `hashlib`, `subprocess`
 for `git ls-remote` only).
 
+### Programmatic use — `scan_tree()` (added 2026-07-28)
+
+`match_target.py` also exposes a structured, print-free API for downstream consumers:
+
+```python
+from match_target import scan_tree
+for group in scan_tree(Path("some/tree")):
+    group["status"]    # CONFIRMED / MIXED / PARTIALLY_MODIFIED / LIKELY_CONSISTENT /
+                       # INCOMPLETE / INCONSISTENT / INCONCLUSIVE
+    group["versions"]  # resolved release tags — empty when version couldn't be resolved
+```
+
+`resolve_group()` computes the verdict, `analyze_group()` only prints it, so the CLI
+output is unchanged (re-verified against all three corpus trees). The first consumer is
+the end-to-end vuln spike in
+[general/experiments/advisory-fitness](../../../../general/experiments/advisory-fitness/README.md#closing-the-loop--detected-version--applicable-cve-end-to-end-2026-07-28),
+which turns a detected version into an applicable CVE via GHSA's per-repo advisory feed.
+Note `versions` is a **set**, and its meaning differs by status — `MIXED` means those
+releases *coexist* in the tree, everything else means they're *candidates* for one
+release; consumers must not conflate the two.
+
 ## Known limitations / next steps
 
 - Covers the 7 core kernel `.c` files but **not** `portable/<compiler>/<arch>/port.c`
@@ -151,7 +172,11 @@ for `git ls-remote` only).
   and its version but **cannot locate the file the kernel's own CVE resides in**.
   Extending to port files is the natural next step, but they're compiler/arch-specific,
   so that reference set must be indexed by (tag, arch, compiler) rather than just tag.
-  Explicitly deferred (2026-07-23) per scope decision.
+  Explicitly deferred (2026-07-23) per scope decision. **Reinforced 2026-07-28** by the
+  end-to-end vuln spike: version matching alone pins CVE-2024-28115 but *over-claims*,
+  because the CVE applies only to ARMv7-M/ARMv8-M **MPU ports** — a condition no
+  advisory source states machine-readably. Detecting which port is vendored is what
+  would make the verdict precise.
 - Nor does it cover the `include/` headers (21 of them) — header-level fingerprints
   would add corroboration and catch header-only integrations, another consolidation item.
 - Similarity threshold for "is this FreeRTOS at all vs. something else entirely" hasn't

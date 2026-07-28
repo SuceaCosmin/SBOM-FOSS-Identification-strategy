@@ -317,23 +317,52 @@ findings suggest revisiting a decision.
   **pretty-printed JSON** (leaf-array-inline `pretty_json()` in each `build_reference_db.py`),
   and a repo-wide **"fingerprints are POC-scoped, not consolidated"** caveat was added to
   [general/README.md](general/README.md#maturity-caveat-the-fingerprints-here-are-poc-scoped-not-consolidated).
-  **Prioritized next steps (documented 2026-07-23, to resume from):**
-  1. **Close the vuln loop for FreeRTOS (recommended first, cheap spike):** take a
-     detected kernel semver → query the GHSA per-repo feed → test version-range
-     membership → report the applicable CVE (CVE-2024-28115). This is the one slice of
-     the paused vuln-mapping layer that's **proven-fit and needs no CPE/version-scheme
-     reconciliation** — it sidesteps exactly the FreeRTOS-versioning problem. First
-     real end-to-end SBOM→vuln result in the repo. New probe belongs alongside
-     [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md).
+  **Prioritized next steps (documented 2026-07-23):** step 1 is **DONE 2026-07-28** (see
+  the next bullet); steps 2–3 remain, with step 2 now the next-up item.
+  1. ~~**Close the vuln loop for FreeRTOS**~~ — **DONE 2026-07-28**, see below.
   2. **Consolidate FreeRTOS's port/`mpu_wrappers` layer (heavier):** where
      CVE-2024-28115 actually lives, so it's what lets a detection point at that CVE's
      file. Needs a reference set indexed by `(tag, arch, compiler)` and new corpus —
      the natural pairing with step 1, and would make FreeRTOS the first fully-
      consolidated (POC→production) component. Also owed: the 21 `include/` headers and
-     empirically-tuned winnowing thresholds.
+     empirically-tuned winnowing thresholds. **Now the next-up item, and reinforced by
+     step 1's result**: the end-to-end verdict pins CVE-2024-28115 by version but
+     *over-claims*, because that CVE applies only to ARMv7-M/ARMv8-M **MPU ports** — a
+     condition stated in prose only, in every advisory source tested. Port-layer
+     detection is what makes the verdict precise.
   3. **Lower priority:** a new component (lwIP or FatFs) via the `research-component`
      skill for breadth; or apply the POC-consolidation lens to mbedTLS/CMSIS (same
      minimal-scope shape, no fresh finding pushing them).
+- **Vuln loop CLOSED for FreeRTOS (2026-07-28)** — step 1 of the re-review's next-step
+  list, the repo's **first end-to-end SBOM→vuln result**: vendored source tree →
+  fingerprint detection → GHSA per-repo advisory range → CVE verdict. Two new scripts in
+  [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)
+  ("Closing the loop" section): `ghsa_vuln_lookup.py` (canonical identity →
+  `{owner}/{repo}` → cached advisory feed → range parse → membership → verdict; feed
+  cached in `ghsa_repo_advisories.json`, `--refresh` to re-fetch) and
+  `end_to_end_freertos.py` (chains the two halves over the corpus). `match_target.py`
+  gained a print-free `resolve_group()`/`scan_tree()` API for this (CLI output unchanged,
+  re-verified on all three corpus trees). **All three ground truths resolve correctly**:
+  NXP verbatim V11.2.0 → NOT_AFFECTED; esp-idf fork (PARTIALLY_MODIFIED → V10.5.1/V10.6.0)
+  → AFFECTED by CVE-2024-28115; mixed synthetic → AFFECTED. Five findings, all about the
+  *interface* between detection and advisories, not the sources: (1) a version **set**
+  means either **candidates** (one of these — partly-affected ⇒ POSSIBLY_AFFECTED, tighten
+  detection) or **coexisting** (MIXED — the vulnerable file really is present ⇒ AFFECTED);
+  conflating them turns "unknown" into a false yes/no (now architecture rec. 8's
+  window-semantics clause); (2) **version membership is necessary, not sufficient** —
+  CVE-2024-28115 applies only to ARMv7-M/ARMv8-M MPU ports, a condition in *prose only*
+  in every source tested (now architecture rec. 12; the direct argument for next step 2);
+  (3) GHSA's documented `vulnerable_version_range` grammar **isn't reliably honored** —
+  of three FreeRTOS-org advisories only one is well-formed; the others are an enumeration
+  (`202212.01, 202112.00`, unsatisfiable if ANDed as documented) and a bare version, so
+  the parser classifies conjunction/enumeration/exact/unparseable rather than
+  mis-evaluating; (4) the upstream **tag zoo** needs classification, not forcing —
+  `-kernel-only` is packaging, `-LTS-Patch-N` is a maintenance branch a mainline range
+  can't express (flagged), `V202110.00-SMP` is date-scheme ⇒ **UNDETERMINED**, `rcN`
+  sorts before its release; (5) **"not covered" is a first-class result** — mbedTLS →
+  NOT_COVERED *with the right alternative* (NVD/CPE), unresolved version → NOT_QUERYABLE
+  ("a detection gap, not a clean bill of health"). `COMPONENT_MAP` there is the miniature
+  of the paused mapping layer's sub-tasks 1 and 4 for this one source.
 - **Backlog / next-up — PAUSED 2026-07-23 (was designated 2026-07-22): the full
   vuln-source mapping layer** — explicitly deprioritized by the user on 2026-07-23 in
   favor of the FreeRTOS re-review above; resume later. Note step 1 above is a narrow,
@@ -354,7 +383,8 @@ findings suggest revisiting a decision.
   release commit (the reference DBs already mine per-release tags) and test
   membership in each CVE's introduced..fixed GIT range, unlocking OSV's only
   upstream-accurate feed; (4) **per-component coverage metadata** so an empty
-  result reads as "not covered," never "no known vulns." Grounded in
+  result reads as "not covered," never "no known vulns" — *done for the GHSA repo
+  source 2026-07-28 (`COMPONENT_MAP`); still owed for NVD/OSV*. Grounded in
   [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)
   and architecture recommendation 11
   ([general/sbom-generator-architecture.md](general/sbom-generator-architecture.md));

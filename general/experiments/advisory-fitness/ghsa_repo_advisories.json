@@ -1,0 +1,41 @@
+{
+  "generated": "2026-07-28",
+  "api": "https://api.github.com/repos/{owner}/{repo}/security-advisories",
+  "repos": {
+    "FreeRTOS/FreeRTOS-Kernel": [
+      {
+        "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+        "cve_id": "CVE-2024-28115",
+        "severity": "high",
+        "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+        "html_url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+        "ranges": [
+          {
+            "ecosystem": "freertos-kernel",
+            "name": "FreeRTOS-Kernel",
+            "vulnerable_version_range": "<=10.6.1",
+            "patched_versions": ">=10.6.2"
+          }
+        ]
+      }
+    ],
+    "FreeRTOS/coreMQTT": [
+      {
+        "ghsa_id": "GHSA-6qh9-r6jp-2wxc",
+        "cve_id": "CVE-2026-8686",
+        "severity": "high",
+        "summary": "DoS from MQTT v5.0 deserialization fault in coreMQTT",
+        "html_url": "https://github.com/FreeRTOS/coreMQTT/security/advisories/GHSA-6qh9-r6jp-2wxc",
+        "ranges": [
+          {
+            "ecosystem": "",
+            "name": "coreMQTT",
+            "vulnerable_version_range": "v5.0.0",
+            "patched_versions": "v5.0.1"
+          }
+        ]
+      }
+    ],
+    "Mbed-TLS/mbedtls": []
+  }
+}

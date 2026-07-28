@@ -1,0 +1,595 @@
+{
+  "component": "pkg:github/freertos/freertos-kernel",
+  "advisory_source": "GHSA per-repository feed",
+  "advisory_cache_generated": "2026-07-28",
+  "trees": [
+    {
+      "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\esp-idf-fork",
+      "status": "PARTIALLY_MODIFIED",
+      "versions": [
+        "V10.5.1",
+        "V10.6.0"
+      ],
+      "version_set_semantics": "candidates",
+      "lookups": [
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.5.1",
+          "version_parsed": {
+            "raw": "V10.5.1",
+            "scheme": "semver",
+            "parts": [
+              10,
+              5,
+              1
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.6.0",
+          "version_parsed": {
+            "raw": "V10.6.0",
+            "scheme": "semver",
+            "parts": [
+              10,
+              6,
+              0
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "tree_verdict": "AFFECTED"
+    },
+    {
+      "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\mixed-version-synthetic",
+      "status": "MIXED",
+      "versions": [
+        "V10.4.0-kernel-only",
+        "V10.4.1-kernel-only",
+        "V10.4.2",
+        "V10.4.3",
+        "V10.4.3-LTS-Patch-1",
+        "V10.4.3-LTS-Patch-2",
+        "V10.4.3-LTS-Patch-3",
+        "V10.4.4",
+        "V10.4.5",
+        "V10.4.6",
+        "V11.0.0",
+        "V11.0.1",
+        "V202110.00-SMP"
+      ],
+      "version_set_semantics": "coexisting",
+      "lookups": [
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.0-kernel-only",
+          "version_parsed": {
+            "raw": "V10.4.0-kernel-only",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              0
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.1-kernel-only",
+          "version_parsed": {
+            "raw": "V10.4.1-kernel-only",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              1
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.2",
+          "version_parsed": {
+            "raw": "V10.4.2",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              2
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.3",
+          "version_parsed": {
+            "raw": "V10.4.3",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              3
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.3-LTS-Patch-1",
+          "version_parsed": {
+            "raw": "V10.4.3-LTS-Patch-1",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              3
+            ],
+            "pre": null,
+            "lts_patch": 1,
+            "flags": [
+              "LTS maintenance branch (patch 1) off the base release"
+            ]
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": [
+                "LTS maintenance branch (patch 1) off the base release",
+                "verdict is a linear-ordering result: this is an LTS maintenance tag, and a mainline range cannot express backported fixes \u2014 confirm against the LTS branch's own changelog"
+              ]
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.3-LTS-Patch-2",
+          "version_parsed": {
+            "raw": "V10.4.3-LTS-Patch-2",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              3
+            ],
+            "pre": null,
+            "lts_patch": 2,
+            "flags": [
+              "LTS maintenance branch (patch 2) off the base release"
+            ]
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": [
+                "LTS maintenance branch (patch 2) off the base release",
+                "verdict is a linear-ordering result: this is an LTS maintenance tag, and a mainline range cannot express backported fixes \u2014 confirm against the LTS branch's own changelog"
+              ]
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.3-LTS-Patch-3",
+          "version_parsed": {
+            "raw": "V10.4.3-LTS-Patch-3",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              3
+            ],
+            "pre": null,
+            "lts_patch": 3,
+            "flags": [
+              "LTS maintenance branch (patch 3) off the base release"
+            ]
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": [
+                "LTS maintenance branch (patch 3) off the base release",
+                "verdict is a linear-ordering result: this is an LTS maintenance tag, and a mainline range cannot express backported fixes \u2014 confirm against the LTS branch's own changelog"
+              ]
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.4",
+          "version_parsed": {
+            "raw": "V10.4.4",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              4
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.5",
+          "version_parsed": {
+            "raw": "V10.4.5",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              5
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V10.4.6",
+          "version_parsed": {
+            "raw": "V10.4.6",
+            "scheme": "semver",
+            "parts": [
+              10,
+              4,
+              6
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V11.0.0",
+          "version_parsed": {
+            "raw": "V11.0.0",
+            "scheme": "semver",
+            "parts": [
+              11,
+              0,
+              0
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "NOT_AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V11.0.1",
+          "version_parsed": {
+            "raw": "V11.0.1",
+            "scheme": "semver",
+            "parts": [
+              11,
+              0,
+              1
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "NOT_AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V202110.00-SMP",
+          "version_parsed": {
+            "raw": "V202110.00-SMP",
+            "scheme": "date",
+            "parts": [
+              202110,
+              0
+            ],
+            "flags": [
+              "SMP branch tag"
+            ]
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "UNDETERMINED",
+              "range_kind": "conjunction",
+              "reason": "detected version 'V202110.00-SMP' is on the date scheme; the advisory range is not \u2014 version-scheme reconciliation needed"
+            }
+          ]
+        }
+      ],
+      "tree_verdict": "AFFECTED"
+    },
+    {
+      "directory": "C:\\Users\\Sucea\\source\\repos\\SBOM-FOSS-Identification-strategy\\components\\freertos\\corpus\\nxp-mcux-vendored",
+      "status": "CONFIRMED",
+      "versions": [
+        "V11.2.0"
+      ],
+      "version_set_semantics": "candidates",
+      "lookups": [
+        {
+          "component": "pkg:github/freertos/freertos-kernel",
+          "ghsa_repo": "FreeRTOS/FreeRTOS-Kernel",
+          "version": "V11.2.0",
+          "version_parsed": {
+            "raw": "V11.2.0",
+            "scheme": "semver",
+            "parts": [
+              11,
+              2,
+              0
+            ],
+            "pre": null,
+            "lts_patch": null,
+            "flags": []
+          },
+          "coverage": "COVERED",
+          "advisory_count": 1,
+          "findings": [
+            {
+              "ghsa_id": "GHSA-xcv7-v92w-gq6r",
+              "cve_id": "CVE-2024-28115",
+              "severity": "high",
+              "summary": "Potential Privilege Escalation in FreeRTOS Kernel ARMv7-M MPU ports and ARMv8-M ports with MPU support enabled",
+              "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel/security/advisories/GHSA-xcv7-v92w-gq6r",
+              "vulnerable_version_range": "<=10.6.1",
+              "patched_versions": ">=10.6.2",
+              "verdict": "NOT_AFFECTED",
+              "range_kind": "conjunction",
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "tree_verdict": "NOT_AFFECTED"
+    }
+  ]
+}

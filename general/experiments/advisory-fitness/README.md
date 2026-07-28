@@ -22,6 +22,11 @@ osv_results.json`, `python nvd_probe.py --json nvd_results.json`,
 committed snapshots — CVE *counts* drift as sources ingest advisories; the
 *shape* of the findings is the durable result.
 
+**Follow-up run 2026-07-28**: the fitness question is answered, so the loop was
+*closed* — see [Closing the loop](#closing-the-loop--detected-version--applicable-cve-end-to-end-2026-07-28)
+for the first end-to-end detection → CVE result (`ghsa_vuln_lookup.py`,
+`end_to_end_freertos.py`).
+
 ## Comparative verdict — NVD/CPE is the primary fit source; GHSA is fit only via its per-repo feed; OSV is not
 
 | source | mbedTLS coverage | version discrimination | FreeRTOS | CMSIS | our-coordinate that works |
@@ -245,6 +250,109 @@ canonical identity's `{owner}/{repo}`, not a general fallback. This reinforces t
 per-component coverage-metadata requirement: which source covers a component is itself
 a mapped, per-component fact.
 
+## Closing the loop — detected version → applicable CVE, end to end (2026-07-28)
+
+The fitness tests above stop at "which source *could* answer". This section runs the
+whole chain for real, on the FreeRTOS corpus: **vendored source tree → detected
+version → advisory range membership → CVE verdict**. It is the first end-to-end
+SBOM-to-vuln result in the repo. Deliberately narrow: the FreeRTOS-Kernel/GHSA-repo
+pair is the one path that needs *no* version-scheme reconciliation (Path B above), so
+it isolates the loop-closing question from the paused mapping-layer work.
+
+Scripts (both reproduce offline from the committed advisory cache):
+
+- **`ghsa_vuln_lookup.py`** — canonical identity → `{owner}/{repo}` → cached repo
+  advisory feed → parse `vulnerable_version_range` → membership test → verdict.
+  `python ghsa_vuln_lookup.py --component freertos-kernel --version V10.4.3`
+  (`--refresh` re-fetches all mapped repos into `ghsa_repo_advisories.json`).
+- **`end_to_end_freertos.py`** — chains the FreeRTOS matcher's new `scan_tree()` into
+  that lookup and runs it over the corpus. Snapshot: `end_to_end_freertos_results.json`.
+
+### Result: all three corpus ground truths resolve correctly
+
+| corpus tree | detection | version(s) | verdict |
+|---|---|---|---|
+| `nxp-mcux-vendored` (verbatim V11.2.0) | CONFIRMED | `V11.2.0` | **NOT_AFFECTED** (post-fix) |
+| `esp-idf-fork` (modified, ~10.5.1 base) | PARTIALLY_MODIFIED | `V10.5.1`, `V10.6.0` | **AFFECTED** — CVE-2024-28115 |
+| `mixed-version-synthetic` | MIXED | 10.4.x tags **+** `V11.0.0/V11.0.1` | **AFFECTED** (the 10.4.x files are in the tree) |
+
+So the loop closes: a real vendored tree, identified purely from source fingerprints,
+yields a real, correctly version-filtered CVE. Four findings came out of making it work
+— all of them about the *interface* between the two halves, none about the sources.
+
+### Finding 1 — a version **set** means two different things, and the verdict depends on which
+
+Every detector in this repo emits a *set* of release tags, never a single version. That
+set carries two incompatible meanings, and collapsing them would silently convert
+"unknown" into a hard yes/no:
+
+- **candidates** (CONFIRMED with content-identical releases, PARTIALLY_MODIFIED) — the
+  tree *is one of* these. If only some are affected, the honest verdict is
+  **POSSIBLY_AFFECTED**, and the fix is to tighten *detection*, not the advisory query.
+- **coexisting** (MIXED) — files from several releases are *simultaneously present*. If
+  any one is affected, the tree is affected; there is nothing to narrow, the vulnerable
+  file is genuinely there.
+
+The synthetic mixed tree is the proof: it resolves to 10.4.x tags **and** V11.0.0/V11.0.1,
+which under "candidates" semantics would read as an unresolvable ambiguity, but under
+"coexisting" semantics is a definite AFFECTED. `end_to_end_freertos.py` keeps the two
+apart explicitly. **The version-window output shape this repo has produced all along is
+not a nuisance for vuln lookup — but it needs its semantics carried alongside it.**
+
+### Finding 2 — version membership is necessary, not sufficient: applicability is prose
+
+CVE-2024-28115's actual scope is *"ARMv7-M MPU ports and ARMv8-M ports with MPU support
+enabled"* — a **port + build-config predicate**, stated only in the advisory's prose
+summary. Nothing in the machine-readable range expresses it. A version-only verdict
+therefore **over-claims**: a 10.4.3 kernel built for a non-MPU port is not actually
+vulnerable. The lookup prints the scope line on every AFFECTED verdict rather than
+pretending the answer is complete.
+
+This is a direct, independent argument for the already-queued next step —
+**consolidating FreeRTOS's port/`mpu_wrappers` layer** — which is exactly where this
+CVE lives. Detecting *which port* is present is what would turn an over-broad AFFECTED
+into a precise one. (Generalized: an advisory's applicability condition is a third input
+next to identity and version, and it is not machine-readable in any source tested.)
+
+### Finding 3 — GHSA's `vulnerable_version_range` grammar is not reliably honored
+
+Of the three FreeRTOS-org advisories, only **one** states a range in the documented
+comma-separated-comparator grammar (`<=10.6.1`). The others are hand-written:
+`202212.01, 202112.00` (an *enumeration* — ANDing it, as the grammar says, is
+unsatisfiable and would yield NOT_AFFECTED for both listed versions) and `v5.0.0` (a
+bare version, i.e. an implied `=`). `parse_range()` classifies these as
+`conjunction` / `enumeration` / `exact` / `unparseable` and flags the non-conforming
+ones instead of silently mis-evaluating them. **A consumer that assumes the documented
+grammar will get wrong answers on real self-published advisories** — the kernel's range
+happens to be the well-formed one, which is luck, not a rule.
+
+### Finding 4 — upstream tag zoo vs. advisory ranges
+
+Real tags in the reference DB don't all compare linearly against a mainline range, so
+`parse_version()` classifies rather than forces:
+
+- `V10.4.1-kernel-only` — packaging suffix only; same release content → compares as 10.4.1.
+- `V10.4.3-LTS-Patch-3` — an **LTS maintenance branch**. Linearly it lands inside
+  `<=10.6.1`, but a mainline range structurally *cannot* express backported fixes, so
+  the verdict carries an explicit note to confirm against the LTS changelog. (Here the
+  linear answer is right — the LTS patches predate the 2024 CVE — but the general case
+  isn't decidable from the range.)
+- `V202110.00-SMP` — **date-scheme** (AWS distribution versioning), not comparable to a
+  kernel-semver range at all → **UNDETERMINED**, not a guess. This is the FreeRTOS
+  version-scheme problem showing up *inside* the source that otherwise sidesteps it.
+- `V9.0.0rc1` — prerelease, sorts before its release.
+
+### Finding 5 — "not covered" is a first-class result
+
+The lookup never returns an empty CVE list where it means "this source doesn't cover
+this component". `mbedtls` → NOT_COVERED *with the reason and the right alternative*
+(`use NVD/CPE cpe:2.3:a:arm:mbed_tls`); `cmsis` → NOT_COVERED (no repo feed); an
+unmapped component (`lwip`) → NOT_COVERED (no mapping yet). Likewise a tree whose
+version the detector couldn't resolve returns NOT_QUERYABLE — *"a detection gap, not a
+clean bill of health"*. This implements sub-task 4 of the paused mapping-layer backlog
+for one source, and `COMPONENT_MAP` is the miniature of sub-task 1: identity →
+source coordinate, with per-component coverage metadata attached.
+
 ## Implications for the generator (feeds the metadata-mapping layer)
 
 1. **SBOM identity ≠ vuln-lookup key.** The canonical upstream purl is right for
@@ -282,10 +390,15 @@ a mapped, per-component fact.
   kernel specifically — its CVE-2024-28115 range is already in kernel semver
   (`<=10.6.1`) — so kernel-semver → GHSA-repo may be the shorter path than
   kernel-semver → AWS-distribution CPE. Weigh both.*
-- **Per-component vuln-source map incl. the GHSA repo feed**: record, per component,
-  its `{owner}/{repo}` and whether that repo self-publishes advisories (FreeRTOS-Kernel
-  yes, mbedTLS no), so the mapping layer knows to query the repo feed for the
-  self-publishers and skip it for the rest. Part of the per-component coverage metadata.
+- ~~**Per-component vuln-source map incl. the GHSA repo feed**~~ — **DONE 2026-07-28**
+  as `COMPONENT_MAP` in `ghsa_vuln_lookup.py` (see "Closing the loop" above): per
+  component, its `{owner}/{repo}`, whether that repo self-publishes (FreeRTOS-Kernel yes,
+  mbedTLS no), the version scheme, and the coverage note naming the right alternative
+  source. Covers the four components researched so far; extend it as components are added.
+- **Applicability predicates beyond version** (new, from Finding 2 above): CVE-2024-28115
+  applies only to ARMv7-M/ARMv8-M **MPU ports** — a condition stated in prose only, in
+  every source tested. Pairs with the FreeRTOS port-layer consolidation step; until then
+  version-only verdicts are knowingly over-broad.
 - **Tag→commit resolver over OSV GIT ranges**: prototype resolving a detected
   version to its release commit and testing membership in OSV CVE GIT ranges,
   using the tags the reference DBs already mine.

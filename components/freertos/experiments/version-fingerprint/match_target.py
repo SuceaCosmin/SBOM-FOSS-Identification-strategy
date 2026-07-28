@@ -88,20 +88,27 @@ def print_file_result(result: dict) -> None:
         print(f"    No reference data for {result['filename']} — can't compare.")
 
 
-def analyze_group(directory: Path, files_present: dict, anchors: list, db: dict) -> None:
-    print(f"\n{'=' * 70}\nCandidate FreeRTOS-Kernel location: {directory}\n{'=' * 70}")
+def resolve_group(directory: Path, files_present: dict, anchors: list, db: dict) -> dict:
+    """Resolve one candidate kernel directory to a structured verdict.
 
+    Returns {"directory", "files" (per-file evaluate_file results), "status",
+    "versions", "detail"}. `versions` is the set of release tags the tree is pinned
+    to — the handoff point for downstream consumers (e.g. the advisory lookup in
+    general/experiments/advisory-fitness/ghsa_vuln_lookup.py). It is empty whenever
+    presence or version could not be established.
+
+    Statuses: CONFIRMED / MIXED / PARTIALLY_MODIFIED / LIKELY_CONSISTENT /
+    INCOMPLETE / INCONSISTENT / INCONCLUSIVE.
+    """
     missing_anchors = [f for f in anchors if f not in files_present]
-    results = {}
-    for filename, path in sorted(files_present.items()):
-        results[filename] = evaluate_file(path, db)
-        print_file_result(results[filename])
+    results = {filename: evaluate_file(path, db)
+               for filename, path in sorted(files_present.items())}
+    out = {"directory": directory, "files": results, "versions": [], "detail": {}}
 
     if missing_anchors:
-        print(f"\n  INCOMPLETE — missing anchor file(s) {missing_anchors}. Presence of "
-              f"FreeRTOS-Kernel can't be confirmed from this directory alone (need "
-              f"{anchors} together); the matches above are a weak, unconfirmed signal only.")
-        return
+        out["status"] = "INCOMPLETE"
+        out["detail"] = {"missing_anchors": missing_anchors}
+        return out
 
     # Consistency runs over every present core file, not just the anchors: any of the
     # optional files (timers/event_groups/stream_buffer/croutine) that happen to be
@@ -114,53 +121,101 @@ def analyze_group(directory: Path, files_present: dict, anchors: list, db: dict)
         # Every file exact-matches at least one release.
         common = set.intersection(*exact_sets.values())
         if common:
-            print(f"\n  CONFIRMED: all files exact-match a common release -> {sorted(common)}")
+            out["status"] = "CONFIRMED"
+            out["versions"] = sorted(common)
         else:
-            print("\n  MIXED VERSION WARNING: every file has an exact match, but they don't "
-                  "agree on a common release:")
-            for f, tags in sorted(exact_sets.items()):
-                print(f"    {f}: {sorted(tags)}")
-            print("  This looks like a FreeRTOS-Kernel integration assembled from files "
-                  "pulled from different releases (e.g. a partial upgrade that only "
-                  "replaced some kernel files).")
-        return
+            out["status"] = "MIXED"
+            # Every distinct per-file release matters downstream: a mixed tree can be
+            # simultaneously affected and not affected by the same advisory.
+            out["versions"] = sorted(set.union(*exact_sets.values()))
+            out["detail"] = {"per_file": {f: sorted(t) for f, t in exact_sets.items()}}
+        return out
 
     if files_with_exact:
         # Some files exact-match, others don't — a real fork often leaves some files
         # (e.g. list.c) untouched while heavily modifying others (e.g. tasks.c).
-        print("\n  PARTIALLY MODIFIED: some files exact-match a known release, others don't:")
-        for f in sorted(files_with_exact):
-            print(f"    {f}: EXACT -> {sorted(exact_sets[f])}")
-        for f in sorted(files_without_exact):
-            top = results[f]["top_candidates"]
-            closest = top[0][1] if top else "unknown (no reference data)"
-            print(f"    {f}: no exact match, closest -> {closest}")
-
         exact_union = set.union(*(exact_sets[f] for f in files_with_exact))
         fuzzy_top_tags = {results[f]["top_candidates"][0][1] for f in files_without_exact
-                           if results[f]["top_candidates"]}
+                          if results[f]["top_candidates"]}
         overlap = exact_union & fuzzy_top_tags
-        if overlap:
-            print(f"  Consistent with a single base release that was partially modified — "
-                  f"the unmodified file(s) pin the base to {sorted(overlap)}.")
-        else:
-            print("  The exact-matched release(s) and the modified files' closest release(s) "
-                  "don't overlap — worth a closer look, this may span more than one base version.")
-        return
+        out["status"] = "PARTIALLY_MODIFIED"
+        out["versions"] = sorted(overlap) if overlap else sorted(exact_union)
+        out["detail"] = {"exact": {f: sorted(exact_sets[f]) for f in files_with_exact},
+                         "fuzzy_closest": {f: (results[f]["top_candidates"][0][1]
+                                               if results[f]["top_candidates"] else None)
+                                           for f in files_without_exact},
+                         "base_pinned_by_unmodified_files": bool(overlap)}
+        return out
 
     top1_tags = {f: (r["top_candidates"][0][1] if r["top_candidates"] else None)
                  for f, r in results.items()}
+    out["detail"] = {"fuzzy_closest": top1_tags}
     if None in top1_tags.values():
-        print("\n  INCONCLUSIVE — at least one file has no reference data to compare against.")
+        out["status"] = "INCONCLUSIVE"
     elif len(set(top1_tags.values())) == 1:
+        out["status"] = "LIKELY_CONSISTENT"
+        out["versions"] = [next(iter(top1_tags.values()))]
+    else:
+        out["status"] = "INCONSISTENT"
+    return out
+
+
+def analyze_group(directory: Path, files_present: dict, anchors: list, db: dict) -> dict:
+    print(f"\n{'=' * 70}\nCandidate FreeRTOS-Kernel location: {directory}\n{'=' * 70}")
+
+    resolved = resolve_group(directory, files_present, anchors, db)
+    for filename in sorted(resolved["files"]):
+        print_file_result(resolved["files"][filename])
+
+    status, detail = resolved["status"], resolved["detail"]
+    if status == "INCOMPLETE":
+        print(f"\n  INCOMPLETE — missing anchor file(s) {detail['missing_anchors']}. Presence "
+              f"of FreeRTOS-Kernel can't be confirmed from this directory alone (need "
+              f"{anchors} together); the matches above are a weak, unconfirmed signal only.")
+    elif status == "CONFIRMED":
+        print(f"\n  CONFIRMED: all files exact-match a common release -> {resolved['versions']}")
+    elif status == "MIXED":
+        print("\n  MIXED VERSION WARNING: every file has an exact match, but they don't "
+              "agree on a common release:")
+        for f, tags in sorted(detail["per_file"].items()):
+            print(f"    {f}: {tags}")
+        print("  This looks like a FreeRTOS-Kernel integration assembled from files "
+              "pulled from different releases (e.g. a partial upgrade that only "
+              "replaced some kernel files).")
+    elif status == "PARTIALLY_MODIFIED":
+        print("\n  PARTIALLY MODIFIED: some files exact-match a known release, others don't:")
+        for f, tags in sorted(detail["exact"].items()):
+            print(f"    {f}: EXACT -> {tags}")
+        for f, closest in sorted(detail["fuzzy_closest"].items()):
+            print(f"    {f}: no exact match, closest -> {closest or 'unknown (no reference data)'}")
+        if detail["base_pinned_by_unmodified_files"]:
+            print(f"  Consistent with a single base release that was partially modified — "
+                  f"the unmodified file(s) pin the base to {resolved['versions']}.")
+        else:
+            print("  The exact-matched release(s) and the modified files' closest release(s) "
+                  "don't overlap — worth a closer look, this may span more than one base version.")
+    elif status == "INCONCLUSIVE":
+        print("\n  INCONCLUSIVE — at least one file has no reference data to compare against.")
+    elif status == "LIKELY_CONSISTENT":
         print(f"\n  LIKELY CONSISTENT: best-match version agrees across all files -> "
-              f"{next(iter(top1_tags.values()))} (at least one file differs from an exact "
+              f"{resolved['versions'][0]} (at least one file differs from an exact "
               f"release copy, so treat this as a modified base rather than a confirmed exact version).")
     else:
         print("\n  INCONSISTENT best-match versions across files — possible mixed-version "
               "or independently-modified integration:")
-        for f, tag in sorted(top1_tags.items()):
+        for f, tag in sorted(detail["fuzzy_closest"].items()):
             print(f"    {f}: closest -> {tag}")
+    return resolved
+
+
+def scan_tree(target: Path, db: dict = None) -> list:
+    """Programmatic entry point: resolve every candidate kernel directory under
+    `target` and return the structured verdicts, printing nothing."""
+    db = db or load_db()
+    anchors = db.get("anchors", db["files"])
+    candidates = find_candidates(target, db["files"])
+    return [resolve_group(directory, files_present, anchors, db)
+            for directory, files_present in sorted(group_by_directory(candidates).items())]
 
 
 def main() -> None:
