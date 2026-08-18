@@ -60,6 +60,23 @@ COMPONENT_MAP = {
                 "Microchip ASF's bundled lwIP example DHCP server (CVE-2024-7490)",
         },
     },
+    "pkg:github/madler/zlib": {
+        "aliases": ["zlib"],
+        "cpe_product": "cpe:2.3:a:zlib:zlib",
+        "version_scheme": "semver-4",   # x.y.z and x.y.z.n both occur, both are releases
+        "note": "Real version discrimination (1.1.4 -> 5 CVEs, 1.2.3 -> 7, 1.2.11 -> 4, "
+                "1.2.13 -> 3, 1.3.2 -> 0, impossible 99.0.0 -> 0). NOTE the CPE "
+                "dictionary ALSO contains a fully deprecated `cpe:2.3:a:gnu:zlib` "
+                "(zlib is not a GNU project); querying it returns 0 for every version, "
+                "so a mapping layer that takes the first keywordSearch hit reports a "
+                "clean bill of health for every zlib ever shipped.",
+        # zlib CVEs are bound to zlib:zlib *and* to dozens of downstream products
+        # (Python, MariaDB, Node.js, Apple, NetApp, Siemens). Unlike lwIP, the upstream
+        # binding is present, so these are not needed to find zlib's own CVEs — they are
+        # recorded because a scan that knows it is looking at a carrier tree may want the
+        # carrier's own advisories too.
+        "carrier_products": {},
+    },
     "pkg:github/mbed-tls/mbedtls": {
         "aliases": ["mbedtls"],
         "cpe_product": "cpe:2.3:a:arm:mbed_tls",
@@ -189,6 +206,21 @@ def _cmp(a: dict, b: dict) -> int:
 
 def evaluate(version: dict, constraint: dict) -> dict:
     """Membership of one detected version in one CPE match constraint."""
+    # NVD marks each cpeMatch with `vulnerable: true/false`. A `false` entry inside an
+    # AND configuration means the product is the *environment / precondition* for someone
+    # else's flaw, not the vulnerable party. Found via zlib (2026-08-18):
+    # CVE-2025-0725 is a **libcurl** integer overflow whose config is
+    #   AND( curl <8.12.0 [vulnerable], libcurl <8.12.0 [vulnerable],
+    #        zlib <=1.2.0.3 [NOT vulnerable] )
+    # — but `virtualMatchString=cpe:2.3:a:zlib:zlib:1.1.4` still returns it, because the
+    # query API matches on CPE *presence*, not on vulnerability role. Reading the flag is
+    # what stops a curl vulnerability being reported as a zlib one. The constraint was
+    # already captured by fetch_product_cves(); it just wasn't consulted.
+    if not constraint.get("vulnerable", True):
+        return {"verdict": "CONTEXT_ONLY",
+                "why": "this product is listed with vulnerable=false — it is a "
+                       "precondition for another product's flaw, not the vulnerable "
+                       "component"}
     if version["scheme"] != "numeric":
         return {"verdict": "UNDETERMINED",
                 "why": f"detected version {version['raw']!r} is not numerically comparable"}
@@ -272,10 +304,15 @@ def lookup(component: str, version_tag: str, cache: dict = None) -> dict:
         results = [evaluate(version, c) for c in cve["constraints"]]
         if any(r["verdict"] == "AFFECTED" for r in results):
             chosen = next(r for r in results if r["verdict"] == "AFFECTED")
+        elif all(r["verdict"] == "CONTEXT_ONLY" for r in results):
+            # Every binding for this product is vulnerable=false: the CVE is somebody
+            # else's, and no version of ours can make it ours. Reported, not counted.
+            chosen = results[0]
         elif all(r["verdict"] == "UNDETERMINED" for r in results):
             chosen = results[0]
         else:
-            chosen = next(r for r in results if r["verdict"] == "NOT_AFFECTED")
+            chosen = next(r for r in results
+                          if r["verdict"] in ("NOT_AFFECTED", "CONTEXT_ONLY"))
         findings.append({"cve_id": cve["cve_id"], "verdict": chosen["verdict"],
                          "why": chosen["why"], "summary": cve["summary"]})
 

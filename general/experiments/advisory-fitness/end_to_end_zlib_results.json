@@ -1,0 +1,621 @@
+[
+  {
+    "tree": "chromium-third-party-zlib",
+    "status": "LIKELY_CONSISTENT",
+    "versions": [
+      "1.3.2"
+    ],
+    "semantics": "candidates",
+    "verdict": "NOT_AFFECTED",
+    "cves": [],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "no file exact-matches, but every file's closest release agrees \u2014 treat as a modified copy of that base, not a confirmed version",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.3.2": []
+    },
+    "refined_verdict": "NOT_AFFECTED",
+    "refinement": "not applicable"
+  },
+  {
+    "tree": "dist-1.2.13-core-only",
+    "status": "CONFIRMED",
+    "versions": [
+      "1.2.13"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2023-45853",
+      "CVE-2026-22184",
+      "CVE-2026-27171"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "all present tracked files exact-match a common release",
+    "evidence": {
+      "tree_looks_complete": true,
+      "subcomponents": {
+        "minizip": {
+          "state": "ABSENT",
+          "why": "tree contains the full core source set and a build entry point but none of ['ioapi.c', 'mztools.c', 'unzip.c', 'unzip.h', 'zip.c', 'zip.h']"
+        },
+        "untgz": {
+          "state": "ABSENT",
+          "why": "tree contains the full core source set and a build entry point but none of ['untgz.c']"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.13": [
+        "CVE-2023-45853",
+        "CVE-2026-22184",
+        "CVE-2026-27171"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 ruled out \u2014 requires contrib/minizip, tree contains the full core source set and a build entry point but none of ['ioapi.c', 'mztools.c', 'unzip.c', 'unzip.h', 'zip.c', 'zip.h'] (advisory: \"MiniZip is not a supported part of the zlib product.\"); CVE-2026-22184 ruled out \u2014 requires contrib/untgz, tree contains the full core source set and a build entry point but none of ['untgz.c'] (advisory: \"The vulnerability is limited to the standalone demonstration utility and does not affect the core zlib compression library.\")",
+    "remaining_cves": [
+      "CVE-2026-27171"
+    ],
+    "ruled_out": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ],
+    "suspended": []
+  },
+  {
+    "tree": "dist-1.2.13-with-contrib",
+    "status": "CONFIRMED",
+    "versions": [
+      "1.2.13"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2023-45853",
+      "CVE-2026-22184",
+      "CVE-2026-27171"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "all present tracked files exact-match a common release",
+    "evidence": {
+      "tree_looks_complete": true,
+      "subcomponents": {
+        "minizip": {
+          "state": "PRESENT",
+          "why": "found ['ioapi.c', 'mztools.c', 'unzip.c', 'unzip.h', 'zip.c', 'zip.h']"
+        },
+        "untgz": {
+          "state": "PRESENT",
+          "why": "found ['untgz.c']"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.13": [
+        "CVE-2023-45853",
+        "CVE-2026-22184",
+        "CVE-2026-27171"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 stands \u2014 contrib/minizip is present in the tree; CVE-2026-22184 stands \u2014 contrib/untgz is present in the tree",
+    "remaining_cves": [
+      "CVE-2023-45853",
+      "CVE-2026-22184",
+      "CVE-2026-27171"
+    ],
+    "ruled_out": [],
+    "suspended": []
+  },
+  {
+    "tree": "linux-kernel-zlib",
+    "status": "INCONSISTENT",
+    "versions": [
+      "1.1.4",
+      "1.2.2",
+      "1.2.3.1",
+      "1.2.3.2"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2003-0107",
+      "CVE-2005-1849",
+      "CVE-2005-2096",
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434",
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "no file exact-matches and closest releases disagree: deflate.c~v1.1.4@0.35, inffast.c~v1.2.3.2@0.35, inflate.c~v1.2.2@0.28, inftrees.c~v1.2.3.1@0.81, zlib.h~v1.1.4@0.12",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.1.4": [
+        "CVE-2003-0107",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.2": [
+        "CVE-2005-2096",
+        "CVE-2005-1849",
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.3.1": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.3.2": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 undecided \u2014 requires contrib/minizip, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded; CVE-2026-22184 undecided \u2014 requires contrib/untgz, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded",
+    "remaining_cves": [
+      "CVE-2003-0107",
+      "CVE-2005-1849",
+      "CVE-2005-2096",
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434"
+    ],
+    "ruled_out": [],
+    "suspended": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ]
+  },
+  {
+    "tree": "mixed-version-synthetic",
+    "status": "MIXED_VERSION",
+    "versions": [
+      "1.2.12",
+      "1.2.13",
+      "1.2.7",
+      "1.2.7.1",
+      "1.2.7.2",
+      "1.2.7.3",
+      "1.2.8"
+    ],
+    "semantics": "coexisting",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9842",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434",
+      "CVE-2023-45853",
+      "CVE-2026-22184",
+      "CVE-2026-27171"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "every file exact-matches, but no single release is common to all: crc32.c=['v1.2.7', 'v1.2.7.1', 'v1.2.7.2', 'v1.2.7.3', 'v1.2.8']; deflate.c=['v1.2.8']; inffast.c=['v1.2.12', 'v1.2.13']; inflate.c=['v1.2.13']; inftrees.c=['v1.2.13']; trees.c=['v1.2.7.1', 'v1.2.7.2', 'v1.2.7.3', 'v1.2.8']; zlib.h=['v1.2.13']; zutil.c=['v1.2.13']",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.12": [
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184",
+        "CVE-2026-27171"
+      ],
+      "1.2.13": [
+        "CVE-2023-45853",
+        "CVE-2026-22184",
+        "CVE-2026-27171"
+      ],
+      "1.2.7": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.7.1": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.7.2": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.7.3": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.8": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 undecided \u2014 requires contrib/minizip, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded; CVE-2026-22184 undecided \u2014 requires contrib/untgz, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded",
+    "remaining_cves": [
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9842",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434",
+      "CVE-2026-27171"
+    ],
+    "ruled_out": [],
+    "suspended": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ]
+  },
+  {
+    "tree": "negative-control-cjson",
+    "status": "NOT_THIS_COMPONENT",
+    "versions": [],
+    "semantics": "candidates",
+    "verdict": "NOT_QUERYABLE",
+    "refined_verdict": "NOT_QUERYABLE",
+    "refinement": "not applicable",
+    "detail": "no tracked file reaches the positive-evidence ceiling (0.4); best is 0.000. Filenames and API may match, but the content does not (scores: crc32.c=0.000, deflate.c=0.000, inffast.c=0.000, inflate.c=0.000, inftrees.c=0.000, trees.c=0.000, zlib.h=0.000, zutil.c=0.000)",
+    "per_version": {},
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "note": "no zlib detected \u2014 nothing to look up"
+  },
+  {
+    "tree": "subset-inflate-only-synthetic",
+    "status": "CONFIRMED",
+    "versions": [
+      "1.2.13"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2023-45853",
+      "CVE-2026-22184",
+      "CVE-2026-27171"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "all present tracked files exact-match a common release",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.13": [
+        "CVE-2023-45853",
+        "CVE-2026-22184",
+        "CVE-2026-27171"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 undecided \u2014 requires contrib/minizip, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded; CVE-2026-22184 undecided \u2014 requires contrib/untgz, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded",
+    "remaining_cves": [
+      "CVE-2026-27171"
+    ],
+    "ruled_out": [],
+    "suspended": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ]
+  },
+  {
+    "tree": "uboot-lib-zlib",
+    "status": "INCONSISTENT",
+    "versions": [
+      "1.2.0.1",
+      "1.2.2.2",
+      "1.2.2.3",
+      "1.2.3.1",
+      "1.2.5",
+      "1.2.5.2",
+      "1.2.9"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9842",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434",
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "no file exact-matches and closest releases disagree: deflate.c~v1.2.5@0.92, inffast.c~v1.2.9@0.68, inflate.c~v1.2.2.2@0.57, inftrees.c~v1.2.3.1@0.72, trees.c~v1.2.5.2@0.90, zlib.h~v1.2.2.3@0.21, zutil.c~v1.2.0.1@0.09",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.0.1": [
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.2.2": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.2.3": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.3.1": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.5": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.5.2": [
+        "CVE-2016-9840",
+        "CVE-2016-9841",
+        "CVE-2016-9842",
+        "CVE-2016-9843",
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ],
+      "1.2.9": [
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 undecided \u2014 requires contrib/minizip, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded; CVE-2026-22184 undecided \u2014 requires contrib/untgz, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded",
+    "remaining_cves": [
+      "CVE-2016-9840",
+      "CVE-2016-9841",
+      "CVE-2016-9842",
+      "CVE-2016-9843",
+      "CVE-2018-25032",
+      "CVE-2022-37434"
+    ],
+    "ruled_out": [],
+    "suspended": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ]
+  },
+  {
+    "tree": "verbatim-1.2.11",
+    "status": "CONFIRMED",
+    "versions": [
+      "1.2.11"
+    ],
+    "semantics": "candidates",
+    "verdict": "AFFECTED",
+    "cves": [
+      "CVE-2018-25032",
+      "CVE-2022-37434",
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ],
+    "context_only": [
+      "CVE-2025-0725"
+    ],
+    "undetermined": [],
+    "detail": "all present tracked files exact-match a common release",
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "per_version": {
+      "1.2.11": [
+        "CVE-2018-25032",
+        "CVE-2022-37434",
+        "CVE-2023-45853",
+        "CVE-2026-22184"
+      ]
+    },
+    "refined_verdict": "AFFECTED",
+    "refinement": "CVE-2023-45853 undecided \u2014 requires contrib/minizip, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded; CVE-2026-22184 undecided \u2014 requires contrib/untgz, no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded",
+    "remaining_cves": [
+      "CVE-2018-25032",
+      "CVE-2022-37434"
+    ],
+    "ruled_out": [],
+    "suspended": [
+      "CVE-2023-45853",
+      "CVE-2026-22184"
+    ]
+  },
+  {
+    "tree": "zlib-ng-adversarial",
+    "status": "NOT_THIS_COMPONENT",
+    "versions": [],
+    "semantics": "candidates",
+    "verdict": "NOT_QUERYABLE",
+    "refined_verdict": "NOT_QUERYABLE",
+    "refinement": "not applicable",
+    "detail": "no tracked file reaches the positive-evidence ceiling (0.4); best is 0.250. Filenames and API may match, but the content does not (scores: crc32.c=0.000, deflate.c=0.116, inflate.c=0.227, inftrees.c=0.250, trees.c=0.190, zlib.h=0.098, zutil.c=0.138)",
+    "per_version": {},
+    "evidence": {
+      "tree_looks_complete": false,
+      "subcomponents": {
+        "minizip": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        },
+        "untgz": {
+          "state": "UNKNOWN",
+          "why": "no marker found, but this tree is not a complete distribution (it may be an extract) \u2014 absence cannot be concluded"
+        }
+      }
+    },
+    "note": "no zlib detected \u2014 nothing to look up"
+  }
+]

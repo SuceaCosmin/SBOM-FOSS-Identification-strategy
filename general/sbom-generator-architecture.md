@@ -234,6 +234,23 @@ coverage metadata**; never assume the SBOM purl is directly queryable.
   AWS-distribution-versioned; CMSIS only `cmsis-rtos`; FreeRTOS-Kernel best served by
   its GHSA repo feed), so an empty result means "not covered," not "no known vulns" —
   a distinction only per-component coverage metadata preserves.
+- **Two failure modes added 2026-08-18 by zlib, both silent.**
+  (a) **A deprecated CPE is a total, silent miss.** The NVD dictionary carries both the
+  live `cpe:2.3:a:zlib:zlib` and a fully deprecated `cpe:2.3:a:gnu:zlib` (zlib is not a
+  GNU project). Querying the deprecated one returns **0 for every version** — so a
+  mapping layer that takes the first `keywordSearch` hit issues a clean bill of health
+  for every zlib ever shipped. The mapping must record the *specific, non-deprecated*
+  CPE and re-validate it, not resolve a name at query time.
+  (b) **A CPE in a CVE's configuration does not mean the CVE is *about* that product.**
+  NVD marks each `cpeMatch` with `vulnerable: true|false`; a `false` entry inside an
+  `AND` node means the product is the **environment/precondition** for someone else's
+  flaw. `CVE-2025-0725` is a **libcurl** integer overflow whose configuration is
+  `AND(curl <8.12.0 [vulnerable], libcurl <8.12.0 [vulnerable], zlib <=1.2.0.3 [NOT
+  vulnerable])` — yet `virtualMatchString=cpe:2.3:a:zlib:zlib:1.1.4` returns it, because
+  the query API matches on CPE *presence*, not on role. Ignoring the flag reports a curl
+  vulnerability against zlib. This one is not a source defect: NVD models it correctly
+  and the consumer must read it. (Found by, and fixed in, `nvd_vuln_lookup.py`, which had
+  been capturing the flag without consulting it.)
 - **Consequences for the architecture**: (a) the resolver's canonical identity
   feeds a **mapping step** that produces each vuln source's own coordinate
   (CPE for NVD, ecosystem purl / GIT commit for OSV) — this is where the
@@ -298,9 +315,30 @@ and let a finding be `AFFECTED (conditional)` rather than silently over-claiming
   from code. Cost, measured: covering the port layer took ~4× the reference-DB size of the
   core kernel files (6.6 MB vs 1.7 MB) — granularity is not free, and is worth budgeting
   per component against which advisories actually key on it.
-- **Source**: the end-to-end spike in
+- **Generalized 2026-08-18 by zlib** — the pattern is not a FreeRTOS quirk. zlib has
+  **two** CVEs where a `contrib/` sub-component's flaw is bound machine-readably to the
+  *core* zlib CPE while the record's own prose disclaims the core: `CVE-2023-45853`
+  (MiniZip; *"NOTE: MiniZip is not a supported part of the zlib product"*) and
+  `CVE-2026-22184` (`contrib/untgz`; *"limited to the standalone demonstration utility
+  and does not affect the core zlib compression library"*). Two independent instances on
+  one component make this a recurring property of CVE records, not an outlier — and here
+  the condition axis is **which files were vendored**, not which port, so the evidence is
+  cheap (sub-component file presence, no fingerprint DB needed). Two refinements to the
+  rules above came out of it:
+  (a) **"absent" is a claim that needs its own evidence.** A scanner sees only what it
+  was given; "no `unzip.c` found" is meaningless if the tree is an extract rather than a
+  complete distribution. `end_to_end_zlib.py` therefore gates ABSENT on a completeness
+  check (full core source set + a build entry point) and reports UNKNOWN otherwise —
+  making rule 2 operative rather than nominal.
+  (b) **The refinement narrows the CVE list even when it can't flip the verdict.** On
+  zlib the tree verdict stayed AFFECTED both ways, because a genuine *core* CVE
+  (`CVE-2026-27171`) applies at the same version — but the core-only tree's finding list
+  went from 3 CVEs to 1, each exclusion carrying its advisory quote. Precision in the
+  finding list is the deliverable; flipping the top-level verdict is a bonus, not the
+  measure of success.
+- **Source**: the end-to-end spikes in
   [experiments/advisory-fitness](experiments/advisory-fitness/README.md)
-  ("Closing the loop", Finding 2).
+  ("Closing the loop", Finding 2; and the zlib section).
 
 ## 13. Where the generator's job ends: identity and composition, not triage
 

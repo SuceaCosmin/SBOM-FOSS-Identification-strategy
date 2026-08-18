@@ -449,6 +449,137 @@ findings suggest revisiting a decision.
   lwIP** on this evidence: no advisory is scoped to a port or `lwipopts.h` macro — the
   applicability axis is *which distribution*, so carrier/fork identification is the
   granularity worth sharpening here.
+- **Researched: [zlib](components/zlib/README.md) — all three phases done, 2026-08-18.**
+  The fifth component, picked as roadmap Tier 1 #2. Four real carriers verified by diff against upstream tags,
+  four different shapes — and the headline is that **zlib is the first component researched
+  here with no reliable version anchor**: `ZLIB_VERSION` is deleted outright by **U-Boot**
+  (its `lib/zlib/zlib.h` is a 17-line glue shim; the real 757-line merged header in
+  `include/u-boot/` has no `ZLIB_VER*` macro at all) and replaced by two prose comments in
+  the **Linux kernel** (`include/linux/zlib.h`: "deflate based on ZLIB_VERSION 1.1.3" /
+  "inflate based on ZLIB_VERSION 1.2.3" — a genuine, real-world **mixed-version tree**,
+  where this repo has been synthesizing them). Other findings: U-Boot's `lib/zlib/zlib.c`
+  is the repo's **first real amalgamation** (it `#include`s the sibling `.c` files, some
+  inside `#ifdef`s) and its base is *pppd's* patched zlib 1.2.3 — the same pppd lineage the
+  lwIP pass found vendored inside lwIP; **Chromium's core is near-verbatim** (inflate.c 10
+  changed lines vs v1.3.2, uncompr.c 0) with the real modification surface in *added* SIMD
+  files, and it ships the best provenance artifact seen so far (`README.chromium` declaring
+  upstream `Version`, the upstream commit SHA, and a `CPEPrefix:` — plus 20 named patch
+  files); **zlib-ng's compat mode declares `ZLIB_VERSION "1.3.1.zlib-ng"`** for a C11
+  rewrite sharing no implementation with zlib — the *inverse* of the nested-component false
+  positive (name right, code wrong), now generalized into
+  [general/README.md](general/README.md#api-compatible-reimplementations-declare-the-originals-version-string)
+  and earmarked as an adversarial negative control. The roadmap's `Z_PREFIX` premise was
+  **corrected**: it is a macro table in `zconf.h` leaving all `.c` files untouched, so it
+  does not stress source-level rename tolerance — it defeats the **symbol-set tier**
+  (exports become `z_*`), fixable by stripping a leading `z_`; the real source-level rename
+  is the kernel's hand-applied `zlib_` prefix. **Subset vendoring is the normal case**
+  (~6 of ~15 core files for decompression-only), which sets the lower bound for the
+  resolver evidence rule's match-ratio floor and argues it needs per-file droppability, not
+  a flat ratio. Advisory side: `cpe:2.3:a:zlib:zlib` is live (a `gnu:zlib` CPE also exists,
+  fully deprecated — a mapping layer must not take the first hit); GHSA repo feed **empty**;
+  and **`CVE-2023-45853` binds a MiniZip flaw to the zlib CPE (`<1.3.1`) while its own NVD
+  prose says "MiniZip is not a supported part of the zlib product"** — the machine
+  coordinate over-claiming against its own text, resolvable only by sub-component detection
+  (was `contrib/minizip` actually vendored?), the same shape as FreeRTOS's MPU-port
+  condition on a third component. Also checked and recorded: zlib is **absent** from TI
+  SimpleLink, NXP MCUXpresso and ESP-IDF, so its embedded footprint is bootloaders and
+  Linux-class carriers rather than Cortex-M vendor middleware.
+- **zlib phase 2 (version-fingerprint) DONE 2026-08-18**:
+  [components/zlib/experiments/version-fingerprint](components/zlib/experiments/version-fingerprint/README.md).
+  55 release tags × 8 tracked files → **1.4 MiB** DB, validated against **8 corpus trees,
+  every ground truth correct**. Four results worth carrying:
+  1. **Phase 1's "zlib has no version anchor" was half wrong.** zlib declares its version
+     in *three* places: `ZLIB_VERSION` in `zlib.h` **plus two string literals** —
+     `inflate_copyright[]` in `inftrees.c` and `deflate_copyright[]` in `deflate.c`. Being
+     literals, not comments, they survive comment-stripped normalization, which is why
+     those two files separate **all 55 releases**. No carrier keeps all three and two keep
+     none, so the verdict must still come from content — but the strings are real
+     corroboration where they survive, and a real falsehood where zlib-ng supplies one.
+  2. **Winnowing succeeds where line-diff distance failed.** On the Linux kernel's
+     restructured, renamed subset, phase 1's diff sweep could not discriminate
+     1.2.1/1.2.2/1.2.3 (8% spread). Winnowing put `inftrees.c` — the least-restructured
+     file — at **v1.2.3.x @0.81** and the deflate side in the **1.1.x** era, independently
+     reproducing from content alone the two-era split the kernel states in prose. Lesson:
+     pick tracked files by measured *modification-survival*, not prominence — the obvious
+     "main" file (`inflate.c`) scored worst (0.28).
+  3. **A new finding the experiment produced rather than confirmed**: U-Boot's deflate side
+     fingerprints to **1.2.5 @0.90–0.92**, and its surviving `deflate_copyright` string
+     agrees — while U-Boot's own prose says the tree is "derived from zlib-1.2.3". A
+     two-era tree whose provenance comment names only one era. Third component where a
+     shipped tree contradicts its own version declarations (after mbedTLS's Wi-SUN and
+     lwIP's phantom tag) — now an expectation, not a surprise. `INCONSISTENT` was hiding
+     this, so the matcher gained **per-half consensus reporting** (inflate vs deflate).
+  4. **The template's per-file reject rule was unsound and is now replaced.** Every matcher
+     here vetoed a tree if *any* tracked file scored below a floor (0.05). The corpus shows
+     genuine-fork and reimplementation per-file scores **overlap** (U-Boot 0.09–0.92, Linux
+     0.12–0.81, zlib-ng 0.00–0.25) — no per-file threshold separates them, and U-Boot
+     survived only by 0.04. Tree **maxima** separate cleanly (0.92/0.81 vs 0.25), so the
+     rule is now **positive evidence** (`POSITIVE_EVIDENCE_CEILING = 0.40`): at least one
+     file must look like the component; a rewritten file is weak evidence, never a veto.
+     Generalized into
+     [general/README.md](general/README.md#rejecting-a-component-use-positive-evidence-not-a-per-file-veto),
+     and it is **the calibrated counterpart to the resolver evidence rule** below — that
+     work was motivated by one file matching in a 309-file tree; zlib supplies the other
+     end, a genuine tree where most files match badly.
+  Also: the **`zlib-ng` adversarial control passed** (identical filenames, API-compatible
+  header declaring `ZLIB_VERSION "1.3.1.zlib-ng"` → NOT_THIS_COMPONENT on content); a
+  **decompression-only subset resolves CONFIRMED** with no penalty for the files it is
+  supposed to lack (integration *shape* is reported, not a flat match ratio); and
+  **Chromium's tree resolves to the nearest release only** — its declared
+  `Revision: 09a1572a` is a real upstream commit from 4 days *after* v1.3.2 that is in no
+  tag, so a tag-mined DB structurally cannot name it (the "origin outside coverage"
+  verdict arriving for an ordinary, fully-covered component; argues for architecture
+  rec. 14). Flat-layout lesson amended into the path-suffix general note: **never resolve a
+  duplicate filename by position** — U-Boot ships two `zlib.h` files; collect all
+  candidates and let content pick.
+- **zlib phase 3 (advisory-source mapping) DONE 2026-08-18** — the repo's **third
+  end-to-end loop**, closed through NVD/CPE, and the first with a **sub-component**
+  applicability refinement. Write-up in
+  [general/experiments/advisory-fitness](general/experiments/advisory-fitness/README.md)
+  ("zlib — the third loop"); new script `end_to_end_zlib.py`, plus a
+  `pkg:github/madler/zlib` entry in `nvd_vuln_lookup.py`. All **10 corpus trees** produce
+  the expected verdict. Coverage: NVD/CPE `cpe:2.3:a:zlib:zlib` is **fit** (1.1.4 → 5
+  CVEs, 1.2.3 → 7, 1.2.11 → 4, 1.2.13 → 3, 1.3.2 → 0, impossible 99.0.0 → **0**); GHSA
+  per-repo feed **empty** (upstream doesn't self-publish); OSV unfit. Four findings:
+  1. **The sub-component/core CPE mismatch is a pattern, not a FreeRTOS outlier.** zlib has
+     **two** CVEs binding a `contrib/` flaw to the *core* zlib CPE while the record's own
+     prose disclaims the core: `CVE-2023-45853` (MiniZip; *"MiniZip is not a supported part
+     of the zlib product"*) and `CVE-2026-22184` (`contrib/untgz`; *"limited to the
+     standalone demonstration utility"*). Two independent instances on one component
+     promote FreeRTOS's prose-only MPU condition from anecdote to expectation. Here the
+     applicability axis is **which files were vendored**, so the evidence is cheap file
+     presence — no fingerprint DB. Demonstrated on two purpose-built corpus trees at the
+     *same* version: the core-only tree's finding list drops **3 CVEs → 1**, each exclusion
+     carrying its advisory quote; the with-contrib tree keeps all 3.
+  2. **The tree verdict did not flip, and that is the honest outcome** — a genuine *core*
+     CVE (`CVE-2026-27171`) applies at that version regardless. Precision in the finding
+     list is the deliverable; flipping the headline verdict is a bonus, not the measure of
+     success (the FreeRTOS run did flip, which could mislead).
+  3. **"Absent" is a claim needing its own evidence.** Rule 2 ("absent evidence suspends")
+     was nominal for FreeRTOS and became operative here: most corpus trees are *extracts*,
+     so "no `unzip.c` found" says nothing — Chromium ships minizip per its own
+     `README.chromium` yet the extract has none. `subcomponent_evidence()` gates ABSENT on
+     a completeness check (full core source set + a build entry point) and reports UNKNOWN
+     otherwise.
+  4. **Two silent ways to get the CPE coordinate wrong**, both fed into architecture
+     rec. 11: (a) the **deprecated `cpe:2.3:a:gnu:zlib`** returns **0 for every version**,
+     so a mapping layer taking the first `keywordSearch` hit gives every zlib a clean bill
+     of health; (b) a CPE with **`vulnerable: false`** inside an `AND` node is a
+     *precondition*, not the flaw — `CVE-2025-0725` is a **libcurl** overflow listing zlib
+     ≤1.2.0.3 as its environment, and the NVD query API returns it for a zlib query anyway.
+     **`nvd_vuln_lookup.py` had been capturing that flag and never consulting it** — a real
+     defect, now fixed with a distinct `CONTEXT_ONLY` verdict; the lwIP and FreeRTOS loops
+     were re-run with **no regression**.
+  Also: OSV's zlib counts *vary* by version (1.2.11 → 101, 1.3.2 → 37, impossible
+  99.0.0 → **36**), which looks like discrimination and isn't — the 36 are entirely
+  **distro** advisories (`DEBIAN-CVE-*`, Debian 8–14 / Ubuntu 14.04–26.04) keyed to the
+  Debian *source package* named zlib, whose distro version strings don't compare against
+  upstream versions at all. A version-scheme mismatch in its most misleading form: a
+  plausible gradient rather than a constant. And **phase 2's Chromium result became an
+  advisory problem** — that tree resolves only to the *nearest* release (its content is an
+  untagged post-1.3.2 commit), and returns NOT_AFFECTED correctly only because 1.3.2 has 0
+  CVEs; a CVE fixed between the nearest tag and the real commit would have produced a
+  confident false AFFECTED. Concrete cost of architecture rec. 14 not being implemented.
 - **Researched (cross-cutting): nested-component attribution — DONE 2026-07-29**,
   [general/experiments/nested-component-attribution](general/experiments/nested-component-attribution/README.md).
   The lwIP pass produced the repo's first real nested case (lwIP vendors a reduced

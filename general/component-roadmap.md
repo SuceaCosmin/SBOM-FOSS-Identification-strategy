@@ -37,12 +37,31 @@ layer" pattern already documented for mbedTLS and CMSIS.
    **phantom release tag** whose content no artifact ever shipped; and advisories filed
    against the **carrier** (`espressif:esp-idf`, `microchip:advanced_software_framework`)
    rather than against upstream lwIP.
-2. **zlib** — compression inside OTA updaters, bootloaders, logging, and *statically
-   embedded inside other libraries*; one of the most-vendored C codebases in existence
-   and a recurring CVE source (CVE-2018-25032, CVE-2022-37434) which makes it a perfect
-   fitness test for the vuln-scanning end goal. Detection interest: frequently vendored
-   as a *subset* of files, often with `Z_PREFIX`-style renaming — stresses partial-copy
-   and identifier-rename tolerance.
+2. ~~**zlib**~~ — **ALL THREE PHASES DONE 2026-08-18**: [components/zlib](../components/zlib/README.md),
+   its [version-fingerprint experiment](../components/zlib/experiments/version-fingerprint/README.md)
+   (8 corpus trees, all ground truths correct), and phase 3 in
+   [advisory-fitness](../general/experiments/advisory-fitness/README.md) — the repo's third
+   end-to-end loop, closed through NVD/CPE, and the first with a **sub-component**
+   applicability refinement (zlib has *two* CVEs binding a `contrib/` flaw to the core CPE
+   while their own prose disclaims the core). The subset-vendoring
+   premise held — decompression-only copies taking ~6 of ~15 core files are the *normal*
+   case (Linux kernel, U-Boot), which puts a hard lower bound on the resolver's planned
+   match-ratio floor. The identifier-rename premise was **half wrong**: `Z_PREFIX` is a
+   macro table inside `zconf.h` that leaves every `.c` file untouched, so it does not
+   stress source-level rename tolerance at all — it defeats the *symbol-set* tier instead
+   (exports become `z_deflate`/`z_inflate`), fixable by stripping a leading `z_`. The real
+   source-level rename is the Linux kernel's hand-applied `zlib_` prefix. What the pass
+   actually turned up: the **version macro is deleted** by both U-Boot and the Linux kernel
+   (the first component researched here with no reliable version anchor); **zlib-ng's
+   compat mode declares `ZLIB_VERSION "1.3.1.zlib-ng"`** for code that is not zlib; U-Boot
+   ships the repo's first real **amalgamation** (`zlib.c` `#include`s the other `.c`
+   files) carrying a **pppd-patched** 1.2.3 base; the Linux kernel is a genuine
+   **mixed-version** tree (inflate 1.2.3 + deflate 1.1.3) stated in its own header; and
+   `CVE-2023-45853` binds a **MiniZip** flaw to the zlib CPE while its own NVD prose says
+   "MiniZip is not a supported part of the zlib product". Also: zlib is largely **absent
+   from Cortex-M vendor SDKs** (TI/NXP/Espressif all checked) — its embedded footprint is
+   bootloaders and Linux-class carriers, so it is less automotive-ECU-shaped than this
+   list assumed.
 3. **FatFs (ChaN)** — FAT driver for logging/media/USB-storage in ECUs, IVI, dashcams;
    bundled in STM32Cube and MCUXpresso middleware. Detection interest: **no official
    git repo** — upstream is zip archives on elm-chan.org, so Software Heritage/OSSKB

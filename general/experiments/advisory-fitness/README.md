@@ -29,12 +29,12 @@ for the first end-to-end detection → CVE result (`ghsa_vuln_lookup.py`,
 
 ## Comparative verdict — NVD/CPE is the primary fit source; GHSA is fit only via its per-repo feed; OSV is not
 
-| source | mbedTLS coverage | version discrimination | FreeRTOS | CMSIS | our-coordinate that works |
-|---|---|---|---|---|---|
-| **NVD/CPE** | ✓ `arm:mbed_tls` | ✓ **real** (@99.0.0 → 0) | CVEs exist, AWS-versioned | `cmsis-rtos` only | **canonical identity → CPE 2.3** |
-| **OSV.dev** | distro advisories only | ✗ **inert** (@99.0.0 → 83) | **absent** | **absent** | none upstream (distro purl / GIT-commit) |
-| **GHSA (global feed)** | unreviewed CVE mirror, no ecosystem | ✗ none | ✗ absent via `affects=` | absent | none (no C/C++ ecosystem) |
-| **GHSA (per-repo feed)** | ✗ upstream doesn't self-publish | ✓ **real** for self-publishers | ✓ **kernel-semver range** (CVE-2024-28115 `<=10.6.1`) | absent | **`{owner}/{repo}` → repo advisory feed** |
+| source | mbedTLS coverage | version discrimination | FreeRTOS | CMSIS | zlib | our-coordinate that works |
+|---|---|---|---|---|---|---|
+| **NVD/CPE** | ✓ `arm:mbed_tls` | ✓ **real** (@99.0.0 → 0) | CVEs exist, AWS-versioned | `cmsis-rtos` only | ✓ `zlib:zlib` (@99.0.0 → 0); beware the **deprecated `gnu:zlib`** → 0 always | **canonical identity → CPE 2.3** |
+| **OSV.dev** | distro advisories only | ✗ **inert** (@99.0.0 → 83) | **absent** | **absent** | ✗ distro-only, *deceptively* graded (@99.0.0 → 36) | none upstream (distro purl / GIT-commit) |
+| **GHSA (global feed)** | unreviewed CVE mirror, no ecosystem | ✗ none | ✗ absent via `affects=` | absent | unreviewed mirrors; one `reviewed` entry is **`pip`/`pyminizip`** | none (no C/C++ ecosystem) |
+| **GHSA (per-repo feed)** | ✗ upstream doesn't self-publish | ✓ **real** for self-publishers | ✓ **kernel-semver range** (CVE-2024-28115 `<=10.6.1`) | absent | ✗ 0 — upstream doesn't self-publish | **`{owner}/{repo}` → repo advisory feed** |
 
 > **Correction (2026-07-23):** the original run (2026-07-22) tested only GHSA's
 > *global* `/advisories` feed (`affects=`, `cve_id=`) and concluded GHSA was flatly
@@ -527,6 +527,160 @@ brackets the 2.4.5 lwIP vendored. lwIP 2.2.1 still ships `src/netif/ppp/eap.c` w
 and explicitly not this repo's job** — but the *mapping* fact is: that CVE is reachable
 only if the nested pppd is emitted with its own identity. An SBOM listing lwIP alone
 cannot surface it from any source tested.
+
+## zlib (2026-08-18) — the third loop, and the first *sub-component* refinement
+
+Phase-3 pass for [zlib](../../../components/zlib/README.md), run over the
+[phase-2 corpus](../../../components/zlib/corpus/README.md) plus two purpose-built
+complete-distribution trees. Routed through NVD/CPE again (zlib's GHSA repo feed is
+empty). New script: **`end_to_end_zlib.py`**; `nvd_vuln_lookup.py` gained a
+`pkg:github/madler/zlib` entry and one real bug fix (finding 3 below).
+
+### Coverage
+
+| source | coordinate | result |
+|---|---|---|
+| **NVD/CPE** | `cpe:2.3:a:zlib:zlib` | **fit** — real discrimination: 1.1.4 → 5 CVEs, 1.2.3 → 7, 1.2.11 → 4, 1.2.13 → 3, 1.3.2 → **0**, impossible 99.0.0 → **0** |
+| NVD/CPE (deprecated) | `cpe:2.3:a:gnu:zlib` | **0 at every version** — a silent total miss (finding 3) |
+| GHSA per-repo | `/repos/madler/zlib/security-advisories` | **0** — upstream does not self-publish (`zlib-ng/zlib-ng` likewise 0) |
+| GHSA global | `?cve_id=…` | zlib CVEs present only as **`unreviewed` mirrors with empty ecosystem**; the single `reviewed` one (`CVE-2023-45853`) is filed against **`pyminizip` in the `pip` ecosystem** — a Python wrapper, not our component |
+| OSV.dev | `pkg:github/madler/zlib` | **0** — OSV does not index GitHub purls (unchanged from earlier runs) |
+| OSV.dev | bare name `zlib` | **unusable, and deceptively so** — finding 4 |
+
+### Finding 1 — the sub-component/core CPE mismatch is a *pattern*, not a FreeRTOS outlier
+
+zlib has **two** CVEs where a `contrib/` sub-component's flaw is bound machine-readably to
+the **core zlib CPE** while the record's own prose disclaims the core:
+
+| CVE | CPE binding | the record's own words |
+|---|---|---|
+| `CVE-2023-45853` | `zlib:zlib < 1.3.1` | *"NOTE: MiniZip is not a supported part of the zlib product."* |
+| `CVE-2026-22184` | `zlib:zlib <= 1.3.1.2` | *"limited to the standalone demonstration utility and does not affect the core zlib compression library"* |
+
+A version-only verdict therefore reports **every** zlib tree below those bounds as
+AFFECTED — including the overwhelmingly common core-only vendoring that never took
+`contrib/` at all. Two independent instances on one component is what turns FreeRTOS's
+prose-only ARMv7-M-MPU condition from an anecdote into an expectation.
+
+The condition axis here is **which files were vendored**, not which port — so unlike
+FreeRTOS this needed no fingerprint DB, just sub-component file presence. Same three
+safety rules (architecture rec. 12): refinement only narrows; absent evidence suspends;
+the condition is curated metadata carrying its source quote.
+
+Demonstrated on two trees at the *same* version:
+
+```
+dist-1.2.13-core-only     minizip=ABSENT   version-only AFFECTED [45853, 22184, 27171]
+                                           refined      AFFECTED [27171]
+                                           ruled out: 45853, 22184 (each with its quote)
+dist-1.2.13-with-contrib  minizip=PRESENT  version-only AFFECTED [45853, 22184, 27171]
+                                           refined      AFFECTED [45853, 22184, 27171]
+```
+
+**The tree verdict did not flip, and that is the honest outcome** — a genuine *core* CVE
+(`CVE-2026-27171`, `>=1.2.12 <1.3.2`) applies at that version regardless. The refinement's
+deliverable is a finding list that went from 3 CVEs to 1 with reasons attached, not a
+flipped headline. Worth stating because the FreeRTOS run *did* flip verdicts, which could
+easily be mistaken for the measure of success.
+
+### Finding 2 — "absent" is a claim that needs its own evidence
+
+Rule 2 ("absent evidence suspends") was nominal in the FreeRTOS run and became operative
+here. Most corpus trees are **extracts** — only the tracked files were ever fetched — so
+"no `unzip.c` found" says nothing about the real carrier. Chromium's `README.chromium`
+states outright that it ships minizip, yet the extract contains none of it.
+
+`subcomponent_evidence()` therefore gates the ABSENT verdict on a **completeness check**
+(the full core source set *plus* a build entry point) and reports UNKNOWN otherwise. All
+eight extract-based trees correctly report `minizip=UNKNOWN` and keep the conditioned CVEs
+suspended; only the two purpose-built distributions can say ABSENT. A scanner sees only
+what it was handed, and the distinction between "not there" and "not looked at" has to be
+in the data model, not in the operator's head.
+
+### Finding 3 — two silent ways to get the CPE coordinate wrong
+
+**(a) The deprecated CPE returns zero, not an error.** NVD's dictionary carries both
+`cpe:2.3:a:zlib:zlib` (live) and `cpe:2.3:a:gnu:zlib` (fully deprecated — zlib is not a
+GNU project, but the entry exists and covers 1.0 → 1.2.11). Querying the deprecated one
+returns **0 CVEs for every version tested**. A mapping layer that resolves a name at query
+time and takes the first `keywordSearch` hit issues a clean bill of health for every zlib
+ever shipped. The mapping must pin the specific non-deprecated CPE, and re-validate it.
+
+**(b) A CPE in a CVE's configuration does not mean the CVE is *about* that product.**
+`CVE-2025-0725` is a **libcurl** integer overflow. Its configuration is:
+
+```
+AND( curl    <8.12.0      vulnerable=true
+     libcurl <8.12.0      vulnerable=true
+     zlib    <=1.2.0.3    vulnerable=FALSE )
+```
+
+zlib ≤1.2.0.3 is the *precondition*, not the flaw. But
+`virtualMatchString=cpe:2.3:a:zlib:zlib:1.1.4` still returns this CVE, because the query
+API matches on CPE **presence**, not role. This is not a source defect — NVD models it
+correctly and the consumer must read the flag.
+
+`nvd_vuln_lookup.py` had been **capturing `vulnerable` into each constraint and never
+consulting it**, so it would have reported a curl vulnerability against zlib. Fixed: a
+`vulnerable: false` constraint now yields a distinct `CONTEXT_ONLY` verdict, reported
+beside the findings and never counted as AFFECTED. The lwIP and FreeRTOS end-to-end runs
+were re-run after the change with **no regression** (lwIP's results are unchanged; its
+corpus happened to contain no such case).
+
+### Finding 4 — OSV's varying counts look like discrimination and are not
+
+Earlier components found OSV **flatly** version-inert (mbedTLS: impossible version → the
+same 83 CVEs). zlib looks better and is arguably worse:
+
+| query | result |
+|---|---|
+| `zlib@1.2.11` | 101 vulns |
+| `zlib@1.3.2` | 37 vulns |
+| `zlib@99.0.0` (**impossible**) | **36 vulns** |
+
+The counts *move*, so a casual test would conclude the source discriminates — but an
+impossible version still returns 36, i.e. only one of the newest real version's 37 hits is
+genuinely version-matched. Breaking the 36 down by ecosystem explains it: they are
+**entirely distro advisories** — `Debian:8…14`, `Ubuntu:14.04 … 26.04`, `Echo` — with ids
+like `DEBIAN-CVE-2016-9840`. OSV's `zlib` is the *Debian source package* named zlib, whose
+version ranges are distro package versions (`1:1.2.11.dfsg-2+deb11u2`) that do not compare
+meaningfully against an upstream version at all, so they match everything.
+
+This is the version-scheme mismatch the phase-3 checklist asks about, in its most
+misleading form: **the name collides, the scheme does not, and the failure presents as a
+plausible-looking gradient rather than a constant.** An impossible-version control is the
+only cheap way to see it.
+
+### Loop results
+
+All ten corpus trees produce the expected verdict:
+
+| tree | detection | version-only | refined |
+|---|---|---|---|
+| `verbatim-1.2.11` | CONFIRMED 1.2.11 | AFFECTED (4) | AFFECTED |
+| `subset-inflate-only-synthetic` | CONFIRMED 1.2.13 | AFFECTED (3) | AFFECTED |
+| `dist-1.2.13-core-only` | CONFIRMED 1.2.13 | AFFECTED (3) | AFFECTED (**1**) |
+| `dist-1.2.13-with-contrib` | CONFIRMED 1.2.13 | AFFECTED (3) | AFFECTED (3) |
+| `mixed-version-synthetic` | MIXED_VERSION (coexisting) | AFFECTED | AFFECTED |
+| `uboot-lib-zlib` | INCONSISTENT | AFFECTED (8) | AFFECTED |
+| `linux-kernel-zlib` | INCONSISTENT | AFFECTED | AFFECTED |
+| `chromium-third-party-zlib` | LIKELY_CONSISTENT 1.3.2 | **NOT_AFFECTED** | NOT_AFFECTED |
+| `zlib-ng-adversarial` | NOT_THIS_COMPONENT | NOT_QUERYABLE | NOT_QUERYABLE |
+| `negative-control-cjson` | NOT_THIS_COMPONENT | NOT_QUERYABLE | NOT_QUERYABLE |
+
+Two of these deserve a note:
+
+- **Chromium → NOT_AFFECTED is right for the wrong reason.** Its content is an *untagged*
+  post-1.3.2 commit (phase 2), and 1.3.2 has 0 CVEs, so the answer happens to be correct.
+  Had the tree sat in a window where a CVE was fixed *between* the nearest tag and the
+  actual commit, resolving to the nearest release would have produced a confident false
+  AFFECTED. Nearest-release resolution is not safe in general — it is safe here by luck.
+  This is the concrete cost of architecture rec. 14 not yet being implemented.
+- **`uboot-lib-zlib` returns 8 CVEs across a 7-version candidate set** under *candidates*
+  semantics, and every candidate is affected by something, so the verdict is AFFECTED
+  rather than POSSIBLY_AFFECTED. Correct but coarse: the honest reading is "this tree is
+  old zlib, and old zlib has many CVEs", which is all a two-era heavily-modified fork can
+  support. Tightening it needs better detection, not a better advisory query.
 
 ## Implications for the generator (feeds the metadata-mapping layer)
 

@@ -201,6 +201,19 @@ First observed in: [components/mbedtls](../components/mbedtls/README.md#3-what-l
 (`stm32-mw-mbedtls/st_readme.txt`, which enumerates every upstream version bump and
 ST-specific patch since 2019).
 
+- **Amalgamation can be a *carrier-side* build trick, not an upstream release shape.**
+  This repo's scope names "amalgamated/single-header libraries" as a priority detection
+  case, and so far every component researched turned out to have no official amalgamated
+  release. But a carrier can amalgamate a normally multi-file component itself: U-Boot
+  builds zlib through a single `zlib.c` that `#include`s the individual `.c` files, with
+  some of the `#include`s inside `#ifdef`s so the translation unit's contents depend on
+  build configuration. The individual files are still on disk, so per-file matching still
+  works — what breaks is the assumption that one `.c` file is one compilation unit, and
+  any "which files are actually built" reasoning layered on top of a file listing. Check
+  for a file that includes sibling `.c` files before concluding a tree's build shape.
+
+First observed in: [components/zlib](../components/zlib/README.md#31-u-boot-libzlib--amalgamation-by-include-version-header-deleted).
+
 ## Attribution: vendored integrations are often multiple stacked components
 
 A single embedded project that appears to contain "one" recognizable open-source
@@ -269,6 +282,71 @@ be an expressible verdict.
 
 First observed in: [general/experiments/nested-component-attribution](experiments/nested-component-attribution/README.md).
 
+## API-compatible reimplementations declare the original's version string
+
+A separate project that reimplements a well-known component's API commonly ships a
+**compatibility header that defines the original's version macros**, so that existing
+callers compile unchanged. The result is a codebase which is *not* the component,
+shares little or none of its code, and has its own maintainers and its own advisory
+stream — while announcing itself in metadata as a specific release of the original.
+
+This is the exact inverse of the nested-component false positive above: there, the code
+matched and the *name* was wrong; here the **name and version string are exactly right
+and the code is wrong**. Two consequences:
+
+- **The metadata tier must stay confirm-only.** A version macro is admissible as
+  corroboration of a content match, never as an identity signal on its own. This is a
+  hard limit on the "in-source version strings survive modification" heuristic above —
+  that heuristic assumes the string was written by the project it names, and a
+  compatibility layer breaks the assumption deliberately.
+- **These make excellent adversarial negative controls.** An unrelated C file scores ~0
+  and proves little. A drop-in reimplementation scores ~0 on content while matching every
+  metadata signal, which is the case a detector actually has to survive.
+
+The corollary for content matching: a reimplementation *will* share standard constant
+tables, protocol magic numbers, and algorithm-mandated structures with the original, so
+similarity scoring must not be allowed to promote those into a match — see the
+constant/data-table caveat in the nested-component note above.
+
+First observed in: [components/zlib](../components/zlib/README.md#34-zlib-ng--a-rewrite-that-declares-itself-to-be-zlib)
+(zlib-ng's zlib-compat mode emits `#define ZLIB_VERSION "1.3.1.zlib-ng"` for a C11
+rewrite that shares no implementation with zlib 1.3.1).
+
+## Rejecting a component: use positive evidence, not a per-file veto
+
+Every matcher in this repo initially rejected a candidate tree with a per-file **veto** —
+if *any* tracked file scored below a similarity floor, the whole tree was declared
+NOT_THIS_COMPONENT. Measured against a corpus containing both a heavily-modified genuine
+fork and an API-compatible reimplementation, that rule is unsound: **their per-file scores
+overlap**, so no per-file threshold separates them.
+
+Measured on zlib (per-file best winnowing scores, one row per tree):
+
+| tree | scores |
+|---|---|
+| U-Boot's zlib (**genuine**) | 0.09, 0.21, 0.57, 0.68, 0.72, 0.90, 0.92 |
+| Linux kernel's zlib (**genuine**) | 0.12, 0.28, 0.35, 0.35, 0.81 |
+| zlib-ng (**not zlib**) | 0.00, 0.10, 0.12, 0.14, 0.19, 0.23, 0.25 |
+
+The genuine forks' low ends sit inside the reimplementation's range. Under the veto rule
+U-Boot survived only because its worst file landed 0.04 above the floor — a real vendor
+fork within a rounding error of being reported as "not this component". What separates the
+cases cleanly is the tree **maximum**: 0.92 and 0.81 against 0.25.
+
+So the rule should be **positive evidence**: at least one tracked file must actually look
+like the component. A rewritten, gutted, or absent file is then weak evidence, never a
+veto. Two corollaries:
+
+- **Absence of similarity in one file is not evidence of absence of the component.** A
+  patched vendor fork violates the reverse assumption routinely — that is what vendoring
+  *is*.
+- This is the counterpart to the opposite failure, where a *single* file's snippet match
+  in a 309-file tree produced a confident whole-tree claim (see the nested-component note
+  above). Both point the same way: the verdict must be driven by how much positive
+  evidence exists and how it is distributed, not by a per-file pass/fail on either side.
+
+First observed in: [components/zlib/experiments/version-fingerprint](../components/zlib/experiments/version-fingerprint/README.md#calibrating-the-reject-rule--the-templates-per-file-veto-is-the-wrong-shape).
+
 ## Git tags are not release artifacts — validate one against the other before mining
 
 A reference DB mined from an upstream repo's tags silently assumes each tag *is* the
@@ -305,6 +383,18 @@ upstream-internal `lwip/init.h` vs `core/init.c` collision at the same time. Che
 and the cost of not doing it is invisible until it fires.
 
 First observed in: [components/lwip](../components/lwip/experiments/version-fingerprint/README.md#files-are-located-by-path-suffix-not-basename).
+
+**Amendment (zlib, 2026-08-18): when upstream's layout is flat, a path suffix *is* the
+basename and disambiguates nothing.** Every zlib source sits in the repo root, so there is
+no suffix to key on — yet the collision still happens: U-Boot ships two files named
+`zlib.h`, a 17-line glue shim at `lib/zlib/zlib.h` and the real merged header at
+`include/u-boot/zlib.h`. The general rule is therefore *never resolve a duplicate by
+position* — not by basename, and not by path either. Where a suffix exists it is a cheap
+disambiguator; where it doesn't, collect **all** candidates for the tracked name, score
+each, and keep the best, recording that a choice was made. Content decides, path only
+narrows.
+
+First observed in: [components/zlib/experiments/version-fingerprint](../components/zlib/experiments/version-fingerprint/README.md).
 
 ## Architecture-tied standards are gated by CPU core choice, not by vendor
 
