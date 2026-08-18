@@ -6,7 +6,15 @@ non-AUTOSAR alike — automotive-first prioritization decided 2026-07-08. Within
 tier, components are
 roughly ordered by expected prevalence × detection-research value.
 
-Already researched (see `components/`): **FreeRTOS**, **mbedTLS**, **CMSIS**.
+Already researched (see `components/`): **FreeRTOS**, **mbedTLS**, **CMSIS**, **lwIP**,
+**zlib**.
+
+> **PAUSED 2026-08-18 — no new component until three known defects are fixed.** Decision
+> recorded in [CLAUDE.md](../CLAUDE.md) ("consolidation before breadth"): the resolver's
+> evidence rule, tag-only mining of branch-tracking carriers, and `Z_PREFIX` invisibility
+> in the symbol tier are all live defects in existing code with known fixes. This list
+> stays valid and prioritized — **FatFs** (Tier 1 #3) is next when research resumes — but
+> picking from it is not the default next move right now.
 
 Scope reminders that shaped this list (from [CLAUDE.md](../CLAUDE.md)):
 

@@ -607,7 +607,69 @@ findings suggest revisiting a decision.
   architecture rec. 7 (evidence threshold clause),
   [general/README.md](general/README.md#attribution-vendored-integrations-are-often-multiple-stacked-components),
   the fingerprint roadmap's TODO-9, and a defect note in the minr-self-mining README.
-- **NEXT UP (designated 2026-07-29, not started): the resolver's evidence rule.** The
+- **DECIDED 2026-08-18 — consolidation before breadth: fix the three known defects before
+  researching any new component.** Explicit user decision at the end of the zlib session.
+  Rationale: items 1–3 below are things currently known to be **wrong** in code that
+  already exists — each with a known fix and existing validation data — whereas a sixth
+  component would add coverage on top of a detection core with three live defects. This
+  supersedes "pick a new component" as the default next move. **FatFs** (roadmap Tier 1 #3,
+  the adversarial no-git-upstream case) and every other component stay queued until these
+  three are closed.
+
+  Note the argument is *not* that new components have stopped paying off — zlib produced
+  several genuinely new findings (the version anchor hiding in string literals, the
+  positive-evidence rejection rule, the `vulnerable`-flag defect, OSV's deceptive version
+  gradient). Only one specific thing was confirmatory rather than new: the
+  applicability-condition pattern that FreeRTOS had already established. The case for
+  consolidation rests on the defects being real, not on diminishing returns.
+
+  **Defect 1 — the resolver's evidence rule** (was "NEXT UP" since 2026-07-29, deferred
+  twice; full scope in the bullet below, which stays authoritative). Now materially more
+  ready than when designated, because **zlib supplied the missing calibration from the
+  opposite direction**. The two ends are:
+    * lwIP (false positive): **1 of 309** files matched → a confident whole-tree claim with
+      the wrong purl, version *and* license.
+    * zlib (near false negative): a **genuine** U-Boot fork whose per-file scores
+      (0.09–0.92) **overlap** an unrelated reimplementation's (zlib-ng, 0.00–0.25), so no
+      per-file threshold separates them; tree *maxima* do (0.92/0.81 vs 0.25).
+  The fix is already implemented and validated in one place —
+  `components/zlib/experiments/version-fingerprint/match_target.py`'s
+  `POSITIVE_EVIDENCE_CEILING = 0.40`, replacing the skill template's per-file veto — so
+  the remaining work is porting that reasoning into `validate_export.py` for the KB path,
+  applying it to the other components' matchers, and re-running every corpus. Generalized
+  already in
+  [general/README.md](general/README.md#rejecting-a-component-use-positive-evidence-not-a-per-file-veto).
+
+  **Defect 2 — tag-only mining silently mis-versions branch-tracking carriers**
+  (architecture rec. 14, previously abstract, now with a measured cost). Chromium's
+  `third_party/zlib` is upstream commit `09a1572a`, **four days past v1.3.2 and in no
+  tag**; the detector can only resolve it to the nearest release. zlib's phase-3 loop
+  returned the correct NOT_AFFECTED *only because* 1.3.2 happens to have zero CVEs — a
+  carrier sitting in a window where a CVE was fixed between the nearest tag and the real
+  commit would produce a confident **false AFFECTED**. Any vendor tracking `main` rather
+  than tags has this. Scope: mine release artifacts and/or commits alongside tags, and give
+  the matcher a way to say "newer than the nearest release" instead of silently rounding.
+
+  **Defect 3 — `Z_PREFIX` builds are invisible to the symbol tier** (zlib phase 1 §5; the
+  smallest of the three, roughly an afternoon). A `Z_PREFIX` build exports
+  `z_deflate`/`z_inflate`/`z_crc32`, so a reference symbol set mined from upstream headers
+  misses every symbol. The mapping is a **fixed, published table** in `zconf.h`, so the fix
+  is exact rather than heuristic: strip a leading `z_` before matching, or mine both
+  variants. Applies to `symbol_tier.py` and the TI static-lib matcher in
+  [general/experiments/static-lib-identification](general/experiments/static-lib-identification/README.md).
+
+  **Queued behind these three, in order**: (a) **MiniZip as a detection target in its own
+  right** — zlib's phase-3 refinement answers "is minizip present?" by *file presence*, not
+  identification, yet minizip is vendored standalone constantly, has its own CVE
+  (CVE-2023-45853) and its own nested Info-ZIP lineage; this is where the nested-component
+  thread finally has a direct advisory consequence. (b) **Carrier/fork identification**
+  (from the lwIP pass — recognizing *Espressif's* lwIP rather than generic lwIP 2.2.0, so
+  the carrier's CPE can be queried); still correctly ordered *after* the evidence rule,
+  since carrier ID feeds more single-signal evidence into the same resolver. (c) New
+  components, starting with FatFs.
+
+- **Defect 1 in detail — the resolver's evidence rule** (designated 2026-07-29;
+  scheduled by the 2026-08-18 consolidation decision above). The
   direct, bounded follow-up to the nested-component finding above — the KB's verdict logic
   turns one file's snippet match in a 309-file tree into a confident whole-tree component
   claim with a wrong purl, version *and* license. Fix the rule, then re-validate. Scope
